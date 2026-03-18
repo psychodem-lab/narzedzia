@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model ABC - Terapia CBT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Optymalizacja pod wydruk i zapis do PDF */
+        @media print {
+            body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .no-print { display: none !important; }
+            .print-w-full { width: 100% !important; max-width: none !important; }
+            .print-shadow-none { box-shadow: none !important; border: 1px solid #cbd5e1 !important; }
+            .print-m-0 { margin: 0 !important; padding: 0 !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans text-slate-900 pb-10">
+
+    <header class="bg-indigo-900 text-white p-4 shadow-md no-print">
+        <div class="container mx-auto flex justify-between items-center max-w-5xl">
+            <h1 class="text-xl font-black uppercase tracking-tight">Model <span class="text-indigo-400">ABC</span></h1>
+            <button onclick="window.print()" class="text-xs bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded font-bold uppercase transition shadow">
+                Drukuj / Zapisz PDF
+            </button>
+        </div>
+    </header>
+
+    <div class="container mx-auto py-6 px-4 max-w-5xl grid grid-cols-1 md:grid-cols-12 gap-6">
+        
+        <aside class="md:col-span-5 space-y-4 no-print">
+            <div class="bg-white p-5 rounded-xl shadow-md border border-slate-200">
+                <h2 class="text-xs font-black text-slate-500 uppercase mb-4 tracking-widest">Uzupełnij dzienniczek</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-blue-600 mb-1">A - Aktywator (Sytuacja)</label>
+                        <p class="text-[10px] text-slate-500 mb-1 italic">Co się wydarzyło? Gdzie byłeś/aś? Z kim?</p>
+                        <textarea id="input-a" rows="2" class="w-full p-2 text-sm border rounded bg-slate-50 focus:ring-2 ring-blue-200 outline-none transition-all" placeholder="np. Szef poprosił mnie o rozmowę w swoim gabinecie..." oninput="updateView()"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-purple-600 mb-1">B - Przekonania (Myśli)</label>
+                        <p class="text-[10px] text-slate-500 mb-1 italic">Co przemknęło Ci przez głowę? Jak to zinterpretowałeś/aś?</p>
+                        <textarea id="input-b" rows="3" class="w-full p-2 text-sm border rounded bg-slate-50 focus:ring-2 ring-purple-200 outline-none transition-all" placeholder="np. Na pewno chce mnie zwolnić. Zrobiłem coś źle." oninput="updateView()"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-red-600 mb-1">C - Konsekwencje</label>
+                        <p class="text-[10px] text-slate-500 mb-1 italic">Jakie pojawiły się emocje? Jak zareagowało ciało? Co zrobiłeś/aś?</p>
+                        <textarea id="input-c" rows="3" class="w-full p-2 text-sm border rounded bg-slate-50 focus:ring-2 ring-red-200 outline-none transition-all" placeholder="np. Silny lęk (8/10), ścisk w żołądku. Unikałem kontaktu wzrokowego." oninput="updateView()"></textarea>
+                    </div>
+                </div>
+
+                <button onclick="clearForm()" class="w-full mt-4 text-xs text-slate-500 font-bold uppercase hover:text-red-600 border border-slate-300 rounded py-2 bg-white transition-all">
+                    Wyczyść formularz
+                </button>
+            </div>
+        </aside>
+
+        <main class="md:col-span-7 print-w-full">
+            <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-200 print-shadow-none h-full flex flex-col">
+                <h2 class="text-center text-lg font-black text-slate-800 uppercase tracking-widest mb-6 border-b pb-3">Moja Analiza ABC</h2>
+                
+                <div class="flex-1 flex flex-col justify-center space-y-2">
+                    <div class="relative bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                        <div class="absolute -left-4 top-1/2 -translate-y-1/2 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-md">A</div>
+                        <h3 class="font-bold text-blue-800 text-xs uppercase mb-1 ml-6 tracking-wide">Sytuacja (Aktywator)</h3>
+                        <p id="output-a" class="text-slate-700 whitespace-pre-wrap ml-6 text-sm italic min-h-[1.5rem]">Brak wpisu...</p>
+                    </div>
+
+                    <div class="flex justify-center text-slate-300 py-1">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                    </div>
+
+                    <div class="relative bg-purple-50 border-l-4 border-purple-500 p-4 rounded-r-lg">
+                        <div class="absolute -left-4 top-1/2 -translate-y-1/2 w-8 h-8 bg-purple-500 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-md">B</div>
+                        <h3 class="font-bold text-purple-800 text-xs uppercase mb-1 ml-6 tracking-wide">Myśli (Przekonania)</h3>
+                        <p id="output-b" class="text-slate-800 whitespace-pre-wrap ml-6 text-sm font-medium min-h-[1.5rem]">Brak wpisu...</p>
+                    </div>
+
+                    <div class="flex justify-center text-slate-300 py-1">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                    </div>
+
+                    <div class="relative bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
+                        <div class="absolute -left-4 top-1/2 -translate-y-1/2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-md">C</div>
+                        <h3 class="font-bold text-red-800 text-xs uppercase mb-1 ml-6 tracking-wide">Konsekwencje (Emocje, Ciało, Zachowanie)</h3>
+                        <p id="output-c" class="text-slate-700 whitespace-pre-wrap ml-6 text-sm min-h-[1.5rem]">Brak wpisu...</p>
+                    </div>
+                </div>
+                
+                <p class="text-center text-[10px] text-slate-400 mt-8 no-print uppercase tracking-wider">Wypełnij pola po lewej stronie, aby wygenerować model</p>
+            </div>
+        </main>
+
+    </div>
+
+    <script>
+        // Funkcja aktualizująca podgląd na żywo
+        function updateView() {
+            const a = document.getElementById('input-a').value;
+            const b = document.getElementById('input-b').value;
+            const c = document.getElementById('input-c').value;
+
+            document.getElementById('output-a').innerText = a || "Brak wpisu...";
+            document.getElementById('output-b').innerText = b || "Brak wpisu...";
+            document.getElementById('output-c').innerText = c || "Brak wpisu...";
+        }
+
+        // Funkcja czyszcząca formularz
+        function clearForm() {
+            if(confirm("Czy na pewno chcesz wyczyścić wszystkie pola?")) {
+                document.getElementById('input-a').value = '';
+                document.getElementById('input-b').value = '';
+                document.getElementById('input-c').value = '';
+                updateView();
+            }
+        }
+    </script>
+</body>
+</html>
