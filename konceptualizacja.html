@@ -3,19 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interaktywna Konceptualizacja CBT</title>
+    <title>Zaawansowana Konceptualizacja CBT (Model Zintegrowany)</title>
     <style>
         :root {
-            --primary: #2c3e50;
-            --secondary: #3498db;
-            --background: #f8f9fa;
+            --primary: #1e3a8a;
+            --secondary: #2563eb;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --background: #f1f5f9;
             --card-bg: #ffffff;
-            --text: #333333;
-            --border: #e2e8f0;
-            --helper-bg: #e1f5fe;
+            --text: #1e293b;
+            --border: #cbd5e1;
+            --helper-bg: #eff6ff;
         }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background-color: var(--background);
             color: var(--text);
             line-height: 1.6;
@@ -23,104 +26,149 @@
             padding: 20px;
         }
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
         }
         header {
             text-align: center;
             margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border);
         }
         h1 {
             color: var(--primary);
             margin-bottom: 5px;
         }
         .subtitle {
-            color: #666;
-            font-size: 0.9em;
+            color: #475569;
+            font-size: 1.1em;
+        }
+        .section-title {
+            color: var(--primary);
+            border-bottom: 2px solid var(--secondary);
+            padding-bottom: 5px;
+            margin-top: 40px;
+            margin-bottom: 20px;
         }
         .level-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 8px;
             padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            position: relative;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
         }
-        .level-card h2 {
+        .level-card.strengths {
+            border-left: 5px solid var(--success);
+        }
+        .level-card.perpetuating {
+            border-left: 5px solid var(--warning);
+        }
+        .level-card h3 {
             margin-top: 0;
             color: var(--primary);
-            font-size: 1.3em;
+            font-size: 1.2em;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         textarea, input[type="text"] {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             margin-top: 10px;
             border: 1px solid var(--border);
-            border-radius: 4px;
+            border-radius: 6px;
             font-family: inherit;
+            font-size: 14px;
             box-sizing: border-box;
             resize: vertical;
+            background-color: #f8fafc;
+        }
+        textarea:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: var(--secondary);
+            background-color: #ffffff;
         }
         textarea {
-            min-height: 80px;
+            min-height: 100px;
         }
         .btn-helper {
-            background-color: var(--secondary);
-            color: white;
-            border: none;
+            background-color: #e2e8f0;
+            color: #475569;
+            border: 1px solid #cbd5e1;
             padding: 6px 12px;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 0.85em;
-            transition: background 0.3s;
+            font-weight: 600;
+            transition: all 0.2s;
         }
         .btn-helper:hover {
-            background-color: #2980b9;
+            background-color: var(--secondary);
+            color: white;
+            border-color: var(--secondary);
         }
         .helper-panel {
             display: none;
             background-color: var(--helper-bg);
-            padding: 15px;
-            border-left: 4px solid var(--secondary);
-            border-radius: 0 4px 4px 0;
+            padding: 15px 20px;
+            border-radius: 6px;
             margin-top: 15px;
-            font-size: 0.9em;
+            font-size: 0.95em;
+            color: #1e40af;
+            border-left: 4px solid var(--secondary);
         }
         .helper-panel ul {
             margin: 0;
             padding-left: 20px;
         }
+        .helper-panel li {
+            margin-bottom: 8px;
+        }
         .arrow-down {
             text-align: center;
-            font-size: 24px;
-            color: #cbd5e1;
-            margin: -5px 0 10px 0;
+            font-size: 28px;
+            color: #94a3b8;
+            margin: -10px 0 10px 0;
+            font-weight: bold;
+        }
+        .hypothesis-box {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        .hypothesis-box h3 {
+            color: var(--success);
+            margin-top: 0;
         }
         .print-btn {
             display: block;
             width: 100%;
             padding: 15px;
-            background-color: #27ae60;
+            background-color: var(--primary);
             color: white;
             text-align: center;
             border: none;
             border-radius: 8px;
             font-size: 1.1em;
+            font-weight: bold;
             cursor: pointer;
-            margin-top: 30px;
+            margin-top: 40px;
+            margin-bottom: 40px;
             transition: background 0.3s;
         }
         .print-btn:hover {
-            background-color: #2ecc71;
+            background-color: #1e40af;
         }
         @media print {
             .btn-helper, .print-btn { display: none; }
-            body { background: white; }
-            .level-card { box-shadow: none; border-color: #ccc; }
+            body { background: white; padding: 0; }
+            .container { max-width: 100%; }
+            .level-card { box-shadow: none; border-color: #000; page-break-inside: avoid; }
+            textarea { border: none; background: transparent; resize: none; min-height: auto; padding: 0;}
+            .section-title { page-break-after: avoid; }
         }
     </style>
 </head>
@@ -128,105 +176,173 @@
 
 <div class="container">
     <header>
-        <h1>Konceptualizacja Przypadku CBT</h1>
-        <div class="subtitle">Zestawienie hierarchiczne (Analiza "Strzałki w dół")</div>
+        <h1>Zaawansowana Konceptualizacja CBT</h1>
+        <div class="subtitle">Integracja ujęcia Becka (2021) oraz modelu Kuykena, Padesky'ego i Dudleya (2009)</div>
     </header>
 
+    <h2 class="section-title">CZĘŚĆ I: Makro-poziom (Tło i Kontekst)</h2>
+
     <div class="level-card">
-        <h2>1. Sytuacja Wyzwalająca
-            <button class="btn-helper" onclick="toggleHelper('help1')">Pytania pomocnicze</button>
-        </h2>
-        <div id="help1" class="helper-panel">
+        <h3>1. Czynniki Predysponujące (Wczesne Doświadczenia)
+            <button class="btn-helper" onclick="toggleHelper('help-predisposing')">Pytania pomocnicze</button>
+        </h3>
+        <div id="help-predisposing" class="helper-panel">
             <ul>
-                <li>Co dokładnie się wydarzyło? (Tylko suche fakty, jak z kamery wideo).</li>
-                <li>Kto tam był? Kiedy to miało miejsce?</li>
+                <li>Jakie kluczowe wydarzenia z dzieciństwa/okresu dorastania ukształtowały pacjenta?</li>
+                <li>Jakie komunikaty na swój temat pacjent otrzymywał od głównych opiekunów lub rówieśników?</li>
+                <li>Czy występuje genetyczna lub biologiczna podatność (np. wywiad rodzinny w kierunku depresji)?</li>
             </ul>
         </div>
-        <textarea placeholder="Opisz sytuację..."></textarea>
+        <textarea placeholder="Opisz wczesne doświadczenia, relacje z opiekunami, genetykę..."></textarea>
     </div>
 
+    <div class="level-card">
+        <h3>2. Czynniki Wyzwalające (Precipitating Factors)
+            <button class="btn-helper" onclick="toggleHelper('help-precipitating')">Pytania pomocnicze</button>
+        </h3>
+        <div id="help-precipitating" class="helper-panel">
+            <ul>
+                <li>Dlaczego pacjent szuka pomocy <strong>właśnie teraz</strong>? (A nie np. 3 lata temu).</li>
+                <li>Jakie krytyczne wydarzenie (np. strata pracy, choroba, konflikt) przeciążyło jego dotychczasowe strategie radzenia sobie?</li>
+                <li>Jaki ukryty schemat został aktywowany przez to konkretne zdarzenie?</li>
+            </ul>
+        </div>
+        <textarea placeholder="Opisz bezpośrednie powody zgłoszenia się na terapię i niedawne kryzysy..."></textarea>
+    </div>
+
+    <div class="level-card strengths">
+        <h3>3. Zasoby i Czynniki Chroniące (Protective Factors)
+            <button class="btn-helper" onclick="toggleHelper('help-strengths')">Pytania pomocnicze</button>
+        </h3>
+        <div id="help-strengths" class="helper-panel">
+            <ul>
+                <li><strong>Wewnętrzne:</strong> Jakie cechy pomogły pacjentowi przetrwać do tej pory? (Inteligencja, humor, upór, wgląd).</li>
+                <li><strong>Zewnętrzne:</strong> Kto stanowi sieć wsparcia? (Partner, przyjaciele, bezpieczne środowisko pracy).</li>
+                <li>Gdzie w życiu pacjenta problem <strong>nie</strong> występuje? Kiedy funkcjonuje optymalnie?</li>
+            </ul>
+        </div>
+        <textarea placeholder="Wypisz mocne strony, talenty, relacje wspierające..."></textarea>
+    </div>
+
+    <h2 class="section-title">CZĘŚĆ II: Mikro-poziom (Przekrój Poznawczy)</h2>
+
+    <div class="level-card">
+        <h3>4. Typowa Sytuacja Aktywująca (Sygnał)
+            <button class="btn-helper" onclick="toggleHelper('help-sit')">Pytania pomocnicze</button>
+        </h3>
+        <div id="help-sit" class="helper-panel">
+            <ul>
+                <li>Tylko suche fakty: Kto? Co? Gdzie? Kiedy? (Jak z zapisu kamery wideo).</li>
+            </ul>
+        </div>
+        <textarea placeholder="Konkretna sytuacja "tu i teraz"..."></textarea>
+    </div>
     <div class="arrow-down">↓</div>
 
     <div class="level-card">
-        <h2>2. Myśli Automatyczne i Zniekształcenia
-            <button class="btn-helper" onclick="toggleHelper('help2')">Pytania pomocnicze</button>
-        </h2>
-        <div id="help2" class="helper-panel">
+        <h3>5. Myśli Automatyczne i Zniekształcenia
+            <button class="btn-helper" onclick="toggleHelper('help-nat')">Pytania pomocnicze</button>
+        </h3>
+        <div id="help-nat" class="helper-panel">
             <ul>
-                <li>Co przebiegło Panu/Pani przez głowę w tamtej sekundzie?</li>
-                <li>Jakie obrazy pojawiły się w wyobraźni?</li>
-                <li><i>Dla terapeuty:</i> Czy widać tu czytanie w myślach, katastrofizację, myślenie czarno-białe?</li>
+                <li>Czy to była myśl w słowach, czy obraz/wspomnienie przed oczami?</li>
+                <li>Na ile % wierzysz w tę myśl w chwili, gdy się pojawia?</li>
+                <li><strong>Funkcja:</strong> Czy ta myśl próbuje Cię przed czymś ostrzec, czy raczej Cię krytykuje?</li>
+                <li><strong>Zniekształcenia:</strong> Czy traktujesz emocje jako dowód (uzasadnienie emocjonalne)?</li>
             </ul>
         </div>
-        <input type="text" placeholder="Zidentyfikowane zniekształcenia (np. katastrofizacja)..." style="margin-bottom: 10px;">
-        <textarea placeholder="Wypisz myśli automatyczne..."></textarea>
+        <input type="text" placeholder="Zidentyfikowane zniekształcenia (np. katastrofizacja, myślenie dychotomiczne)...">
+        <textarea placeholder="Strumień myśli w danej sytuacji..."></textarea>
     </div>
-
     <div class="arrow-down">↓</div>
 
     <div class="level-card">
-        <h2>3. Emocje i Fizjologia
-            <button class="btn-helper" onclick="toggleHelper('help3')">Pytania pomocnicze</button>
-        </h2>
-        <div id="help3" class="helper-panel">
+        <h3>6. Emocje i Reakcje Fizjologiczne
+            <button class="btn-helper" onclick="toggleHelper('help-emo')">Pytania pomocnicze</button>
+        </h3>
+        <div id="help-emo" class="helper-panel">
             <ul>
-                <li>Jakie emocje się pojawiły? (Smutek, lęk, złość, wstyd, poczucie winy).</li>
-                <li>Na ile procent (0-100) odczuwał/a Pan/Pani tę emocję?</li>
-                <li>Gdzie w ciele było to odczuwalne?</li>
+                <li>Jakie emocje się pojawiły (podaj % nasilenia)?</li>
+                <li>Gdzie w ciele było to odczuwalne? (Napięcie mięśni, płytki oddech, ucisk w klatce).</li>
             </ul>
         </div>
-        <textarea placeholder="Zanotuj emocje (z nasileniem %) oraz reakcje z ciała..."></textarea>
+        <textarea placeholder="Smutek 80%, Lęk 90%... Odczucia z ciała..."></textarea>
     </div>
-
     <div class="arrow-down">↓</div>
 
     <div class="level-card">
-        <h2>4. Przekonania Pośredniczące (Zasady/Założenia)
-            <button class="btn-helper" onclick="toggleHelper('help4')">Pytania pomocnicze</button>
-        </h2>
-        <div id="help4" class="helper-panel">
+        <h3>7. Przekonania Pośredniczące (Zasady i Założenia)
+            <button class="btn-helper" onclick="toggleHelper('help-inter')">Pytania pomocnicze</button>
+        </h3>
+        <div id="help-inter" class="helper-panel">
             <ul>
-                <li>Jaka zasada kieruje tym zachowaniem? (Format: "Jeśli..., to...").</li>
-                <li>Co trzeba robić, by uniknąć katastrofy? ("Muszę zawsze...")</li>
-                <li>Gdyby ta myśl automatyczna była prawdziwa, co to oznacza?</li>
+                <li><strong>Standardy:</strong> Jakie wymagania stawiasz sobie w tej sytuacji, których nie stawiasz innym?</li>
+                <li><strong>Warunki (Jeśli... to...):</strong> Co musisz robić, aby uniknąć katastrofy/odrzucenia?</li>
+                <li><strong>Koszty:</strong> Co by się stało, gdybyś choć raz złamał tę zasadę? W czym ona pomaga, a w czym ogranicza?</li>
             </ul>
         </div>
-        <textarea placeholder="Zasady (np. 'Jeśli nie będę idealny, to mnie odrzucą')..."></textarea>
+        <textarea placeholder="Zasady (Muszę...), Postawy (To okropne, gdy...), Założenia (Jeśli..., to...)..."></textarea>
     </div>
-
     <div class="arrow-down">↓</div>
 
     <div class="level-card">
-        <h2>5. Przekonania Kluczowe (Core Beliefs)
-            <button class="btn-helper" onclick="toggleHelper('help5')">Pytania pomocnicze</button>
-        </h2>
-        <div id="help5" class="helper-panel">
+        <h3>8. Przekonania Kluczowe (Core Beliefs)
+            <button class="btn-helper" onclick="toggleHelper('help-core')">Pytania pomocnicze</button>
+        </h3>
+        <div id="help-core" class="helper-panel">
             <ul>
-                <li>Gdyby ta najgorsza obawa się spełniła, co by to mówiło o Panu/Pani jako człowieku?</li>
-                <li>Kategoria bezradności: "Jestem słaby, bezsilny, uwięziony".</li>
-                <li>Kategoria nieatrakcyjności: "Jestem zły, nic niewarty, nie da się mnie kochać".</li>
+                <li><strong>Definicja:</strong> Co to znaczy być 'bezwartościowym'/'niekompetentnym' według Twojej definicji?</li>
+                <li><strong>Globalność:</strong> Czy to dotyczy tylko tej sytuacji, czy definiuje całego Ciebie?</li>
+                <li><strong>Test spójności:</strong> Gdybyśmy znaleźli 100 dowodów na to, że jesteś kompetentny, jak Twój umysł by je odrzucił?</li>
+                <li>Kategoria bezradności (nieadekwatność) vs Kategoria nieatrakcyjności (niezasługiwanie na miłość).</li>
             </ul>
         </div>
-        <textarea placeholder="Globalne sądy o sobie, świecie lub innych (np. 'Jestem wybrakowany')..."></textarea>
+        <textarea placeholder="Absolutne prawdy o sobie (Jestem...), innych (Ludzie są...), świecie (Świat jest...)..."></textarea>
     </div>
-
     <div class="arrow-down">↓</div>
 
     <div class="level-card">
-        <h2>6. Strategie Kompensacyjne / Zachowania
-            <button class="btn-helper" onclick="toggleHelper('help6')">Pytania pomocnicze</button>
-        </h2>
-        <div id="help6" class="helper-panel">
+        <h3>9. Strategie Kompensacyjne (Zachowania Zabezpieczające)
+            <button class="btn-helper" onclick="toggleHelper('help-beh')">Pytania pomocnicze</button>
+        </h3>
+        <div id="help-beh" class="helper-panel">
             <ul>
-                <li>Co Pan/Pani robi, aby poradzić sobie z tym przekonaniem lub uniknąć jego aktywacji?</li>
-                <li>Czy występuje unikanie, nadmierne przygotowywanie się, poszukiwanie zapewnień?</li>
-                <li><i>Dla terapeuty:</i> W jaki sposób to zachowanie paradoksalnie podtrzymuje problem?</li>
+                <li><strong>Unikanie poznawcze:</strong> Czy robisz coś w myślach (liczenie, odwracanie uwagi), by nie czuć lęku?</li>
+                <li><strong>Kontrola:</strong> Ile energii zużywasz na upewnianie się, że wszystko jest idealnie?</li>
+                <li><strong>Sygnały bezpieczeństwa:</strong> Czego/kogo potrzebujesz obok siebie, by przetrwać tę sytuację?</li>
             </ul>
         </div>
-        <textarea placeholder="Opisz zachowania zabezpieczające i unikające..."></textarea>
+        <textarea placeholder="Unikanie, perfekcjonizm, wycofanie, poszukiwanie zapewnień..."></textarea>
     </div>
 
-    <button class="print-btn" onclick="window.print()">Zapisz do PDF / Drukuj</button>
+    <h2 class="section-title">CZĘŚĆ III: Dynamika Podtrzymująca</h2>
+
+    <div class="level-card perpetuating">
+        <h3>10. Czynniki Podtrzymujące (Perpetuating Factors)
+            <button class="btn-helper" onclick="toggleHelper('help-perp')">Pytania pomocnicze</button>
+        </h3>
+        <div id="help-perp" class="helper-panel">
+            <ul>
+                <li><strong>Pętle sprzężenia:</strong> Jak zachowanie zabezpieczające z pkt 9 paradoksalnie potwierdza przekonanie kluczowe z pkt 8?</li>
+                <li><strong>Biologia/Styl życia:</strong> Czy bezsenność, dieta lub substancje psychoaktywne nasilają objawy?</li>
+                <li><strong>Środowisko:</strong> Czy osoby z otoczenia (nieświadomie) wzmacniają problem (np. wyręczając pacjenta)?</li>
+            </ul>
+        </div>
+        <textarea placeholder="Opisz mechanizmy błędnego koła, jatrogenię, czynniki środowiskowe..."></textarea>
+    </div>
+
+    <h2 class="section-title">CZĘŚĆ IV: Synteza</h2>
+
+    <div class="hypothesis-box">
+        <h3>Hipoteza Robocza (Case Formulation Hypothesis)</h3>
+        <p style="font-size: 0.9em; color: #166534; margin-bottom: 15px;">
+            <em>Sklej zebrane informacje w narrację. Uzupełnij poniższy schemat swoimi danymi:</em><br>
+            "Z powodu <strong>[Wczesnych doświadczeń - pkt 1]</strong>, pacjent wykształcił przekonanie kluczowe <strong>[pkt 8]</strong>. Aby przetrwać i chronić się przed bólem, przyjął zasadę <strong>[pkt 7]</strong>. Kiedy nastąpił wyzwalacz <strong>[pkt 2]</strong>, aktywowały się myśli <strong>[pkt 5]</strong>, co doprowadziło do emocji <strong>[pkt 6]</strong> i zachowań <strong>[pkt 9]</strong>. Problem jest obecnie podtrzymywany przez <strong>[pkt 10]</strong>, jednak rokowania są korzystne dzięki zasobom takim jak <strong>[pkt 3]</strong>."
+        </p>
+        <textarea placeholder="Wpisz pełną hipotezę narracyjną tutaj..." style="border-color: #22c55e; background-color: #ffffff;"></textarea>
+    </div>
+
+    <button class="print-btn" onclick="window.print()">Drukuj / Zapisz jako PDF do dokumentacji</button>
 
 </div>
 
