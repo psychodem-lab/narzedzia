@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strefa Postępu - Terapia Lęku</title>
+    <style>
+        /* Zmienne CSS - Paleta "Safe Space" */
+        :root {
+            --bg-color: #F4F7F6;
+            --text-main: #2C3E50;
+            --text-muted: #7F8C8D;
+            --accent-blue: #8AB6D6;
+            --accent-green: #A3C9A8;
+            --card-bg: #FFFFFF;
+            --locked-bg: #EAEAEA;
+            --btn-hover: #75A3C3;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Kontener główny */
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Nagłówek */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0 40px 0;
+            border-bottom: 2px solid var(--accent-blue);
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 24px;
+            color: var(--accent-blue);
+        }
+
+        .user-info {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        /* Układ siatki dla głównej zawartości */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Kafelki i Sekcje */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            margin-bottom: 25px;
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: var(--text-main);
+        }
+
+        /* Moduły / Poziomy */
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .module {
+            border: 1px solid #E0E0E0;
+            border-radius: 12px;
+            padding: 20px;
+            background: var(--card-bg);
+        }
+
+        .module.active {
+            border-left: 5px solid var(--accent-green);
+        }
+
+        .module.locked {
+            background: var(--locked-bg);
+            color: var(--text-muted);
+            border: none;
+        }
+
+        .module h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .module p {
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        /* Przyciski */
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: var(--accent-blue);
+            color: white;
+            text-decoration: none;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            text-align: center;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background-color: var(--btn-hover);
+        }
+
+        .btn.disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn.secondary {
+            background-color: var(--accent-green);
+        }
+
+        /* Test Cotygodniowy */
+        .weekly-test input[type="range"] {
+            width: 100%;
+            margin: 20px 0;
+            accent-color: var(--accent-blue);
+        }
+
+        .test-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Pasek boczny */
+        .sidebar .card {
+            border-top: 4px solid var(--accent-blue);
+        }
+
+        .resource-link {
+            display: block;
+            padding: 10px 0;
+            color: var(--text-main);
+            text-decoration: none;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .resource-link:last-child {
+            border-bottom: none;
+        }
+
+        .resource-link span {
+            color: var(--accent-blue);
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        #feedback-message {
+            display: none;
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #E8F5E9;
+            color: #2E7D32;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>🌱 Strefa Postępu</h1>
+        <div class="user-info">Witaj, Uczestniku</div>
+    </header>
+
+    <div class="main-grid">
+        <main>
+            <section class="card weekly-test">
+                <h2>📊 Twój Cotygodniowy Barometr</h2>
+                <p>Zaznacz na skali, jak silne było średnie odczucie lęku w minionym tygodniu. Twoje dane są zapisywane tylko dla Ciebie i terapeuty.</p>
+                
+                <form id="anxiety-form">
+                    <input type="range" id="anxiety-level" name="anxiety" min="1" max="10" value="5">
+                    <div class="test-labels">
+                        <span>1 (Całkowity spokój)</span>
+                        <span>5 (Umiarkowane napięcie)</span>
+                        <span>10 (Ataki paniki)</span>
+                    </div>
+                    <button type="button" class="btn" style="margin-top: 20px;" onclick="submitTest()">Zapisz wynik w Dzienniku</button>
+                    <div id="feedback-message">Wynik zapisany. Wykres w Twoim profilu został zaktualizowany.</div>
+                </form>
+            </section>
+
+            <section class="card">
+                <h2>Wybierz swój poziom (Materiały CBT)</h2>
+                <div class="modules-grid">
+                    
+                    <div class="module active">
+                        <h3>Poziom 1: Ciało i Oddech</h3>
+                        <p>Fizjologia lęku. Empiryczne metody redukcji napięcia z autonomicznym układem nerwowym.</p>
+                        <ul>
+                            <li><small>📄 Formularz: Obserwacja ciała</small></li>
+                            <li><small>🎧 Audio: Oddychanie przeponowe</small></li>
+                        </ul>
+                        <br>
+                        <a href="#" class="btn">Wejdź do poziomu</a>
+                    </div>
+
+                    <div class="module active">
+                        <h3>Poziom 2: Myśli Automatyczne</h3>
+                        <p>Rozpoznawanie zniekształceń poznawczych (np. katastrofizowanie). Praca na Modelu ABC.</p>
+                        <ul>
+                            <li><small>📄 Formularz: Dziennik Myśli (CBT)</small></li>
+                        </ul>
+                        <br>
+                        <a href="#" class="btn secondary">Wejdź do poziomu</a>
+                    </div>
+
+                    <div class="module locked">
+                        <h3>Poziom 3: Drabina Ekspozycji</h3>
+                        <p>Zajęcia dostępne od 4 tygodnia terapii. Stopniowa desensytyzacja na bodźce lękowe.</p>
+                        <br>
+                        <button class="btn disabled" disabled>Moduł zablokowany</button>
+                    </div>
+
+                </div>
+            </section>
+        </main>
+
+        <aside class="sidebar">
+            
+            <section class="card">
+                <h2>💬 Czat Grupowy</h2>
+                <p style="font-size: 14px; margin-bottom: 15px;">Wymień się przemyśleniami z osobami, które przechodzą przez to samo.</p>
+                <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 15px;">
+                    <em>"Ostatnia aktywność na grupie: 15 minut temu. Uczestnik podzielił się wnioskami z Dziennika Myśli."</em>
+                </div>
+                <a href="https://groups.google.com" target="_blank" class="btn" style="width: 100%;">Przejdź do Google Groups</a>
+            </section>
+
+            <section class="card">
+                <h2>🧰 Skrzynka S.O.S</h2>
+                <p style="font-size: 12px; margin-bottom: 10px; color: var(--text-muted);">Szybka pomoc w chwili ataku lęku.</p>
+                <a href="#" class="resource-link"><span>1.</span> Technika uziemienia 5-4-3-2-1</a>
+                <a href="#" class="resource-link"><span>2.</span> Arkusz ratunkowy (PDF)</a>
+                <a href="#" class="resource-link"><span>3.</span> Zimna woda (Zanurzenie - TIPP)</a>
+            </section>
+
+        </aside>
+    </div>
+</div>
+
+<script>
+    // Prosty skrypt dający natychmiastową informację zwrotną po wypełnieniu testu
+    function submitTest() {
+        const btn = document.querySelector('.weekly-test .btn');
+        const feedback = document.getElementById('feedback-message');
+        
+        btn.innerText = "Zapisywanie...";
+        btn.style.opacity = "0.7";
+        
+        // Symulacja wysyłania danych na serwer
+        setTimeout(() => {
+            btn.innerText = "Zapisano";
+            btn.classList.add('disabled');
+            btn.disabled = true;
+            feedback.style.display = "block";
+        }, 800);
+    }
+</script>
+
+</body>
+</html>
