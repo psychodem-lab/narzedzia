@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Strefa Postępu - Terapia Lęku</title>
+    
     <style>
-        /* Zmienne CSS - Paleta "Safe Space" */
         :root {
             --bg-color: #F4F7F6;
             --text-main: #2C3E50;
@@ -30,34 +30,50 @@
             line-height: 1.6;
         }
 
-        /* Kontener główny */
         .container {
             max-width: 1100px;
             margin: 0 auto;
             padding: 20px;
         }
 
-        /* Nagłówek */
+        /* --- STYLIZACJA EKRANU LOGOWANIA --- */
+        #auth-section {
+            max-width: 400px;
+            margin: 100px auto;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        #auth-section h2 { margin-bottom: 20px; color: var(--accent-blue); }
+        .auth-input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        /* --- STYLIZACJA PULPITU --- */
+        #dashboard-section {
+            display: none; /* Ukryte domyślnie, odkrywane przez JavaScript po zalogowaniu */
+        }
+
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 0 40px 0;
+            padding: 20px 0 30px 0;
             border-bottom: 2px solid var(--accent-blue);
             margin-bottom: 30px;
         }
 
-        header h1 {
-            font-size: 24px;
-            color: var(--accent-blue);
-        }
+        header h1 { font-size: 24px; color: var(--accent-blue); }
+        .user-info { display: flex; align-items: center; gap: 15px; }
 
-        .user-info {
-            font-size: 16px;
-            font-weight: bold;
-        }
-
-        /* Układ siatki dla głównej zawartości */
         .main-grid {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -65,32 +81,19 @@
         }
 
         @media (max-width: 768px) {
-            .main-grid {
-                grid-template-columns: 1fr;
-            }
+            .main-grid { grid-template-columns: 1fr; }
         }
 
-        /* Kafelki i Sekcje */
         .card {
             background-color: var(--card-bg);
             border-radius: 16px;
             padding: 25px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.03);
             margin-bottom: 25px;
-            transition: transform 0.2s ease;
         }
 
-        .card:hover {
-            transform: translateY(-2px);
-        }
+        h2 { font-size: 20px; margin-bottom: 15px; }
 
-        h2 {
-            font-size: 20px;
-            margin-bottom: 15px;
-            color: var(--text-main);
-        }
-
-        /* Moduły / Poziomy */
         .modules-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -104,27 +107,17 @@
             background: var(--card-bg);
         }
 
-        .module.active {
-            border-left: 5px solid var(--accent-green);
-        }
-
+        .module.active { border-left: 5px solid var(--accent-green); }
         .module.locked {
             background: var(--locked-bg);
             color: var(--text-muted);
             border: none;
+            opacity: 0.7;
         }
 
-        .module h3 {
-            font-size: 18px;
-            margin-bottom: 10px;
-        }
+        .module h3 { font-size: 18px; margin-bottom: 10px; }
+        .module p { font-size: 14px; margin-bottom: 15px; }
 
-        .module p {
-            font-size: 14px;
-            margin-bottom: 15px;
-        }
-
-        /* Przyciski */
         .btn {
             display: inline-block;
             padding: 10px 20px;
@@ -138,40 +131,25 @@
             cursor: pointer;
             text-align: center;
             transition: background 0.3s;
-        }
-
-        .btn:hover {
-            background-color: var(--btn-hover);
-        }
-
-        .btn.disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-
-        .btn.secondary {
-            background-color: var(--accent-green);
-        }
-
-        /* Test Cotygodniowy */
-        .weekly-test input[type="range"] {
             width: 100%;
-            margin: 20px 0;
-            accent-color: var(--accent-blue);
+        }
+        .btn:hover { background-color: var(--btn-hover); }
+        .btn-outline {
+            background-color: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--text-main);
         }
 
-        .test-labels {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            color: var(--text-muted);
+        /* Osadzenie Google Forms */
+        .forms-container {
+            width: 100%;
+            height: 400px;
+            border: none;
+            border-radius: 12px;
+            background: #f9f9f9;
         }
 
-        /* Pasek boczny */
-        .sidebar .card {
-            border-top: 4px solid var(--accent-blue);
-        }
-
+        .sidebar .card { border-top: 4px solid var(--accent-blue); }
         .resource-link {
             display: block;
             padding: 10px 0;
@@ -179,129 +157,121 @@
             text-decoration: none;
             border-bottom: 1px solid #eee;
         }
-        
-        .resource-link:last-child {
-            border-bottom: none;
-        }
-
-        .resource-link span {
-            color: var(--accent-blue);
-            font-weight: bold;
-            margin-right: 5px;
-        }
-
-        #feedback-message {
-            display: none;
-            margin-top: 15px;
-            padding: 10px;
-            background-color: #E8F5E9;
-            color: #2E7D32;
-            border-radius: 8px;
-            font-size: 14px;
-        }
+        .resource-link span { color: var(--accent-blue); font-weight: bold; margin-right: 5px; }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div id="auth-section">
+    <h2>Witaj w Strefie Postępu</h2>
+    <p style="margin-bottom: 20px; color: var(--text-muted); font-size: 14px;">Zaloguj się, aby uzyskać dostęp do swoich materiałów.</p>
+    
+    <input type="email" id="email-input" class="auth-input" placeholder="Adres e-mail">
+    <input type="password" id="password-input" class="auth-input" placeholder="Hasło">
+    
+    <button class="btn" id="login-btn" onclick="simulateLogin()">Zaloguj się</button>
+    
+    <p id="auth-error" style="color: red; font-size: 12px; margin-top: 10px; display: none;">Nieprawidłowe dane logowania.</p>
+</div>
+
+<div class="container" id="dashboard-section">
     <header>
         <h1>🌱 Strefa Postępu</h1>
-        <div class="user-info">Witaj, Uczestniku</div>
+        <div class="user-info">
+            <span id="user-email-display">uzytkownik@email.com</span>
+            <button class="btn btn-outline" style="padding: 5px 15px; width: auto;" onclick="simulateLogout()">Wyloguj</button>
+        </div>
     </header>
 
     <div class="main-grid">
         <main>
-            <section class="card weekly-test">
+            <section class="card">
                 <h2>📊 Twój Cotygodniowy Barometr</h2>
-                <p>Zaznacz na skali, jak silne było średnie odczucie lęku w minionym tygodniu. Twoje dane są zapisywane tylko dla Ciebie i terapeuty.</p>
+                <p style="margin-bottom: 15px;">Wypełnij poniższy formularz, aby zapisać swoje odczucia z tego tygodnia.</p>
                 
-                <form id="anxiety-form">
-                    <input type="range" id="anxiety-level" name="anxiety" min="1" max="10" value="5">
-                    <div class="test-labels">
-                        <span>1 (Całkowity spokój)</span>
-                        <span>5 (Umiarkowane napięcie)</span>
-                        <span>10 (Ataki paniki)</span>
-                    </div>
-                    <button type="button" class="btn" style="margin-top: 20px;" onclick="submitTest()">Zapisz wynik w Dzienniku</button>
-                    <div id="feedback-message">Wynik zapisany. Wykres w Twoim profilu został zaktualizowany.</div>
-                </form>
+                <iframe 
+                    class="forms-container" 
+                    src="https://docs.google.com/forms/d/e/TUTAJ_WKLEJ_SWOJ_IDENTYFIKATOR_FORMULARZA/viewform?embedded=true" 
+                    title="Cotygodniowy Test Lęku">
+                    Ładowanie formularza...
+                </iframe>
             </section>
 
             <section class="card">
-                <h2>Wybierz swój poziom (Materiały CBT)</h2>
+                <h2>Wybierz swój poziom</h2>
                 <div class="modules-grid">
-                    
                     <div class="module active">
                         <h3>Poziom 1: Ciało i Oddech</h3>
-                        <p>Fizjologia lęku. Empiryczne metody redukcji napięcia z autonomicznym układem nerwowym.</p>
-                        <ul>
-                            <li><small>📄 Formularz: Obserwacja ciała</small></li>
-                            <li><small>🎧 Audio: Oddychanie przeponowe</small></li>
-                        </ul>
-                        <br>
-                        <a href="#" class="btn">Wejdź do poziomu</a>
-                    </div>
-
-                    <div class="module active">
-                        <h3>Poziom 2: Myśli Automatyczne</h3>
-                        <p>Rozpoznawanie zniekształceń poznawczych (np. katastrofizowanie). Praca na Modelu ABC.</p>
-                        <ul>
-                            <li><small>📄 Formularz: Dziennik Myśli (CBT)</small></li>
-                        </ul>
-                        <br>
-                        <a href="#" class="btn secondary">Wejdź do poziomu</a>
+                        <p>Fizjologia lęku i techniki uziemiające.</p>
+                        
+                        <a href="LINK_DO_PDF_LUB_INNEGO_FORMULARZA" target="_blank" class="btn">Otwórz Arkusz Obserwacji</a>
                     </div>
 
                     <div class="module locked">
-                        <h3>Poziom 3: Drabina Ekspozycji</h3>
-                        <p>Zajęcia dostępne od 4 tygodnia terapii. Stopniowa desensytyzacja na bodźce lękowe.</p>
-                        <br>
-                        <button class="btn disabled" disabled>Moduł zablokowany</button>
+                        <h3>Poziom 2: Myśli Automatyczne</h3>
+                        <p>Zajęcia dostępne w przyszłym tygodniu.</p>
+                        <button class="btn" style="background: #ccc; cursor: not-allowed;" disabled>Moduł zablokowany</button>
                     </div>
-
                 </div>
             </section>
         </main>
 
         <aside class="sidebar">
-            
             <section class="card">
                 <h2>💬 Czat Grupowy</h2>
-                <p style="font-size: 14px; margin-bottom: 15px;">Wymień się przemyśleniami z osobami, które przechodzą przez to samo.</p>
-                <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 15px;">
-                    <em>"Ostatnia aktywność na grupie: 15 minut temu. Uczestnik podzielił się wnioskami z Dziennika Myśli."</em>
-                </div>
-                <a href="https://groups.google.com" target="_blank" class="btn" style="width: 100%;">Przejdź do Google Groups</a>
+                <p style="font-size: 14px; margin-bottom: 15px;">Podziel się wnioskami z formularza na grupie.</p>
+                
+                <a href="https://groups.google.com/g/TUTAJ_NAZWA_TWOJEJ_GRUPY" target="_blank" class="btn">Przejdź do Google Groups</a>
             </section>
 
             <section class="card">
                 <h2>🧰 Skrzynka S.O.S</h2>
-                <p style="font-size: 12px; margin-bottom: 10px; color: var(--text-muted);">Szybka pomoc w chwili ataku lęku.</p>
-                <a href="#" class="resource-link"><span>1.</span> Technika uziemienia 5-4-3-2-1</a>
-                <a href="#" class="resource-link"><span>2.</span> Arkusz ratunkowy (PDF)</a>
-                <a href="#" class="resource-link"><span>3.</span> Zimna woda (Zanurzenie - TIPP)</a>
+                <a href="#" class="resource-link"><span>1.</span> Technika 5-4-3-2-1</a>
+                <a href="#" class="resource-link"><span>2.</span> Oddech 4-7-8</a>
             </section>
-
         </aside>
     </div>
 </div>
 
 <script>
-    // Prosty skrypt dający natychmiastową informację zwrotną po wypełnieniu testu
-    function submitTest() {
-        const btn = document.querySelector('.weekly-test .btn');
-        const feedback = document.getElementById('feedback-message');
-        
-        btn.innerText = "Zapisywanie...";
-        btn.style.opacity = "0.7";
-        
-        // Symulacja wysyłania danych na serwer
-        setTimeout(() => {
-            btn.innerText = "Zapisano";
-            btn.classList.add('disabled');
-            btn.disabled = true;
-            feedback.style.display = "block";
-        }, 800);
+    // Referencje do sekcji
+    const authSection = document.getElementById('auth-section');
+    const dashboardSection = document.getElementById('dashboard-section');
+    const userEmailDisplay = document.getElementById('user-email-display');
+    const emailInput = document.getElementById('email-input');
+
+    /* * TUTAJ W PRZYSZŁOŚCI UMIEŚCISZ LISTENER FIREBASE:
+     * firebase.auth().onAuthStateChanged(function(user) {
+     * if (user) {
+     * // Użytkownik zalogowany - pokaż pulpit
+     * authSection.style.display = 'none';
+     * dashboardSection.style.display = 'block';
+     * userEmailDisplay.innerText = user.email;
+     * } else {
+     * // Brak użytkownika - pokaż logowanie
+     * authSection.style.display = 'block';
+     * dashboardSection.style.display = 'none';
+     * }
+     * });
+     */
+
+    // Poniżej znajduje się tylko prowizoryczna funkcja na potrzeby wizualizacji,
+    // dopóki nie dodasz kodu Firebase. Wpisz cokolwiek w pole email i kliknij Zaloguj.
+    function simulateLogin() {
+        if(emailInput.value.trim() !== "") {
+            authSection.style.display = 'none';
+            dashboardSection.style.display = 'block';
+            userEmailDisplay.innerText = emailInput.value;
+        } else {
+            document.getElementById('auth-error').style.display = 'block';
+        }
+    }
+
+    function simulateLogout() {
+        dashboardSection.style.display = 'none';
+        authSection.style.display = 'block';
+        emailInput.value = '';
+        document.getElementById('auth-error').style.display = 'none';
     }
 </script>
 
