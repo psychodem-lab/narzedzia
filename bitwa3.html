@@ -2,95 +2,115 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Worms Ultimate: Tactical Warfare</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Warzone Tactical - Pro Edition</title>
     <style>
         :root {
             --ui-blue: #00d4ff;
             --ui-red: #ff2e63;
-            --ui-bg: rgba(0, 0, 0, 0.7);
-            --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --ui-bg: rgba(10, 10, 20, 0.6);
+            --font-main: 'Segoe UI', Tahoma, sans-serif;
         }
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            overflow: hidden; background: #000; font-family: var(--font-main);
+            overflow: hidden; background: #020205; font-family: var(--font-main);
             touch-action: none; -webkit-user-select: none; user-select: none;
         }
-        canvas { display: block; image-rendering: pixelated; }
+        canvas { display: block; width: 100vw; height: 100vh; }
 
-        /* EKRAN STARTOWY */
-        #overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle, #1a1a2e 0%, #000 100%);
-            display: flex; flex-direction: column; justify-content: center;
-            align-items: center; z-index: 1000; color: white; cursor: pointer;
-        }
-        #overlay h1 { font-size: 4rem; margin: 0; text-shadow: 0 0 20px var(--ui-blue); letter-spacing: 5px; }
-        #overlay p { font-size: 1.2rem; color: #888; letter-spacing: 2px; animation: blink 1.5s infinite; }
-
-        /* OSTRZEŻENIE O ORIENTACJI */
-        #landscape-msg {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; color: white; z-index: 2000; display: none;
-            flex-direction: column; justify-content: center; align-items: center; text-align: center;
-        }
-        @media (orientation: portrait) { #landscape-msg { display: flex; } }
-
-        /* INTERFEJS GRY (HUD) */
+        /* UI OVERLAY - ZMNIEJSZONY PANEL */
         #hud {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 10; padding: 20px; box-sizing: border-box;
-            color: white;
+            pointer-events: none; z-index: 10; padding: 10px 15px; box-sizing: border-box;
         }
-        .top-bar { display: flex; justify-content: space-between; align-items: flex-start; }
-        .team-stats { background: var(--ui-bg); padding: 15px; border-radius: 15px; border-bottom: 3px solid var(--ui-blue); backdrop-filter: blur(5px); }
-        .team-stats h2 { margin: 0; font-size: 1.2rem; text-transform: uppercase; }
-        #timer { font-size: 3.5rem; font-weight: 900; color: #fff; text-shadow: 0 0 15px var(--ui-blue); }
-        #wind-meter { font-size: 0.9rem; color: #aaa; margin-top: 5px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Zmniejszony panel lewy */
+        .team-stats { 
+            background: var(--ui-bg); 
+            padding: 6px 12px; 
+            border-radius: 8px; 
+            border-left: 3px solid var(--ui-blue); 
+            backdrop-filter: blur(8px);
+            min-width: 120px;
+        }
+        .team-stats h2 { 
+            margin: 0; 
+            font-size: 13px; 
+            text-transform: uppercase; 
+            color: #fff; 
+            letter-spacing: 1px;
+        }
+        #wind-meter { font-size: 10px; color: #00ffcc; margin-top: 2px; font-weight: bold; }
+
+        /* Timer */
+        #timer { 
+            font-size: 32px; 
+            font-weight: 900; 
+            color: #fff; 
+            text-shadow: 0 0 10px var(--ui-blue);
+            background: rgba(0,0,0,0.3);
+            padding: 0 15px;
+            border-radius: 10px;
+        }
 
         /* STEROWANIE MOBILNE */
         .controls {
-            position: absolute; bottom: 30px; left: 0; right: 0;
+            position: absolute; bottom: 20px; left: 0; right: 0;
             display: flex; justify-content: space-between; align-items: flex-end;
-            padding: 0 40px; pointer-events: none;
+            padding: 0 30px; pointer-events: none;
         }
         .joystick-base {
-            width: 140px; height: 140px; background: rgba(255,255,255,0.05);
-            border: 2px solid rgba(255,255,255,0.2); border-radius: 50%;
+            width: 110px; height: 110px; background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 50%;
             position: relative; pointer-events: auto;
         }
         #joystick-knob {
-            width: 60px; height: 60px; background: #fff; border-radius: 50%;
-            position: absolute; top: 40px; left: 40px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            transition: transform 0.1s;
-        }
-        #jump-btn {
-            width: 100px; height: 100px; background: var(--ui-red);
-            border: 4px solid #fff; border-radius: 50%; pointer-events: auto;
-            display: flex; justify-content: center; align-items: center;
-            font-weight: 900; box-shadow: 0 0 20px rgba(255, 46, 99, 0.5);
+            width: 45px; height: 45px; background: rgba(255,255,255,0.8); border-radius: 50%;
+            position: absolute; top: 32.5px; left: 32.5px; box-shadow: 0 4px 10px rgba(0,0,0,0.4);
         }
 
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        /* Przezroczysty przycisk skoku */
+        #jump-btn {
+            width: 80px; height: 80px; 
+            background: rgba(255, 46, 99, 0.15); /* Duża przezroczystość */
+            border: 2px solid rgba(255, 255, 255, 0.3); 
+            border-radius: 50%; pointer-events: auto;
+            display: flex; justify-content: center; align-items: center;
+            color: rgba(255,255,255,0.6); font-weight: 900; font-size: 14px;
+            backdrop-filter: blur(2px);
+        }
+
+        #start-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #05050a; z-index: 1000; display: flex; 
+            flex-direction: column; justify-content: center; align-items: center; color: white;
+        }
+        #start-screen h1 { font-size: 3rem; margin: 0; color: var(--ui-blue); text-shadow: 0 0 20px var(--ui-blue); }
+        
+        @media (orientation: portrait) {
+            #rotate-hint { display: flex !important; }
+        }
+        #rotate-hint {
+            position: fixed; top:0; left:0; width:100%; height:100%; background:#000;
+            z-index: 9999; display:none; flex-direction:column; justify-content:center; align-items:center; color:#fff;
+        }
     </style>
 </head>
 <body>
 
-<div id="landscape-msg">
-    <h1>PROSZĘ OBRÓCIĆ URZĄDZENIE 📱</h1>
-    <p>Gra wymaga trybu poziomego.</p>
-</div>
+<div id="rotate-hint"><h1>OBRÓĆ TELEFON 📱</h1></div>
 
-<div id="overlay" onclick="bootGame()">
-    <h1>WARZONE 2D</h1>
-    <p>DOTKNIJ, ABY ROZPOCZĄĆ</p>
+<div id="start-screen" onclick="init()">
+    <h1>WARZONE</h1>
+    <p style="letter-spacing: 3px; color: #555;">KLIKNIJ, ABY ZACZĄĆ</p>
 </div>
 
 <div id="hud">
     <div class="top-bar">
-        <div class="team-stats" id="team-info">
-            <h2 id="active-player-name">CZEKAJ...</h2>
-            <div id="wind-meter">WIATR: 0.0 m/s</div>
+        <div class="team-stats">
+            <h2 id="active-player-name">INICJALIZACJA...</h2>
+            <div id="wind-meter">WIATR: 0.0</div>
         </div>
         <div id="timer">60</div>
     </div>
@@ -100,102 +120,53 @@
     <div class="joystick-base" id="joy-base">
         <div id="joystick-knob"></div>
     </div>
-    <div id="jump-btn">SKOK</div>
+    <div id="jump-btn">JUMP</div>
 </div>
 
 <canvas id="gameCanvas"></canvas>
 
 <script>
 /**
- * 1. KONFIGURACJA I STAŁE
+ * KONFIGURACJA
  */
 const CONFIG = {
-    zoom: 0.6,             // Globalne oddalenie kamery
-    gravity: 0.25,         // Grawitacja
-    turnTime: 60,          // Czas tury w sekundach
-    windChange: 0.15,      // Maksymalna siła wiatru
-    fallDamageMin: 8,      // Prędkość, powyżej której gracz otrzymuje dmg z upadku
-    explosionRadius: 70,   // Promień wybuchu
-    groundFriction: 0.85   // Tarcie ziemi
+    zoom: 0.55,           // Zmniejszony zoom, aby widzieć więcej (rozwiązuje problem "za dużych" elementów)
+    gravity: 0.24,
+    windMax: 0.12,
+    turnTime: 60,
+    friction: 0.88,
+    explosionPower: 65,
+    pixelRatio: window.devicePixelRatio || 1
 };
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-const terrainCanvas = document.createElement('canvas');
-const tCtx = terrainCanvas.getContext('2d');
+const tCanvas = document.createElement('canvas'); // Ukryty canvas terenu
+const tCtx = tCanvas.getContext('2d');
 
 let game = {
     running: false,
     players: [],
     projectiles: [],
     particles: [],
-    crates: [],
-    activePlayer: null,
-    currentTeam: 1,
-    turnTimeLeft: CONFIG.turnTime,
-    lastTick: 0,
     wind: 0,
-    inputDir: 0,
+    activePlayer: null,
+    timeLeft: CONFIG.turnTime,
+    lastTime: 0,
+    inputX: 0,
     isAiming: false,
     aimStart: {x:0, y:0},
-    aimCurrent: {x:0, y:0},
-    keys: {}
+    aimEnd: {x:0, y:0},
+    turnState: 'PLAYING'
 };
 
 /**
- * 2. SILNIK AUDIO (WEB AUDIO API)
+ * KLASA GRACZA - Z MINKAMI
  */
-let audioCtx;
-function initAudio() {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    // Ambient Bass
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(45, audioCtx.currentTime);
-    gain.gain.value = 0.03;
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.start();
-}
-
-function playSfx(freq, type, dur, vol, slide = false) {
-    if(!audioCtx) return;
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    if(slide) osc.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + dur);
-    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + dur);
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.start(); osc.stop(audioCtx.currentTime + dur);
-}
-
-/**
- * 3. KLASY OBIEKTÓW
- */
-class Particle {
-    constructor(x, y, color, size) {
-        this.x = x; this.y = y;
-        this.vx = (Math.random() - 0.5) * 12;
-        this.vy = (Math.random() - 0.5) * 12;
-        this.color = color;
-        this.size = size;
-        this.life = 1.0;
-        this.decay = Math.random() * 0.03 + 0.01;
-    }
-    update() { this.x += this.vx; this.y += this.vy; this.vy += 0.2; this.life -= this.decay; }
-    draw() {
-        ctx.globalAlpha = this.life;
-        ctx.fillStyle = this.color;
-        ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
-        ctx.globalAlpha = 1;
-    }
-}
-
 class Player {
     constructor(x, team, color, name) {
-        this.x = x; this.y = -100;
+        this.x = x;
+        this.y = 0; // Ustawiane przez spawn
         this.vx = 0; this.vy = 0;
         this.hp = 100;
         this.team = team;
@@ -204,338 +175,284 @@ class Player {
         this.radius = 16;
         this.grounded = false;
         this.dead = false;
+        this.face = Math.floor(Math.random() * 4); // 0: radosny, 1: zły, 2: zdziwiony, 3: spokojny
     }
+
     update() {
         if(this.dead) return;
         
-        let oldVy = this.vy;
         this.vy += CONFIG.gravity;
         this.x += this.vx;
         this.y += this.vy;
-        this.vx *= CONFIG.groundFriction;
+        this.vx *= CONFIG.friction;
 
-        // Śmierć poza planszą (dół)
-        if(this.y > terrainCanvas.height + 200) {
+        // Kolizja z terenem
+        if(checkTerrain(this.x, this.y + this.radius)) {
+            this.vy = 0;
+            this.grounded = true;
+            while(checkTerrain(this.x, this.y + this.radius - 1)) this.y--;
+        } else {
+            this.grounded = false;
+        }
+
+        if(this.hp <= 0 || this.y > tCanvas.height) {
             this.hp = 0; this.dead = true;
             if(game.activePlayer === this) nextTurn();
         }
-
-        // Kolizja z terenem
-        if(checkPixel(this.x, this.y + this.radius)) {
-            if(!this.grounded && oldVy > CONFIG.fallDamageMin) {
-                this.hp -= Math.floor((oldVy - CONFIG.fallDamageMin) * 6);
-                playSfx(100, 'square', 0.2, 0.2);
-            }
-            this.vy = 0;
-            this.grounded = true;
-            while(checkPixel(this.x, this.y + this.radius - 1)) this.y--;
-        } else { this.grounded = false; }
-
-        if(this.hp <= 0) { this.hp = 0; this.dead = true; if(game.activePlayer === this) nextTurn(); }
     }
+
     draw() {
         if(this.dead) {
-            ctx.fillStyle = '#555'; ctx.fillRect(this.x-12, this.y-5, 24, 30); // Nagrobek
+            ctx.fillStyle = '#444'; ctx.fillRect(this.x-10, this.y-5, 20, 25); // Nagrobek
             return;
         }
-        // Cień
-        ctx.fillStyle = 'rgba(0,0,0,0.3)';
-        ctx.beginPath(); ctx.ellipse(this.x, this.y + 12, 12, 5, 0, 0, Math.PI*2); ctx.fill();
+
         // Ciało
         ctx.fillStyle = this.color;
         ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.fill();
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke();
-        // HP Bar
-        ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(this.x-20, this.y-35, 40, 6);
-        ctx.fillStyle = this.hp > 30 ? '#00ff00' : '#ff0000';
-        ctx.fillRect(this.x-20, this.y-35, (this.hp/100)*40, 6);
-        // Nickname
-        ctx.fillStyle = '#fff'; ctx.font = 'bold 14px Arial'; ctx.textAlign = 'center';
-        ctx.fillText(this.name, this.x, this.y - 45);
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+
+        // RYSOWANIE MINKI
+        ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
         
-        // Strzałka nad aktywnym graczem
-        if(game.activePlayer === this && game.turnState === 'PLAYING') {
-            ctx.fillStyle = 'yellow'; ctx.beginPath();
-            ctx.moveTo(this.x, this.y - 60); ctx.lineTo(this.x-8, this.y-75); ctx.lineTo(this.x+8, this.y-75); ctx.fill();
+        // Oczy
+        ctx.fillStyle = '#000';
+        ctx.beginPath(); ctx.arc(this.x - 5, this.y - 3, 2, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(this.x + 5, this.y - 3, 2, 0, Math.PI*2); ctx.fill();
+
+        // Buzia zależna od minki
+        ctx.beginPath();
+        if(this.face === 0) { // Uśmiech
+            ctx.arc(this.x, this.y + 2, 5, 0, Math.PI);
+        } else if(this.face === 1) { // Zły
+            ctx.moveTo(this.x - 4, this.y + 5); ctx.lineTo(this.x + 4, this.y + 5);
+            ctx.moveTo(this.x - 6, this.y - 8); ctx.lineTo(this.x - 2, this.y - 5);
+            ctx.moveTo(this.x + 6, this.y - 8); ctx.lineTo(this.x + 2, this.y - 5);
+        } else if(this.face === 2) { // Zdziwiony
+            ctx.arc(this.x, this.y + 5, 2, 0, Math.PI*2);
+        } else { // Spokojny
+            ctx.moveTo(this.x - 3, this.y + 4); ctx.lineTo(this.x + 3, this.y + 4);
+        }
+        ctx.stroke();
+
+        // HP Bar
+        ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(this.x - 20, this.y - 35, 40, 4);
+        ctx.fillStyle = this.hp > 30 ? '#00ff00' : '#ff0000';
+        ctx.fillRect(this.x - 20, this.y - 35, (this.hp/100)*40, 4);
+        
+        if(game.activePlayer === this) {
+            ctx.fillStyle = 'yellow';
+            ctx.beginPath(); ctx.moveTo(this.x, this.y - 50); ctx.lineTo(this.x-5, this.y-60); ctx.lineTo(this.x+5, this.y-60); ctx.fill();
         }
     }
 }
 
-class Projectile {
-    constructor(x, y, vx, vy) { this.x = x; this.y = y; this.vx = vx; this.vy = vy; this.active = true; }
-    update() {
-        this.vx += game.wind; // Wpływ wiatru
-        this.vy += CONFIG.gravity;
-        this.x += this.vx; this.y += this.vy;
-
-        // Kolizja z graczem
-        game.players.forEach(p => { if(!p.dead && Math.hypot(p.x-this.x, p.y-this.y) < 20) this.explode(); });
-        // Kolizja z terenem
-        if(checkPixel(this.x, this.y) || this.y > terrainCanvas.height) this.explode();
-    }
-    explode() {
-        if(!this.active) return;
-        this.active = false;
-        playSfx(50, 'sawtooth', 0.6, 0.4, true);
-        
-        // Niszczenie terenu
-        tCtx.globalCompositeOperation = 'destination-out';
-        tCtx.beginPath(); tCtx.arc(this.x, this.y, CONFIG.explosionRadius, 0, Math.PI*2); tCtx.fill();
-        tCtx.globalCompositeOperation = 'source-over';
-
-        // Damage & Knockback
-        game.players.forEach(p => {
-            let d = Math.hypot(p.x-this.x, p.y-this.y);
-            if(d < CONFIG.explosionRadius + 20) {
-                let force = (CONFIG.explosionRadius + 20 - d) / CONFIG.explosionRadius;
-                p.hp -= Math.floor(force * 55);
-                let ang = Math.atan2(p.y-this.y, p.x-this.x);
-                p.vx += Math.cos(ang) * force * 15;
-                p.vy += Math.sin(ang) * force * 15 - 5;
-                p.grounded = false;
-            }
-        });
-
-        for(let i=0; i<30; i++) game.particles.push(new Particle(this.x, this.y, i%2?'#ff4e00':'#ffcc00', Math.random()*5+2));
-        setTimeout(nextTurn, 1500);
-    }
-    draw() {
-        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(this.x, this.y, 6, 0, Math.PI*2); ctx.fill();
-        // Ślad dymu
-        if(Math.random() > 0.5) game.particles.push(new Particle(this.x, this.y, 'rgba(255,255,255,0.2)', 3));
-    }
-}
-
-class Crate {
-    constructor(x) { this.x = x; this.y = -50; this.vy = 0; this.active = true; }
-    update() {
-        if(!this.active) return;
-        this.vy += 0.2; this.y += this.vy;
-        if(checkPixel(this.x, this.y + 12)) { this.y -= this.vy; this.vy = 0; }
-        game.players.forEach(p => {
-            if(!p.dead && Math.hypot(p.x-this.x, p.y-this.y) < 25) {
-                p.hp = Math.min(100, p.hp + 40);
-                this.active = false;
-                playSfx(600, 'sine', 0.3, 0.2);
-            }
-        });
-    }
-    draw() {
-        if(!this.active) return;
-        ctx.fillStyle = '#8b4513'; ctx.fillRect(this.x-12, this.y-12, 24, 24);
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(this.x-12, this.y-12, 24, 24);
-        ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Arial'; ctx.fillText("+", this.x, this.y+6);
-    }
-}
-
 /**
- * 4. LOGIKA TERENU I ŚWIATA
+ * LOGIKA TERENU I SPAWNOWANIA
  */
 function generateTerrain() {
-    const worldW = canvas.width / CONFIG.zoom;
-    const worldH = canvas.height / CONFIG.zoom;
-    terrainCanvas.width = worldW;
-    terrainCanvas.height = worldH;
-
-    const grad = tCtx.createLinearGradient(0, 0, 0, worldH);
-    grad.addColorStop(0.5, '#4caf50'); // Góra
-    grad.addColorStop(0.7, '#8bc34a'); // Środek
-    grad.addColorStop(1, '#5d4037');   // Dół
-
-    tCtx.fillStyle = grad;
+    tCanvas.width = window.innerWidth / CONFIG.zoom;
+    tCanvas.height = window.innerHeight / CONFIG.zoom;
+    
+    tCtx.fillStyle = '#2d5a27'; // Kolor trawy
     tCtx.beginPath();
-    tCtx.moveTo(0, worldH);
+    tCtx.moveTo(0, tCanvas.height);
     
     let seed = Math.random() * 1000;
-    for(let x=0; x <= worldW; x += 10) {
-        // Złożony szum (3 fale)
-        let y = worldH * 0.75 
-              + Math.sin(x * 0.004 + seed) * 150 
-              + Math.sin(x * 0.01 + seed) * 50
-              + Math.sin(x * 0.03) * 15;
+    for(let x=0; x <= tCanvas.width; x += 10) {
+        let y = tCanvas.height * 0.7 + Math.sin(x*0.005 + seed)*150 + Math.sin(x*0.02)*40;
         tCtx.lineTo(x, y);
     }
-    tCtx.lineTo(worldW, worldH);
+    tCtx.lineTo(tCanvas.width, tCanvas.height);
     tCtx.fill();
 }
 
-function checkPixel(x, y) {
-    if(x < 0 || x >= terrainCanvas.width || y < 0 || y >= terrainCanvas.height) return false;
-    // Pobieramy dane z ukrytego canvasu terenu
-    return tCtx.getImageData(x, y, 1, 1).data[3] > 0;
+function checkTerrain(x, y) {
+    if(x < 0 || x >= tCanvas.width || y < 0 || y >= tCanvas.height) return false;
+    return tCtx.getImageData(x, y, 1, 1).data[3] > 200;
+}
+
+// Funkcja szukająca bezpiecznego Y na ziemi dla danego X
+function findGroundY(x) {
+    for(let y = 0; y < tCanvas.height; y += 5) {
+        if(checkTerrain(x, y)) return y - 16;
+    }
+    return tCanvas.height * 0.5;
+}
+
+function spawnMixedPlayers() {
+    const worldW = tCanvas.width;
+    const padding = 200;
+    
+    // Tworzymy listę pozycji
+    let playersData = [
+        { team: 1, color: '#00d4ff', name: 'BLUE 1' },
+        { team: 1, color: '#00d4ff', name: 'BLUE 2' },
+        { team: 2, color: '#ff2e63', name: 'RED 1' },
+        { team: 2, color: '#ff2e63', name: 'RED 2' },
+        { team: 1, color: '#00d4ff', name: 'BLUE 3' },
+        { team: 2, color: '#ff2e63', name: 'RED 3' }
+    ];
+
+    // Mieszamy kolejność spawnu
+    playersData.sort(() => Math.random() - 0.5);
+
+    playersData.forEach((p, index) => {
+        // Rozmieszczamy postacie w różnych sekcjach planszy
+        let x = padding + (index * ((worldW - padding*2) / 5));
+        x += (Math.random() - 0.5) * 100; // Lekka losowość pozycji X
+        
+        let newPlayer = new Player(x, p.team, p.color, p.name);
+        newPlayer.y = findGroundY(x); // Ustawienie od razu na planszy
+        game.players.push(newPlayer);
+    });
 }
 
 /**
- * 5. PRZEBIEG GRY
+ * POCISK I WYBUCH
  */
-function bootGame() {
-    if(game.running) return;
-    document.getElementById('overlay').style.display = 'none';
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    
-    initAudio();
-    generateTerrain();
-
-    // Spawn 2 drużyn
-    for(let i=0; i<3; i++) {
-        game.players.push(new Player(300 + i*150, 1, '#00d4ff', `Niebieski ${i+1}`));
-        game.players.push(new Player(terrainCanvas.width - 300 - i*150, 2, '#ff2e63', `Czerwony ${i+1}`));
+class Projectile {
+    constructor(x, y, vx, vy) { this.x = x; this.y = y; this.vx = vx; this.vy = vy; this.active = true; }
+    update() {
+        this.vx += game.wind; this.vy += CONFIG.gravity;
+        this.x += this.vx; this.y += this.vy;
+        if(checkTerrain(this.x, this.y) || this.y > tCanvas.height) this.explode();
     }
+    explode() {
+        if(!this.active) return; this.active = false;
+        tCtx.globalCompositeOperation = 'destination-out';
+        tCtx.beginPath(); tCtx.arc(this.x, this.y, 60, 0, Math.PI*2); tCtx.fill();
+        tCtx.globalCompositeOperation = 'source-over';
 
-    game.running = true;
-    startTurn();
-    requestAnimationFrame(mainLoop);
+        game.players.forEach(p => {
+            let d = Math.hypot(p.x - this.x, p.y - this.y);
+            if(d < 80) {
+                let force = (80-d)/80;
+                p.hp -= Math.floor(force * CONFIG.explosionPower);
+                let ang = Math.atan2(p.y - this.y, p.x - this.x);
+                p.vx += Math.cos(ang) * force * 20; p.vy += Math.sin(ang) * force * 20 - 5;
+            }
+        });
+        setTimeout(nextTurn, 1000);
+    }
+    draw() { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(this.x, this.y, 5, 0, Math.PI*2); ctx.fill(); }
 }
 
-function startTurn() {
-    // Sprawdzenie czy ktoś wygrał
-    const team1Alive = game.players.filter(p => p.team === 1 && !p.dead);
-    const team2Alive = game.players.filter(p => p.team === 2 && !p.dead);
+/**
+ * GŁÓWNA PĘTLA I TURY
+ */
+function init() {
+    document.getElementById('start-screen').style.display = 'none';
+    canvas.width = window.innerWidth * CONFIG.pixelRatio;
+    canvas.height = window.innerHeight * CONFIG.pixelRatio;
+    ctx.scale(CONFIG.pixelRatio, CONFIG.pixelRatio);
+
+    generateTerrain();
+    spawnMixedPlayers();
     
-    if(team1Alive.length === 0 || team2Alive.length === 0) {
-        alert(team1Alive.length > 0 ? "DRUŻYNA NIEBIESKICH WYGRAŁA!" : "DRUŻYNA CZERWONYCH WYGRAŁA!");
-        location.reload(); return;
-    }
-
-    let team = game.currentTeam === 1 ? team1Alive : team2Alive;
-    if(team.length === 0) { game.currentTeam = game.currentTeam===1?2:1; startTurn(); return; }
-
-    game.activePlayer = team[Math.floor(Math.random() * team.length)];
-    game.turnTimeLeft = CONFIG.turnTime;
-    game.wind = (Math.random() - 0.5) * CONFIG.windChange;
-    game.turnState = 'PLAYING';
-
-    if(Math.random() < 0.4) game.crates.push(new Crate(Math.random() * (terrainCanvas.width - 400) + 200));
-
-    updateHUD();
+    game.running = true;
+    game.activePlayer = game.players[0];
+    requestAnimationFrame(loop);
 }
 
 function nextTurn() {
     if(game.turnState === 'RESOLVING') return;
     game.turnState = 'RESOLVING';
     setTimeout(() => {
-        game.currentTeam = game.currentTeam === 1 ? 2 : 1;
-        startTurn();
+        let alive = game.players.filter(p => !p.dead);
+        let nextIndex = (game.players.indexOf(game.activePlayer) + 1) % game.players.length;
+        game.activePlayer = game.players[nextIndex];
+        if(game.activePlayer.dead) return nextTurn();
+
+        game.timeLeft = CONFIG.turnTime;
+        game.wind = (Math.random() - 0.5) * CONFIG.windMax;
+        game.turnState = 'PLAYING';
+        
+        document.getElementById('active-player-name').innerText = `TURA: ${game.activePlayer.name}`;
+        document.getElementById('active-player-name').style.color = game.activePlayer.color;
+        document.getElementById('wind-meter').innerText = `WIATR: ${(game.wind * 100).toFixed(1)}`;
     }, 1000);
 }
 
-function updateHUD() {
-    const label = document.getElementById('active-player-name');
-    label.innerText = `TURA: ${game.activePlayer.name}`;
-    label.style.color = game.activePlayer.color;
-    document.getElementById('wind-meter').innerText = `WIATR: ${(game.wind * 100).toFixed(1)} m/s`;
-}
+function loop(time) {
+    ctx.fillStyle = '#0a0a14';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-/**
- * 6. STEROWANIE I INPUT
- */
-const knob = document.getElementById('joystick-knob');
-const joyBase = document.getElementById('joy-base');
-
-joyBase.addEventListener('touchstart', (e) => { e.preventDefault(); handleJoy(e); });
-joyBase.addEventListener('touchmove', (e) => { e.preventDefault(); handleJoy(e); });
-joyBase.addEventListener('touchend', () => { game.inputDir = 0; knob.style.transform = `translate(0px, 0px)`; });
-
-function handleJoy(e) {
-    const r = joyBase.getBoundingClientRect();
-    const touch = e.touches[0];
-    const dx = touch.clientX - (r.left + r.width/2);
-    const limitedX = Math.max(-45, Math.min(45, dx));
-    knob.style.transform = `translate(${limitedX}px, 0px)`;
-    game.inputDir = limitedX / 45;
-}
-
-document.getElementById('jump-btn').addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    if(game.activePlayer && game.activePlayer.grounded && game.turnState === 'PLAYING') {
-        game.activePlayer.vy = -9;
-        playSfx(200, 'sine', 0.1, 0.1);
-    }
-});
-
-// Celowanie i Strzelanie (Fling / Sling)
-canvas.addEventListener('touchstart', (e) => {
-    if(game.turnState !== 'PLAYING' || e.touches[0].clientX < 200) return;
-    game.isAiming = true;
-    game.aimStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    game.aimCurrent = game.aimStart;
-});
-canvas.addEventListener('touchmove', (e) => { if(game.isAiming) game.aimCurrent = { x: e.touches[0].clientX, y: e.touches[0].clientY }; });
-canvas.addEventListener('touchend', () => {
-    if(!game.isAiming) return;
-    game.isAiming = false;
-    let vx = (game.aimStart.x - game.aimCurrent.x) * 0.18 / CONFIG.zoom;
-    let vy = (game.aimStart.y - game.aimCurrent.y) * 0.18 / CONFIG.zoom;
-    if(Math.hypot(vx, vy) > 2) {
-        game.projectiles.push(new Projectile(game.activePlayer.x, game.activePlayer.y - 10, vx, vy));
-        game.turnState = 'SHOOTING';
-        playSfx(400, 'triangle', 0.15, 0.2);
-    }
-});
-
-// Desktop Keyboard Support
-window.addEventListener('keydown', (e) => game.keys[e.key] = true);
-window.addEventListener('keyup', (e) => game.keys[e.key] = false);
-
-/**
- * 7. GŁÓWNA PĘTLA RENDEROWANIA
- */
-function mainLoop(time) {
-    // Tło
-    const skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    skyGrad.addColorStop(0, '#0a192f'); skyGrad.addColorStop(1, '#112240');
-    ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Gwiazdy
-    ctx.fillStyle = "#fff"; ctx.globalAlpha = 0.3;
-    for(let i=0; i<30; i++) ctx.fillRect((i*197)%canvas.width, (i*557)%canvas.height, 2, 2);
-    ctx.globalAlpha = 1;
-
-    // ZOOM KAMERY
     ctx.save();
-    ctx.scale(CONFIG.zoom, CONFIG.zoom);
+    ctx.scale(CONFIG.zoom, CONFIG.zoom); // Skalowanie całego świata
 
-    // Rysuj teren
-    ctx.drawImage(terrainCanvas, 0, 0);
+    ctx.drawImage(tCanvas, 0, 0);
 
-    // Logika timera
     if(game.turnState === 'PLAYING') {
-        if(time - game.lastTick > 1000) {
-            game.turnTimeLeft--; game.lastTick = time;
-            document.getElementById('timer').innerText = game.turnTimeLeft;
-            if(game.turnTimeLeft <= 10) playSfx(1000, 'sine', 0.05, 0.05);
-            if(game.turnTimeLeft <= 0) nextTurn();
+        if(time - game.lastTime > 1000) {
+            game.timeLeft--; game.lastTime = time;
+            document.getElementById('timer').innerText = game.timeLeft;
+            if(game.timeLeft <= 0) nextTurn();
         }
-        // Ruch gracza (Joystick lub Klawiatura)
-        let move = game.inputDir;
-        if(game.keys['ArrowLeft'] || game.keys['a']) move = -1;
-        if(game.keys['ArrowRight'] || game.keys['d']) move = 1;
-        if(game.activePlayer) game.activePlayer.vx = move * 4;
-        if(game.keys[' '] && game.activePlayer && game.activePlayer.grounded) game.activePlayer.vy = -9;
+        game.activePlayer.vx = game.inputX * 4;
     }
 
-    // Aktualizacja i rysowanie obiektów
-    game.crates.forEach(c => { c.update(); c.draw(); });
     game.players.forEach(p => { p.update(); p.draw(); });
-    game.projectiles.forEach((p, i) => { p.update(); p.draw(); if(!p.active) game.projectiles.splice(i, 1); });
-    game.particles.forEach((p, i) => { p.update(); p.draw(); if(p.life <= 0) game.particles.splice(i, 1); });
+    game.projectiles.forEach((p, i) => { p.update(); p.draw(); if(!p.active) game.projectiles.splice(i,1); });
 
-    // Wizualizacja celowania
-    if(game.isAiming && game.activePlayer) {
-        ctx.beginPath(); ctx.setLineDash([10, 10]); ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.lineWidth = 4;
-        ctx.moveTo(game.activePlayer.x, game.activePlayer.y - 10);
-        let dx = (game.aimStart.x - game.aimCurrent.x) / CONFIG.zoom;
-        let dy = (game.aimStart.y - game.aimCurrent.y) / CONFIG.zoom;
-        ctx.lineTo(game.activePlayer.x + dx, game.activePlayer.y - 10 + dy);
+    // Celownik
+    if(game.isAiming) {
+        ctx.beginPath(); ctx.setLineDash([5, 5]); ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        ctx.moveTo(game.activePlayer.x, game.activePlayer.y);
+        ctx.lineTo(game.activePlayer.x + (game.aimStart.x - game.aimEnd.x)/CONFIG.zoom, game.activePlayer.y + (game.aimStart.y - game.aimEnd.y)/CONFIG.zoom);
         ctx.stroke(); ctx.setLineDash([]);
     }
 
     ctx.restore();
-    requestAnimationFrame(mainLoop);
+    requestAnimationFrame(loop);
 }
 
-window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+/**
+ * STEROWANIE
+ */
+const knob = document.getElementById('joystick-knob');
+const joyBase = document.getElementById('joy-base');
+
+joyBase.addEventListener('touchstart', (e) => handleJoy(e));
+joyBase.addEventListener('touchmove', (e) => handleJoy(e));
+joyBase.addEventListener('touchend', () => { game.inputX = 0; knob.style.transform = `translate(0px, 0px)`; });
+
+function handleJoy(e) {
+    e.preventDefault();
+    let r = joyBase.getBoundingClientRect();
+    let dx = e.touches[0].clientX - (r.left + r.width/2);
+    let dist = Math.max(-40, Math.min(40, dx));
+    knob.style.transform = `translate(${dist}px, 0px)`;
+    game.inputX = dist / 40;
+}
+
+document.getElementById('jump-btn').addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    if(game.activePlayer && game.activePlayer.grounded) game.activePlayer.vy = -8.5;
+});
+
+canvas.addEventListener('touchstart', (e) => {
+    if(game.turnState !== 'PLAYING' || e.touches[0].clientX < 200) return;
+    game.isAiming = true;
+    game.aimStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    game.aimEnd = game.aimStart;
+});
+
+canvas.addEventListener('touchmove', (e) => {
+    if(game.isAiming) game.aimEnd = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+});
+
+canvas.addEventListener('touchend', () => {
+    if(!game.isAiming) return;
+    game.isAiming = false;
+    let power = 0.18;
+    let vx = (game.aimStart.x - game.aimEnd.x) * power / CONFIG.zoom;
+    let vy = (game.aimStart.y - game.aimEnd.y) * power / CONFIG.zoom;
+    game.projectiles.push(new Projectile(game.activePlayer.x, game.activePlayer.y - 10, vx, vy));
+    game.turnState = 'SHOOTING';
+});
+
+window.onresize = () => { location.reload(); };
 </script>
 </body>
 </html>
