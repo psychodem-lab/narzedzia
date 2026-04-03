@@ -3,459 +3,343 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Worms-style HTML5 Game - Wersja 2.0</title>
+    <title>Worms Mobile Edition 2.0</title>
     <style>
         body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            font-family: Arial, sans-serif;
-            touch-action: none;
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: none; background-color: #000;
         }
         canvas { display: block; }
         #ui {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            color: white;
-            text-shadow: 1px 1px 2px black;
-            pointer-events: none;
+            position: absolute; top: 10px; left: 10px; color: white;
+            text-shadow: 2px 2px 4px black; pointer-events: none; z-index: 10;
         }
         #timer-display {
-            position: absolute;
-            top: 10px;
-            right: 20px;
-            color: white;
-            text-shadow: 1px 1px 2px black;
-            font-size: 24px;
-            font-weight: bold;
+            position: absolute; top: 10px; right: 20px; color: white;
+            text-shadow: 2px 2px 4px black; font-size: 28px; font-weight: bold;
         }
-        #controls {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            color: white;
-            text-shadow: 1px 1px 2px black;
-            font-size: 14px;
-            pointer-events: none;
+        /* STEROWANIE MOBILNE */
+        #mobile-controls {
+            position: absolute; bottom: 20px; left: 0; right: 0;
+            width: 100%; height: 150px; pointer-events: none; display: flex;
+            justify-content: space-between; align-items: flex-end; padding: 0 20px;
+            box-sizing: border-box;
+        }
+        .joystick-area {
+            width: 120px; height: 120px; background: rgba(255,255,255,0.2);
+            border-radius: 50%; position: relative; pointer-events: auto;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        #joystick-stick {
+            width: 50px; height: 50px; background: white; border-radius: 50%;
+            position: absolute; top: 35px; left: 35px; box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        #jump-btn {
+            width: 80px; height: 80px; background: rgba(255,255,255,0.3);
+            border-radius: 50%; color: white; display: flex;
+            justify-content: center; align-items: center; font-weight: bold;
+            pointer-events: auto; border: 2px solid white; user-select: none;
+        }
+        #audio-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.9); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; color: white;
+            z-index: 100; cursor: pointer; text-align: center;
         }
     </style>
 </head>
 <body>
 
+<div id="audio-overlay" onclick="startAudioContext()">
+    <h1>WORMS MOBILE 2.0</h1>
+    <p>Dotknij ekranu, aby zacząć</p>
+    <small>(Wymagane do aktywacji dźwięku i muzyki)</small>
+</div>
+
 <div id="ui">
-    <h2 id="turn-indicator">Ładowanie...</h2>
+    <h2 id="turn-indicator">Inicjalizacja...</h2>
     <div id="team-health"></div>
 </div>
-<div id="timer-display">Czas: 90</div>
-<div id="controls">
-    Ruch: Strzałki (Lewo, Prawo), Skok: Strzałka w Górę.<br>
-    Strzał: Przeciągnij myszką/palcem.
+
+<div id="timer-display">90</div>
+
+<div id="mobile-controls">
+    <div class="joystick-area" id="joy-base">
+        <div id="joystick-stick"></div>
+    </div>
+    <div id="jump-btn">SKOK</div>
 </div>
 
 <canvas id="gameCanvas"></canvas>
 
 <script>
     const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
     const terrainCanvas = document.createElement('canvas');
     terrainCanvas.width = canvas.width;
     terrainCanvas.height = canvas.height;
-    const tCtx = terrainCanvas.getContext('2d', { willReadFrequently: true });
+    const tCtx = terrainCanvas.getContext('2d');
 
-    const gravity = 0.2;
-    const explosionRadius = 50;
-    
-    let players = [];
-    let projectiles = [];
-    let currentTeam = 1; // 1 = Czerwoni, 2 = Niebiescy
-    let lastPlayerIndex = { 1: -1, 2: -1 }; // Pamięta, który gracz z drużyny ruszał się ostatnio
-    let currentActivePlayer = null;
-    let isAiming = false;
-    let dragStart = { x: 0, y: 0 };
-    let dragCurrent = { x: 0, y: 0 };
-    let turnState = 'PLAYING'; // PLAYING, SHOOTING, RESOLVING, GAMEOVER
-    let timeLeft = 90;
-    let lastTime = Date.now();
-    let currentMap = {};
+    // === AUDIO ENGINE ===
+    let audioCtx = null;
+    function startAudioContext() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        document.getElementById('audio-overlay').style.display = 'none';
+        playBackgroundMusic();
+    }
 
-    // 5 rodzajów map
-    const mapTypes = [
-        { name: "Zielone Równiny", sky: "#87CEEB", grass: "#2E8B57", dirt: "#8B4513", func: (x) => Math.sin(x/100)*50 + Math.cos(x/250)*80 },
-        { name: "Pustynia", sky: "#FFDAB9", grass: "#DAA520", dirt: "#D2691E", func: (x) => Math.sin(x/200)*40 },
-        { name: "Mars", sky: "#FFA07A", grass: "#B22222", dirt: "#8B0000", func: (x) => Math.abs(Math.sin(x/80)*60) + Math.cos(x/50)*30 },
-        { name: "Lodowiec", sky: "#E0FFFF", grass: "#F0FFFF", dirt: "#4682B4", func: (x) => (x < canvas.width/2) ? Math.sin(x/50)*20 : Math.cos(x/50)*20 },
-        { name: "Kraina Kosmitów", sky: "#4B0082", grass: "#9932CC", dirt: "#483D8B", func: (x) => Math.sin(x/30)*40 + Math.sin(x/150)*100 }
-    ];
+    function playTone(freq, type, duration, vol=0.1) {
+        if (!audioCtx) return;
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start();
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+        osc.stop(audioCtx.currentTime + duration);
+    }
 
-    function generateTerrain() {
-        currentMap = mapTypes[Math.floor(Math.random() * mapTypes.length)];
-        document.body.style.backgroundColor = currentMap.sky;
+    function playShoot() { playTone(400, 'triangle', 0.2); }
+    function playExplosion() { playTone(100, 'sawtooth', 0.4, 0.3); }
+    function playTick() { playTone(1200, 'sine', 0.05, 0.05); }
 
-        tCtx.fillStyle = currentMap.grass;
-        tCtx.beginPath();
-        tCtx.moveTo(0, canvas.height);
-        for (let x = 0; x <= canvas.width; x += 5) {
-            let y = canvas.height - 200 - currentMap.func(x);
-            tCtx.lineTo(x, y);
+    function playBackgroundMusic() {
+        if (!audioCtx) return;
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(60, audioCtx.currentTime);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        gain.gain.value = 0.03;
+        osc.start();
+    }
+
+    // === GAME LOGIC ===
+    const gravity = 0.25;
+    let players = [], projectiles = [], particles = [], crates = [];
+    let currentTeam = 1, currentActivePlayer = null;
+    let turnState = 'PLAYING', timeLeft = 90, lastTime = Date.now();
+    let moveDir = 0; // -1 lewo, 1 prawo, 0 stop
+
+    class Particle {
+        constructor(x, y, color) {
+            this.x = x; this.y = y;
+            this.vx = (Math.random()-0.5)*8;
+            this.vy = (Math.random()-0.5)*8;
+            this.life = 30; this.color = color;
         }
-        tCtx.lineTo(canvas.width, canvas.height);
-        tCtx.closePath();
-        tCtx.fill();
+        update() { this.x += this.vx; this.y += this.vy; this.life--; }
+        draw() {
+            ctx.fillStyle = this.color;
+            ctx.globalAlpha = this.life/30;
+            ctx.fillRect(this.x, this.y, 3, 3);
+            ctx.globalAlpha = 1;
+        }
+    }
 
-        tCtx.globalCompositeOperation = 'source-atop';
-        tCtx.fillStyle = currentMap.dirt;
-        tCtx.fillRect(0, canvas.height - 150, canvas.width, 150);
-        tCtx.globalCompositeOperation = 'source-over';
+    class Crate {
+        constructor(x) { this.x = x; this.y = -20; this.vy = 0; this.active = true; }
+        update() {
+            if (!this.active) return;
+            this.vy += gravity; this.y += this.vy;
+            if (checkCollision(this.x, this.y + 10)) { this.y -= this.vy; this.vy = 0; }
+            players.forEach(p => {
+                if (p.hp > 0 && Math.abs(p.x - this.x) < 20 && Math.abs(p.y - this.y) < 20) {
+                    p.hp = Math.min(100, p.hp + 40);
+                    this.active = false;
+                }
+            });
+        }
+        draw() {
+            if (!this.active) return;
+            ctx.fillStyle = '#ffcc00'; ctx.fillRect(this.x-10, this.y-10, 20, 20);
+            ctx.strokeStyle = 'black'; ctx.strokeRect(this.x-10, this.y-10, 20, 20);
+        }
     }
 
     class Player {
-        constructor(x, y, team, color, name) {
-            this.x = x;
-            this.y = y;
-            this.vx = 0;
-            this.vy = 0;
-            this.radius = 10;
-            this.team = team;
-            this.color = color;
-            this.name = name;
-            this.hp = 100;
-            this.isGrounded = false;
+        constructor(x, y, team, color) {
+            this.x = x; this.y = y; this.team = team; this.color = color;
+            this.hp = 100; this.vx = 0; this.vy = 0; this.grounded = false; this.dead = false;
         }
-
         update() {
-            if (this.hp <= 0) return;
-
+            if (this.hp <= 0) { this.dead = true; return; }
+            
+            let oldVy = this.vy;
             this.vy += gravity;
             this.y += this.vy;
             this.x += this.vx;
+            this.vx *= 0.7;
 
-            this.vx *= 0.8;
-            if (Math.abs(this.vx) < 0.1) this.vx = 0;
+            if (checkCollision(this.x, this.y + 10)) {
+                if (oldVy > 7) this.hp -= Math.floor(oldVy * 3); // Fall damage
+                this.vy = 0; this.grounded = true;
+                while(checkCollision(this.x, this.y + 9)) this.y--;
+            } else { this.grounded = false; }
 
-            let isColliding = checkTerrainCollision(this.x, this.y + this.radius);
-            
-            if (isColliding) {
-                this.isGrounded = true;
-                this.vy = 0;
-                while (checkTerrainCollision(this.x, this.y + this.radius - 1)) {
-                    this.y -= 1;
-                }
-            } else {
-                this.isGrounded = false;
-            }
-
-            if (this.x < this.radius) this.x = this.radius;
-            if (this.x > canvas.width - this.radius) this.x = canvas.width - this.radius;
-            
-            // Śmierć przez wypadnięcie za planszę
-            if (this.y > canvas.height + 50) {
-                this.hp = 0;
-                if (currentActivePlayer === this && turnState === 'PLAYING') {
-                    turnState = 'RESOLVING';
-                    setTimeout(nextTurn, 1000); // Szybka zmiana tury po samobójstwie
-                }
+            if (this.hp < 25 && Math.random() < 0.2) {
+                particles.push(new Particle(this.x, this.y, 'gray'));
             }
         }
-
         draw() {
-            if (this.hp <= 0) return;
-            ctx.fillStyle = this.color;
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-
-            ctx.fillStyle = 'white';
-            ctx.font = '10px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(this.hp, this.x, this.y - 15);
-            
+            ctx.fillStyle = this.dead ? '#555' : this.color;
+            if (this.dead) { // Nagrobek
+                ctx.fillRect(this.x-10, this.y-5, 20, 15);
+                ctx.fillRect(this.x-2, this.y-12, 4, 15);
+                ctx.fillRect(this.x-6, this.y-8, 12, 4);
+                return;
+            }
+            ctx.beginPath(); ctx.arc(this.x, this.y, 10, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = 'white'; ctx.font = '12px Arial';
+            ctx.fillText(this.hp, this.x - 10, this.y - 15);
             if (currentActivePlayer === this && turnState === 'PLAYING') {
-                ctx.fillStyle = 'yellow';
-                ctx.beginPath();
-                ctx.moveTo(this.x, this.y - 30);
-                ctx.lineTo(this.x - 5, this.y - 40);
-                ctx.lineTo(this.x + 5, this.y - 40);
-                ctx.fill();
+                ctx.fillStyle = 'yellow'; ctx.beginPath();
+                ctx.moveTo(this.x, this.y - 25); ctx.lineTo(this.x-5, this.y-35); ctx.lineTo(this.x+5, this.y-35); ctx.fill();
             }
         }
     }
 
     class Projectile {
-        constructor(x, y, vx, vy) {
-            this.x = x;
-            this.y = y;
-            this.vx = vx;
-            this.vy = vy;
-            this.radius = 4;
-            this.active = true;
-        }
-
+        constructor(x, y, vx, vy) { this.x = x; this.y = y; this.vx = vx; this.vy = vy; this.active = true; }
         update() {
-            this.vy += gravity;
-            this.x += this.vx;
-            this.y += this.vy;
-
-            if (this.x < 0 || this.x > canvas.width || this.y > canvas.height) {
-                this.explode();
-                return;
-            }
-
-            if (checkTerrainCollision(this.x, this.y)) {
-                this.explode();
-            }
+            this.vy += gravity; this.x += this.vx; this.y += this.vy;
+            if (checkCollision(this.x, this.y) || this.y > canvas.height) this.explode();
         }
-
-        draw() {
-            ctx.fillStyle = 'black';
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
         explode() {
-            this.active = false;
-            createExplosion(this.x, this.y);
-            turnState = 'RESOLVING';
-            setTimeout(() => { nextTurn(); }, 2000);
+            this.active = false; playExplosion();
+            tCtx.globalCompositeOperation = 'destination-out';
+            tCtx.beginPath(); tCtx.arc(this.x, this.y, 40, 0, Math.PI*2); tCtx.fill();
+            tCtx.globalCompositeOperation = 'source-over';
+            for(let i=0; i<15; i++) particles.push(new Particle(this.x, this.y, 'orange'));
+            players.forEach(p => {
+                let d = Math.hypot(p.x - this.x, p.y - this.y);
+                if (d < 50) { p.hp -= Math.floor(50 - d); p.vy = -5; }
+            });
+            setTimeout(nextTurn, 1500);
         }
+        draw() { ctx.fillStyle = 'black'; ctx.beginPath(); ctx.arc(this.x, this.y, 4, 0, Math.PI*2); ctx.fill(); }
     }
 
-    function init() {
-        generateTerrain();
-        
-        // Funkcja znajdująca powierzchnię dla losowego punktu X
-        const spawnPlayer = (team, color, name) => {
-            let rx = Math.random() * (canvas.width - 100) + 50;
-            players.push(new Player(rx, 10, team, color, name)); // Zrzucani z Y=10
-        };
+    // === SYSTEM STEROWANIA ===
+    const joyBase = document.getElementById('joy-base');
+    const joyStick = document.getElementById('joystick-stick');
+    const jumpBtn = document.getElementById('jump-btn');
 
-        for (let i = 0; i < 5; i++) spawnPlayer(1, 'red', `Czerwony ${i+1}`);
-        for (let i = 0; i < 5; i++) spawnPlayer(2, 'blue', `Niebieski ${i+1}`);
-        
-        // Losowa drużyna zaczyna
-        currentTeam = Math.random() > 0.5 ? 1 : 2;
-        nextTurn();
-        gameLoop();
+    joyBase.addEventListener('touchstart', handleJoy);
+    joyBase.addEventListener('touchmove', handleJoy);
+    joyBase.addEventListener('touchend', () => {
+        moveDir = 0; joyStick.style.left = '35px'; joyStick.style.top = '35px';
+    });
+
+    function handleJoy(e) {
+        e.preventDefault();
+        let b = joyBase.getBoundingClientRect();
+        let touch = e.touches[0];
+        let dx = touch.clientX - (b.left + b.width/2);
+        let dist = Math.min(Math.abs(dx), 40);
+        joyStick.style.left = (35 + (dx > 0 ? dist : -dist)) + 'px';
+        moveDir = dx > 10 ? 1 : (dx < -10 ? -1 : 0);
     }
 
-    function checkTerrainCollision(x, y) {
-        if (x < 0 || x >= canvas.width || y < 0 || y >= canvas.height) return false;
-        const pixel = tCtx.getImageData(Math.floor(x), Math.floor(y), 1, 1).data;
-        return pixel[3] > 0;
+    jumpBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (currentActivePlayer && currentActivePlayer.grounded && turnState === 'PLAYING') {
+            currentActivePlayer.vy = -7;
+        }
+    });
+
+    // Celowanie (proca) - na reszcie ekranu
+    let isAiming = false, dragS = {x:0, y:0}, dragC = {x:0, y:0};
+    canvas.addEventListener('touchstart', (e) => {
+        if (turnState !== 'PLAYING') return;
+        isAiming = true; dragS = {x: e.touches[0].clientX, y: e.touches[0].clientY};
+        dragC = dragS;
+    });
+    canvas.addEventListener('touchmove', (e) => {
+        if (isAiming) dragC = {x: e.touches[0].clientX, y: e.touches[0].clientY};
+    });
+    canvas.addEventListener('touchend', () => {
+        if (!isAiming) return;
+        isAiming = false;
+        let vx = (dragS.x - dragC.x) * 0.15;
+        let vy = (dragS.y - dragC.y) * 0.15;
+        if (Math.hypot(vx, vy) > 1) {
+            projectiles.push(new Projectile(currentActivePlayer.x, currentActivePlayer.y - 10, vx, vy));
+            turnState = 'RESOLVING'; playShoot();
+        }
+    });
+
+    function checkCollision(x, y) {
+        if (x < 0 || x > canvas.width || y < 0 || y > canvas.height) return false;
+        return tCtx.getImageData(x, y, 1, 1).data[3] > 0;
     }
 
-    function createExplosion(x, y) {
-        tCtx.globalCompositeOperation = 'destination-out';
-        tCtx.beginPath();
-        tCtx.arc(x, y, explosionRadius, 0, Math.PI * 2);
-        tCtx.fill();
-        tCtx.globalCompositeOperation = 'source-over';
-
-        ctx.fillStyle = 'orange';
-        ctx.beginPath();
-        ctx.arc(x, y, explosionRadius, 0, Math.PI * 2);
-        ctx.fill();
-
-        players.forEach(p => {
-            if (p.hp > 0) {
-                let dx = p.x - x;
-                let dy = p.y - y;
-                let dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < explosionRadius + p.radius) {
-                    let damage = Math.floor((1 - (dist / (explosionRadius + p.radius))) * 50);
-                    p.hp -= damage;
-                    p.vx += (dx / dist) * 7;
-                    p.vy -= 7;
-                    p.isGrounded = false;
-                }
-            }
-        });
+    function generateTerrain() {
+        tCtx.fillStyle = '#2d5a27';
+        tCtx.beginPath(); tCtx.moveTo(0, canvas.height);
+        for(let x=0; x<=canvas.width; x+=10) {
+            tCtx.lineTo(x, canvas.height - 150 - Math.sin(x/100)*60 - Math.cos(x/50)*20);
+        }
+        tCtx.lineTo(canvas.width, canvas.height); tCtx.fill();
     }
 
     function nextTurn() {
-        if (checkWinCondition()) return;
-
-        // Przełączenie drużyny naprzemiennie
         currentTeam = currentTeam === 1 ? 2 : 1;
-
-        // Jeśli nowa drużyna nie ma żywych graczy (rzadka sytuacja przy sprawdzaniu wygranej, ale profilaktycznie), zmień znów
-        if (!players.some(p => p.team === currentTeam && p.hp > 0)) {
-            currentTeam = currentTeam === 1 ? 2 : 1;
-        }
-
-        // Znajdź następnego żywego gracza w aktualnej drużynie
-        let teamPlayers = players.filter(p => p.team === currentTeam);
-        let attempts = 0;
-        let foundPlayer = null;
-        
-        do {
-            lastPlayerIndex[currentTeam] = (lastPlayerIndex[currentTeam] + 1) % teamPlayers.length;
-            foundPlayer = teamPlayers[lastPlayerIndex[currentTeam]];
-            attempts++;
-            if(attempts > teamPlayers.length) break; // Zabezpieczenie
-        } while (foundPlayer.hp <= 0);
-
-        currentActivePlayer = foundPlayer;
-        timeLeft = 90; // Reset timera
-        lastTime = Date.now();
-        turnState = 'PLAYING';
+        let team = players.filter(p => p.team === currentTeam && !p.dead);
+        if (team.length === 0) { alert("KONIEC GRY!"); location.reload(); return; }
+        currentActivePlayer = team[Math.floor(Math.random()*team.length)];
+        timeLeft = 90; turnState = 'PLAYING';
+        if (Math.random() < 0.4) crates.push(new Crate(Math.random()*canvas.width));
         updateUI();
     }
 
-    function checkWinCondition() {
-        let team1Alive = players.some(p => p.team === 1 && p.hp > 0);
-        let team2Alive = players.some(p => p.team === 2 && p.hp > 0);
-
-        const indicator = document.getElementById('turn-indicator');
-        if (!team1Alive && !team2Alive) {
-            indicator.innerText = "REMIS!";
-            turnState = 'GAMEOVER';
-            return true;
-        } else if (!team1Alive) {
-            indicator.innerText = "WYGRYWAJĄ NIEBIESCY!";
-            turnState = 'GAMEOVER';
-            return true;
-        } else if (!team2Alive) {
-            indicator.innerText = "WYGRYWAJĄ CZERWONI!";
-            turnState = 'GAMEOVER';
-            return true;
-        }
-        return false;
-    }
-
     function updateUI() {
-        if (turnState === 'GAMEOVER') return;
-        document.getElementById('turn-indicator').innerText = `Mapa: ${currentMap.name} | Tura: ${currentActivePlayer.name}`;
-        document.getElementById('turn-indicator').style.color = currentActivePlayer.color;
-
-        let t1hp = players.filter(p=>p.team===1 && p.hp>0).reduce((acc, p) => acc + p.hp, 0);
-        let t2hp = players.filter(p=>p.team===2 && p.hp>0).reduce((acc, p) => acc + p.hp, 0);
-        document.getElementById('team-health').innerText = `Czerwoni HP: ${t1hp} | Niebiescy HP: ${t2hp}`;
+        let ind = document.getElementById('turn-indicator');
+        ind.innerText = `Tura: ${currentTeam === 1 ? 'CZERWONI' : 'NIEBIESCY'}`;
+        ind.style.color = currentTeam === 1 ? '#ff4444' : '#4444ff';
     }
 
-    // Obsługa wejścia (Klawiatura)
-    const keys = {};
-    window.addEventListener('keydown', e => {
-        keys[e.key] = true;
-        if ((e.key === 'ArrowUp' || e.key === 'w') && turnState === 'PLAYING') {
-            if (currentActivePlayer && currentActivePlayer.hp > 0 && currentActivePlayer.isGrounded) {
-                currentActivePlayer.vy = -6;
-                currentActivePlayer.isGrounded = false;
-            }
-        }
-    });
-    window.addEventListener('keyup', e => keys[e.key] = false);
-
-    // Obsługa strzelania (Mysz / Dotyk)
-    function getPointerPos(e) {
-        if (e.touches) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-        return { x: e.clientX, y: e.clientY };
-    }
-
-    function handleStart(e) {
-        if (turnState !== 'PLAYING') return;
-        isAiming = true;
-        let pos = getPointerPos(e);
-        dragStart = pos;
-        dragCurrent = pos;
-    }
-
-    function handleMove(e) {
-        if (!isAiming) return;
-        dragCurrent = getPointerPos(e);
-    }
-
-    function handleEnd(e) {
-        if (!isAiming) return;
-        isAiming = false;
-        
-        let dx = dragStart.x - dragCurrent.x;
-        let dy = dragStart.y - dragCurrent.y;
-        
-        let powerMultiplier = 0.1;
-        let vx = dx * powerMultiplier;
-        let vy = dy * powerMultiplier;
-
-        const maxVelocity = 20;
-        let speed = Math.sqrt(vx*vx + vy*vy);
-        if (speed > maxVelocity) {
-            vx = (vx / speed) * maxVelocity;
-            vy = (vy / speed) * maxVelocity;
-        }
-
-        if (speed > 1 && currentActivePlayer) {
-            projectiles.push(new Projectile(currentActivePlayer.x, currentActivePlayer.y - currentActivePlayer.radius, vx, vy));
-            turnState = 'SHOOTING';
-        }
-    }
-
-    canvas.addEventListener('mousedown', handleStart);
-    canvas.addEventListener('mousemove', handleMove);
-    window.addEventListener('mouseup', handleEnd);
-    canvas.addEventListener('touchstart', handleStart, {passive: false});
-    canvas.addEventListener('touchmove', handleMove, {passive: false});
-    window.addEventListener('touchend', handleEnd);
-
-    // Główna pętla gry
-    function gameLoop() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    function loop() {
+        ctx.clearRect(0,0,canvas.width, canvas.height);
         ctx.drawImage(terrainCanvas, 0, 0);
 
-        // Obsługa Timera
         if (turnState === 'PLAYING') {
-            let now = Date.now();
-            if (now - lastTime >= 1000) {
-                timeLeft--;
-                lastTime = now;
-                document.getElementById('timer-display').innerText = `Czas: ${timeLeft}`;
-                
-                if (timeLeft <= 0) {
-                    turnState = 'RESOLVING';
-                    nextTurn();
-                }
+            if (Date.now() - lastTime > 1000) {
+                timeLeft--; lastTime = Date.now();
+                document.getElementById('timer-display').innerText = timeLeft;
+                if (timeLeft < 10) playTick();
+                if (timeLeft <= 0) nextTurn();
             }
-        } else {
-            // Zamróź timer podczas animacji strzału
-            lastTime = Date.now(); 
-        }
-
-        // Ruch aktywnego gracza
-        if (turnState === 'PLAYING' && currentActivePlayer && currentActivePlayer.hp > 0) {
-            if ((keys['ArrowLeft'] || keys['a'])) currentActivePlayer.vx = -2;
-            if ((keys['ArrowRight'] || keys['d'])) currentActivePlayer.vx = 2;
+            if (currentActivePlayer) currentActivePlayer.vx = moveDir * 2.5;
         }
 
         players.forEach(p => { p.update(); p.draw(); });
+        projectiles.forEach((p, i) => { p.update(); p.draw(); if(!p.active) projectiles.splice(i,1); });
+        particles.forEach((p, i) => { p.update(); p.draw(); if(p.life<=0) particles.splice(i,1); });
+        crates.forEach(c => { c.update(); c.draw(); });
 
-        for (let i = projectiles.length - 1; i >= 0; i--) {
-            let proj = projectiles[i];
-            proj.update();
-            proj.draw();
-            if (!proj.active) projectiles.splice(i, 1);
+        if (isAiming && currentActivePlayer) {
+            ctx.strokeStyle = 'white'; ctx.setLineDash([5, 5]);
+            ctx.beginPath(); ctx.moveTo(currentActivePlayer.x, currentActivePlayer.y-10);
+            ctx.lineTo(currentActivePlayer.x + (dragS.x - dragC.x), currentActivePlayer.y-10 + (dragS.y - dragC.y));
+            ctx.stroke(); ctx.setLineDash([]);
         }
-
-        if (isAiming && turnState === 'PLAYING' && currentActivePlayer) {
-            ctx.beginPath();
-            ctx.moveTo(currentActivePlayer.x, currentActivePlayer.y);
-            let dx = dragStart.x - dragCurrent.x;
-            let dy = dragStart.y - dragCurrent.y;
-            ctx.lineTo(currentActivePlayer.x + dx, currentActivePlayer.y + dy);
-            ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-        }
-
-        requestAnimationFrame(gameLoop);
+        requestAnimationFrame(loop);
     }
 
-    window.onload = init;
+    generateTerrain();
+    for(let i=0; i<3; i++) players.push(new Player(100+i*50, 50, 1, '#ff4444'));
+    for(let i=0; i<3; i++) players.push(new Player(canvas.width-200+i*50, 50, 2, '#4444ff'));
+    nextTurn();
+    loop();
+
 </script>
 </body>
 </html>
