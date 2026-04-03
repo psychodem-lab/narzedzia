@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Worms-style HTML5 Game</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #87CEEB; /* Kolor nieba */
+            font-family: Arial, sans-serif;
+            touch-action: none; /* Zapobiega przewijaniu na tabletach podczas gry */
+        }
+        canvas {
+            display: block;
+        }
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            text-shadow: 1px 1px 2px black;
+            pointer-events: none;
+        }
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            color: white;
+            text-shadow: 1px 1px 2px black;
+            font-size: 14px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="ui">
+    <h2 id="turn-indicator">Ładowanie...</h2>
+    <div id="team-health"></div>
+</div>
+<div id="controls">
+    Ruch: Strzałki (Lewo, Prawo), Skok: Strzałka w Górę.<br>
+    Strzał: Przeciągnij myszką/palcem na ekranie, aby ustalić siłę i kąt (jak z procy).
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    
+    // Ustawienia ekranu
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Teren (Offscreen Canvas do niszczenia)
+    const terrainCanvas = document.createElement('canvas');
+    terrainCanvas.width = canvas.width;
+    terrainCanvas.height = canvas.height;
+    const tCtx = terrainCanvas.getContext('2d', { willReadFrequently: true });
+
+    // Zmienne globalne
+    const gravity = 0.2;
+    const explosionRadius = 50;
+    let players = [];
+    let projectiles = [];
+    let particles = [];
+    let currentTurnIndex = 0;
+    let isAiming = false;
+    let dragStart = { x: 0, y: 0 };
+    let dragCurrent = { x: 0, y: 0 };
+    let turnState = 'PLAYING'; // PLAYING, SHOOTING, RESOLVING
+
+    // Generowanie terenu (proste pagórki)
+    function generateTerrain() {
+        tCtx.fillStyle = '#2E8B57'; // Zielony teren
+        tCtx.beginPath();
+        tCtx.moveTo(0, canvas.height);
+        
+        for (let x = 0; x <= canvas.width; x += 20) {
+            let y = canvas.height - 150 - Math.sin(x / 100) * 50 - Math.cos(x / 250) * 80;
+            tCtx.lineTo(x, y);
+        }
+        
+        tCtx.lineTo(canvas.width, canvas.height);
+        tCtx.closePath();
+        tCtx.fill();
+
+        // Dodanie warstwy "ziemi" pod trawą
+        tCtx.globalCompositeOperation = 'source-atop';
+        tCtx.fillStyle = '#8B4513';
+        tCtx.fillRect(0, canvas.height - 100, canvas.width, 100);
+        tCtx.globalCompositeOperation = 'source-over';
+    }
+
+    // Klasa Gracza
+    class Player {
+        constructor(x, y, team, color, name) {
+            this.x = x;
+            this.y = y;
+            this.vx = 0;
+            this.vy = 0;
+            this.radius = 10;
+            this.team = team;
+            this.color = color;
+            this.name = name;
+            this.hp = 100;
+            this.isGrounded = false;
+        }
+
+        update() {
+            if (this.hp <= 0) return;
+
+            this.vy += gravity;
+            this.y += this.vy;
+            this.x += this.vx;
+
+            // Tarcie w poziomie
+            this.vx *= 0.8;
+            if (Math.abs(this.vx) < 0.1) this.vx = 0;
+
+            // Detekcja kolizji z terenem (sprawdzanie pikseli)
+            let isColliding = checkTerrainCollision(this.x, this.y + this.radius);
+            
+            if (isColliding) {
+                this.isGrounded = true;
+                this.vy = 0;
+                // Wypychanie na powierzchnię
+                while (checkTerrainCollision(this.x, this.y + this.radius - 1)) {
+                    this.y -= 1;
+                }
+            } else {
+                this.isGrounded = false;
+            }
+
+            // Ograniczenia mapy
+            if (this.x < this.radius) this.x = this.radius;
+            if (this.x > canvas.width - this.radius) this.x = canvas.width - this.radius;
+            
+            // Śmierć przez wypadnięcie z mapy (dół)
+            if (this.y > canvas.height + 50) {
+                this.hp = 0;
+            }
+        }
+
+        draw() {
+            if (this.hp <= 0) return;
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Pasek HP i Nazwa
+            ctx.fillStyle = 'white';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(this.hp, this.x, this.y - 15);
+            
+            // Oznaczenie aktywnego gracza
+            if (players[currentTurnIndex] === this && turnState === 'PLAYING') {
+                ctx.fillStyle = 'yellow';
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y - 30);
+                ctx.lineTo(this.x - 5, this.y - 40);
+                ctx.lineTo(this.x + 5, this.y - 40);
+                ctx.fill();
+            }
+        }
+    }
+
+    // Klasa Pocisku
+    class Projectile {
+        constructor(x, y, vx, vy) {
+            this.x = x;
+            this.y = y;
+            this.vx = vx;
+            this.vy = vy;
+            this.radius = 4;
+            this.active = true;
+        }
+
+        update() {
+            this.vy += gravity;
+            this.x += this.vx;
+            this.y += this.vy;
+
+            // Kolizja z granicami ekranu (lewo, prawo, dół)
+            if (this.x < 0 || this.x > canvas.width || this.y > canvas.height) {
+                this.explode();
+                return;
+            }
+
+            // Kolizja z terenem
+            if (checkTerrainCollision(this.x, this.y)) {
+                this.explode();
+            }
+        }
+
+        draw() {
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        explode() {
+            this.active = false;
+            createExplosion(this.x, this.y);
+            turnState = 'RESOLVING'; // Czekamy aż wszystko opadnie
+            
+            setTimeout(() => {
+                nextTurn();
+            }, 2000); // 2 sekundy na opadnięcie ciał i zakończenie tury
+        }
+    }
+
+    // Inicjalizacja gry
+    function init() {
+        generateTerrain();
+        
+        // Drużyna 1 (Czerwoni)
+        for (let i = 0; i < 5; i++) {
+            players.push(new Player(Math.random() * (canvas.width / 2 - 50) + 50, 50, 1, 'red', `Czerwony ${i+1}`));
+        }
+        // Drużyna 2 (Niebiescy)
+        for (let i = 0; i < 5; i++) {
+            players.push(new Player(canvas.width / 2 + Math.random() * (canvas.width / 2 - 50), 50, 2, 'blue', `Niebieski ${i+1}`));
+        }
+        
+        updateUI();
+        gameLoop();
+    }
+
+    // Pomocnicza funkcja: Sprawdzanie czy piksel na offscreen canvas nie jest przezroczysty
+    function checkTerrainCollision(x, y) {
+        if (x < 0 || x >= canvas.width || y < 0 || y >= canvas.height) return false;
+        const pixel = tCtx.getImageData(x, y, 1, 1).data;
+        return pixel[3] > 0; // Alpha > 0 oznacza, że jest tam teren
+    }
+
+    // Niszczenie terenu i zadawanie obrażeń
+    function createExplosion(x, y) {
+        // Rysowanie "dziury" na offscreen canvas terenu
+        tCtx.globalCompositeOperation = 'destination-out';
+        tCtx.beginPath();
+        tCtx.arc(x, y, explosionRadius, 0, Math.PI * 2);
+        tCtx.fill();
+        tCtx.globalCompositeOperation = 'source-over';
+
+        // Efekt wizualny na głównym canvasie na jedną klatkę (uproszczone)
+        ctx.fillStyle = 'orange';
+        ctx.beginPath();
+        ctx.arc(x, y, explosionRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Zadawanie obrażeń graczom w promieniu
+        players.forEach(p => {
+            if (p.hp > 0) {
+                let dx = p.x - x;
+                let dy = p.y - y;
+                let dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < explosionRadius + p.radius) {
+                    let damage = Math.floor((1 - (dist / (explosionRadius + p.radius))) * 50);
+                    p.hp -= damage;
+                    // Odrzut
+                    p.vx += (dx / dist) * 5;
+                    p.vy -= 5;
+                    p.isGrounded = false;
+                }
+            }
+        });
+    }
+
+    // Logika tur
+    function nextTurn() {
+        let attempts = 0;
+        do {
+            currentTurnIndex = (currentTurnIndex + 1) % players.length;
+            attempts++;
+            // Zabezpieczenie przed nieskończoną pętlą jeśli wszyscy zginą
+            if (attempts > players.length * 2) return checkWinCondition(); 
+        } while (players[currentTurnIndex].hp <= 0);
+
+        turnState = 'PLAYING';
+        updateUI();
+        checkWinCondition();
+    }
+
+    function checkWinCondition() {
+        let team1Alive = players.some(p => p.team === 1 && p.hp > 0);
+        let team2Alive = players.some(p => p.team === 2 && p.hp > 0);
+
+        const indicator = document.getElementById('turn-indicator');
+        if (!team1Alive && !team2Alive) {
+            indicator.innerText = "REMIS!";
+            turnState = 'GAMEOVER';
+        } else if (!team1Alive) {
+            indicator.innerText = "WYGRYWAJĄ NIEBIESCY!";
+            turnState = 'GAMEOVER';
+        } else if (!team2Alive) {
+            indicator.innerText = "WYGRYWAJĄ CZERWONI!";
+            turnState = 'GAMEOVER';
+        }
+    }
+
+    function updateUI() {
+        if (turnState === 'GAMEOVER') return;
+        const p = players[currentTurnIndex];
+        document.getElementById('turn-indicator').innerText = `Tura: ${p.name}`;
+        document.getElementById('turn-indicator').style.color = p.color;
+
+        let t1hp = players.filter(p=>p.team===1 && p.hp>0).reduce((acc, p) => acc + p.hp, 0);
+        let t2hp = players.filter(p=>p.team===2 && p.hp>0).reduce((acc, p) => acc + p.hp, 0);
+        document.getElementById('team-health').innerText = `Czerwoni HP: ${t1hp} | Niebiescy HP: ${t2hp}`;
+    }
+
+    // Obsługa wejścia (Klawiatura)
+    const keys = {};
+    window.addEventListener('keydown', e => {
+        keys[e.key] = true;
+        
+        // Skok
+        if (e.key === 'ArrowUp' || e.key === 'w') {
+            const activePlayer = players[currentTurnIndex];
+            if (turnState === 'PLAYING' && activePlayer.hp > 0 && activePlayer.isGrounded) {
+                activePlayer.vy = -6; // Siła skoku
+                activePlayer.isGrounded = false;
+            }
+        }
+    });
+    window.addEventListener('keyup', e => keys[e.key] = false);
+
+    // Obsługa strzelania (Mysz / Dotyk)
+    function getPointerPos(e) {
+        if (e.touches) {
+            return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }
+        return { x: e.clientX, y: e.clientY };
+    }
+
+    function handleStart(e) {
+        if (turnState !== 'PLAYING') return;
+        isAiming = true;
+        let pos = getPointerPos(e);
+        dragStart = pos;
+        dragCurrent = pos;
+    }
+
+    function handleMove(e) {
+        if (!isAiming) return;
+        dragCurrent = getPointerPos(e);
+    }
+
+    function handleEnd(e) {
+        if (!isAiming) return;
+        isAiming = false;
+        
+        const activePlayer = players[currentTurnIndex];
+        
+        // Obliczanie wektora strzału (odwrotność przeciągnięcia)
+        let dx = dragStart.x - dragCurrent.x;
+        let dy = dragStart.y - dragCurrent.y;
+        
+        // Skalowanie siły (mnożnik dostosowany do empirycznego odczucia gry)
+        let powerMultiplier = 0.1;
+        let vx = dx * powerMultiplier;
+        let vy = dy * powerMultiplier;
+
+        // Limit siły
+        const maxVelocity = 20;
+        let speed = Math.sqrt(vx*vx + vy*vy);
+        if (speed > maxVelocity) {
+            vx = (vx / speed) * maxVelocity;
+            vy = (vy / speed) * maxVelocity;
+        }
+
+        // Strzał (tylko jeśli naciąg był wystarczający)
+        if (speed > 1) {
+            projectiles.push(new Projectile(activePlayer.x, activePlayer.y - activePlayer.radius, vx, vy));
+            turnState = 'SHOOTING';
+        }
+    }
+
+    canvas.addEventListener('mousedown', handleStart);
+    canvas.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+
+    canvas.addEventListener('touchstart', handleStart, {passive: false});
+    canvas.addEventListener('touchmove', handleMove, {passive: false});
+    window.addEventListener('touchend', handleEnd);
+
+    // Główna pętla gry
+    function gameLoop() {
+        // 1. Czyszczenie ekranu i rysowanie nieba
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 2. Rysowanie terenu z offscreen canvas
+        ctx.drawImage(terrainCanvas, 0, 0);
+
+        // 3. Obsługa ruchu aktywnego gracza
+        if (turnState === 'PLAYING') {
+            const activePlayer = players[currentTurnIndex];
+            if (activePlayer.hp > 0) {
+                if ((keys['ArrowLeft'] || keys['a'])) {
+                    activePlayer.vx = -2;
+                }
+                if ((keys['ArrowRight'] || keys['d'])) {
+                    activePlayer.vx = 2;
+                }
+            }
+        }
+
+        // 4. Aktualizacja i rysowanie graczy
+        players.forEach(p => {
+            p.update();
+            p.draw();
+        });
+
+        // 5. Aktualizacja i rysowanie pocisków
+        for (let i = projectiles.length - 1; i >= 0; i--) {
+            let proj = projectiles[i];
+            proj.update();
+            proj.draw();
+            if (!proj.active) {
+                projectiles.splice(i, 1);
+            }
+        }
+
+        // 6. Rysowanie linii celowania
+        if (isAiming && turnState === 'PLAYING') {
+            const activePlayer = players[currentTurnIndex];
+            ctx.beginPath();
+            ctx.moveTo(activePlayer.x, activePlayer.y);
+            
+            let dx = dragStart.x - dragCurrent.x;
+            let dy = dragStart.y - dragCurrent.y;
+            
+            // Wizualizacja przewidywanego wektora
+            ctx.lineTo(activePlayer.x + dx, activePlayer.y + dy);
+            ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    // Reakcja na zmianę rozmiaru okna (podstawowa adaptacja)
+    window.addEventListener('resize', () => {
+        // Uwaga: Zmiana rozmiaru canvasu niszczy obecny teren w tej uproszczonej wersji.
+        // W pełnej grze teren musiałby być skalowany lub generowany dynamicznie na nowo.
+    });
+
+    // Uruchomienie
+    window.onload = init;
+
+</script>
+</body>
+</html>
