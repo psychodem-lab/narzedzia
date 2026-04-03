@@ -3,72 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Worms Mobile Edition 2.0</title>
+    <title>Worms Mobile Professional</title>
     <style>
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            touch-action: none; background-color: #000;
+            overflow: hidden; font-family: 'Courier New', Courier, monospace;
+            touch-action: none; background-color: #000; color: white;
         }
-        canvas { display: block; }
-        #ui {
-            position: absolute; top: 10px; left: 10px; color: white;
-            text-shadow: 2px 2px 4px black; pointer-events: none; z-index: 10;
+        canvas { display: block; background: linear-gradient(to bottom, #1a2a6c, #b21f1f, #fdbb2d); }
+        
+        /* UI OVERLAYS */
+        #ui-top {
+            position: absolute; top: 10px; left: 10px; right: 10px;
+            display: flex; justify-content: space-between; pointer-events: none;
+            z-index: 10; text-shadow: 2px 2px 0px #000;
         }
-        #timer-display {
-            position: absolute; top: 10px; right: 20px; color: white;
-            text-shadow: 2px 2px 4px black; font-size: 28px; font-weight: bold;
+        #timer { font-size: 32px; font-weight: bold; }
+        
+        /* ROTATION WARNING */
+        #rotate-warning {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: #000; display: none; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 9999;
+            text-align: center;
         }
-        /* STEROWANIE MOBILNE */
-        #mobile-controls {
-            position: absolute; bottom: 20px; left: 0; right: 0;
-            width: 100%; height: 150px; pointer-events: none; display: flex;
-            justify-content: space-between; align-items: flex-end; padding: 0 20px;
-            box-sizing: border-box;
+        @media (orientation: portrait) {
+            #rotate-warning { display: flex; }
         }
-        .joystick-area {
-            width: 120px; height: 120px; background: rgba(255,255,255,0.2);
+
+        /* MOBILE CONTROLS */
+        #controls {
+            position: absolute; bottom: 20px; left: 20px; right: 20px;
+            display: flex; justify-content: space-between; align-items: flex-end;
+            pointer-events: none;
+        }
+        .touch-btn {
+            width: 80px; height: 80px; background: rgba(255,255,255,0.2);
+            border: 3px solid #fff; border-radius: 50%; pointer-events: auto;
+            display: flex; justify-content: center; align-items: center;
+            font-weight: bold; user-select: none;
+        }
+        #joystick-container {
+            width: 150px; height: 150px; background: rgba(255,255,255,0.1);
             border-radius: 50%; position: relative; pointer-events: auto;
-            border: 2px solid rgba(255,255,255,0.3);
         }
-        #joystick-stick {
-            width: 50px; height: 50px; background: white; border-radius: 50%;
-            position: absolute; top: 35px; left: 35px; box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        #joystick-knob {
+            width: 60px; height: 60px; background: #fff; border-radius: 50%;
+            position: absolute; top: 45px; left: 45px;
         }
-        #jump-btn {
-            width: 80px; height: 80px; background: rgba(255,255,255,0.3);
-            border-radius: 50%; color: white; display: flex;
-            justify-content: center; align-items: center; font-weight: bold;
-            pointer-events: auto; border: 2px solid white; user-select: none;
-        }
-        #audio-overlay {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+
+        #start-screen {
+            position: fixed; top:0; left:0; width:100%; height:100%;
             background: rgba(0,0,0,0.9); display: flex; flex-direction: column;
-            justify-content: center; align-items: center; color: white;
-            z-index: 100; cursor: pointer; text-align: center;
+            justify-content: center; align-items: center; z-index: 1000; cursor: pointer;
         }
     </style>
 </head>
 <body>
 
-<div id="audio-overlay" onclick="startAudioContext()">
-    <h1>WORMS MOBILE 2.0</h1>
-    <p>Dotknij ekranu, aby zacząć</p>
-    <small>(Wymagane do aktywacji dźwięku i muzyki)</small>
+<div id="rotate-warning">
+    <h1>PROSZĘ OBRÓCIĆ TELEFON</h1>
+    <p>Gra działa tylko w trybie poziomym.</p>
 </div>
 
-<div id="ui">
-    <h2 id="turn-indicator">Inicjalizacja...</h2>
-    <div id="team-health"></div>
+<div id="start-screen" onclick="initGame()">
+    <h1>WORMS HTML5</h1>
+    <p>Kliknij, aby zacząć bitwę</p>
 </div>
 
-<div id="timer-display">90</div>
+<div id="ui-top">
+    <div id="info">Ładowanie...</div>
+    <div id="timer">60</div>
+</div>
 
-<div id="mobile-controls">
-    <div class="joystick-area" id="joy-base">
-        <div id="joystick-stick"></div>
+<div id="controls">
+    <div id="joystick-container">
+        <div id="joystick-knob"></div>
     </div>
-    <div id="jump-btn">SKOK</div>
+    <div id="jump-btn" class="touch-btn">SKOK</div>
 </div>
 
 <canvas id="gameCanvas"></canvas>
@@ -76,132 +88,139 @@
 <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const tCanvas = document.createElement('canvas');
+    const tCtx = tCanvas.getContext('2d');
 
-    const terrainCanvas = document.createElement('canvas');
-    terrainCanvas.width = canvas.width;
-    terrainCanvas.height = canvas.height;
-    const tCtx = terrainCanvas.getContext('2d');
+    let audioCtx, musicNode;
+    let players = [], projectiles = [], particles = [], crates = [];
+    let currentTeam = 1, activePlayer = null;
+    let turnState = 'WAITING', timeLeft = 60, lastTick = 0;
+    let gameRunning = false;
+    let moveDir = 0;
 
-    // === AUDIO ENGINE ===
-    let audioCtx = null;
-    function startAudioContext() {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        document.getElementById('audio-overlay').style.display = 'none';
-        playBackgroundMusic();
+    // --- AUDIO ENGINE ---
+    function initAudio() {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // Muzyka w tle (Ambient Drone)
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(40, audioCtx.currentTime);
+        let filter = audioCtx.createBiquadFilter();
+        filter.frequency.value = 200;
+        gain.gain.value = 0.02;
+        osc.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+        osc.start();
     }
 
-    function playTone(freq, type, duration, vol=0.1) {
-        if (!audioCtx) return;
+    function playSound(freq, type, dur, vol) {
+        if(!audioCtx) return;
         let osc = audioCtx.createOscillator();
         let gain = audioCtx.createGain();
         osc.type = type;
         osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start();
+        osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + dur);
         gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
-        osc.stop(audioCtx.currentTime + duration);
-    }
-
-    function playShoot() { playTone(400, 'triangle', 0.2); }
-    function playExplosion() { playTone(100, 'sawtooth', 0.4, 0.3); }
-    function playTick() { playTone(1200, 'sine', 0.05, 0.05); }
-
-    function playBackgroundMusic() {
-        if (!audioCtx) return;
-        let osc = audioCtx.createOscillator();
-        let gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(60, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + dur);
         osc.connect(gain); gain.connect(audioCtx.destination);
-        gain.gain.value = 0.03;
-        osc.start();
+        osc.start(); osc.stop(audioCtx.currentTime + dur);
     }
 
-    // === GAME LOGIC ===
-    const gravity = 0.25;
-    let players = [], projectiles = [], particles = [], crates = [];
-    let currentTeam = 1, currentActivePlayer = null;
-    let turnState = 'PLAYING', timeLeft = 90, lastTime = Date.now();
-    let moveDir = 0; // -1 lewo, 1 prawo, 0 stop
-
+    // --- CLASSES ---
     class Particle {
-        constructor(x, y, color) {
+        constructor(x, y, color, size = 4) {
             this.x = x; this.y = y;
-            this.vx = (Math.random()-0.5)*8;
-            this.vy = (Math.random()-0.5)*8;
-            this.life = 30; this.color = color;
+            this.vx = (Math.random() - 0.5) * 10;
+            this.vy = (Math.random() - 0.5) * 10;
+            this.life = 1.0;
+            this.color = color;
+            this.size = Math.random() * size;
         }
-        update() { this.x += this.vx; this.y += this.vy; this.life--; }
+        update() {
+            this.x += this.vx; this.y += this.vy;
+            this.vy += 0.1; this.life -= 0.02;
+        }
         draw() {
+            ctx.globalAlpha = this.life;
             ctx.fillStyle = this.color;
-            ctx.globalAlpha = this.life/30;
-            ctx.fillRect(this.x, this.y, 3, 3);
+            ctx.fillRect(this.x, this.y, this.size, this.size);
             ctx.globalAlpha = 1;
         }
     }
 
     class Crate {
-        constructor(x) { this.x = x; this.y = -20; this.vy = 0; this.active = true; }
+        constructor(x) { this.x = x; this.y = -50; this.vy = 0; this.active = true; }
         update() {
-            if (!this.active) return;
-            this.vy += gravity; this.y += this.vy;
-            if (checkCollision(this.x, this.y + 10)) { this.y -= this.vy; this.vy = 0; }
+            if(!this.active) return;
+            this.vy += 0.2; this.y += this.vy;
+            if(checkCol(this.x, this.y + 12)) { this.y -= this.vy; this.vy = 0; }
             players.forEach(p => {
-                if (p.hp > 0 && Math.abs(p.x - this.x) < 20 && Math.abs(p.y - this.y) < 20) {
+                if(p.hp > 0 && Math.hypot(p.x - this.x, p.y - this.y) < 20) {
                     p.hp = Math.min(100, p.hp + 40);
                     this.active = false;
+                    playSound(600, 'sine', 0.2, 0.1);
                 }
             });
         }
         draw() {
-            if (!this.active) return;
-            ctx.fillStyle = '#ffcc00'; ctx.fillRect(this.x-10, this.y-10, 20, 20);
-            ctx.strokeStyle = 'black'; ctx.strokeRect(this.x-10, this.y-10, 20, 20);
+            if(!this.active) return;
+            ctx.fillStyle = '#8B4513'; ctx.fillRect(this.x-10, this.y-10, 20, 20);
+            ctx.fillStyle = '#fff'; ctx.fillRect(this.x-2, this.y-8, 4, 16);
+            ctx.fillRect(this.x-8, this.y-2, 16, 4);
         }
     }
 
     class Player {
-        constructor(x, y, team, color) {
-            this.x = x; this.y = y; this.team = team; this.color = color;
-            this.hp = 100; this.vx = 0; this.vy = 0; this.grounded = false; this.dead = false;
+        constructor(x, team, color) {
+            this.x = x; this.y = 50; this.team = team; this.color = color;
+            this.hp = 100; this.vx = 0; this.vy = 0; this.grounded = false;
         }
         update() {
-            if (this.hp <= 0) { this.dead = true; return; }
+            if(this.hp <= 0) {
+                if(this.y < canvas.height + 100) { this.vy += 0.3; this.y += this.vy; }
+                return;
+            }
             
             let oldVy = this.vy;
-            this.vy += gravity;
-            this.y += this.vy;
-            this.x += this.vx;
-            this.vx *= 0.7;
+            this.vy += 0.25; // Grawitacja
+            this.x += this.vx; this.y += this.vy;
+            this.vx *= 0.8;
 
-            if (checkCollision(this.x, this.y + 10)) {
-                if (oldVy > 7) this.hp -= Math.floor(oldVy * 3); // Fall damage
+            // Śmierć poza planszą
+            if(this.y > canvas.height) {
+                this.hp = 0;
+                if(activePlayer === this) endTurn();
+            }
+
+            if(checkCol(this.x, this.y + 12)) {
+                if(oldVy > 8) { // Fall Damage
+                    this.hp -= Math.floor(oldVy * 3);
+                    playSound(100, 'square', 0.1, 0.2);
+                }
                 this.vy = 0; this.grounded = true;
-                while(checkCollision(this.x, this.y + 9)) this.y--;
+                while(checkCol(this.x, this.y + 11)) this.y--;
             } else { this.grounded = false; }
 
-            if (this.hp < 25 && Math.random() < 0.2) {
-                particles.push(new Particle(this.x, this.y, 'gray'));
+            // Low HP effect
+            if(this.hp < 20 && Math.random() < 0.15) {
+                particles.push(new Particle(this.x, this.y - 10, '#555', 6));
             }
         }
         draw() {
-            ctx.fillStyle = this.dead ? '#555' : this.color;
-            if (this.dead) { // Nagrobek
-                ctx.fillRect(this.x-10, this.y-5, 20, 15);
-                ctx.fillRect(this.x-2, this.y-12, 4, 15);
-                ctx.fillRect(this.x-6, this.y-8, 12, 4);
+            if(this.hp <= 0) { // Nagrobek
+                ctx.fillStyle = '#aaa';
+                ctx.fillRect(this.x-12, this.y-5, 24, 20);
+                ctx.fillStyle = '#000'; ctx.fillRect(this.x-2, this.y-2, 4, 12);
+                ctx.fillRect(this.x-6, this.y+2, 12, 4);
                 return;
             }
-            ctx.beginPath(); ctx.arc(this.x, this.y, 10, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = 'white'; ctx.font = '12px Arial';
-            ctx.fillText(this.hp, this.x - 10, this.y - 15);
-            if (currentActivePlayer === this && turnState === 'PLAYING') {
+            ctx.fillStyle = this.color;
+            ctx.beginPath(); ctx.arc(this.x, this.y, 12, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+            ctx.fillText(this.hp + " HP", this.x, this.y - 20);
+            if(activePlayer === this && turnState === 'PLAYING') {
                 ctx.fillStyle = 'yellow'; ctx.beginPath();
-                ctx.moveTo(this.x, this.y - 25); ctx.lineTo(this.x-5, this.y-35); ctx.lineTo(this.x+5, this.y-35); ctx.fill();
+                ctx.moveTo(this.x, this.y-35); ctx.lineTo(this.x-5, this.y-45); ctx.lineTo(this.x+5, this.y-45); ctx.fill();
             }
         }
     }
@@ -209,137 +228,180 @@
     class Projectile {
         constructor(x, y, vx, vy) { this.x = x; this.y = y; this.vx = vx; this.vy = vy; this.active = true; }
         update() {
-            this.vy += gravity; this.x += this.vx; this.y += this.vy;
-            if (checkCollision(this.x, this.y) || this.y > canvas.height) this.explode();
+            this.vx *= 0.99; this.vy += 0.2;
+            this.x += this.vx; this.y += this.vy;
+            
+            // Kolizja bezpośrednia z graczem
+            players.forEach(p => {
+                if(p.hp > 0 && Math.hypot(p.x - this.x, p.y - this.y) < 15) this.explode();
+            });
+
+            if(checkCol(this.x, this.y) || this.y > canvas.height) this.explode();
         }
         explode() {
-            this.active = false; playExplosion();
+            if(!this.active) return;
+            this.active = false;
+            playSound(60, 'sawtooth', 0.5, 0.4);
             tCtx.globalCompositeOperation = 'destination-out';
-            tCtx.beginPath(); tCtx.arc(this.x, this.y, 40, 0, Math.PI*2); tCtx.fill();
+            tCtx.beginPath(); tCtx.arc(this.x, this.y, 50, 0, Math.PI*2); tCtx.fill();
             tCtx.globalCompositeOperation = 'source-over';
-            for(let i=0; i<15; i++) particles.push(new Particle(this.x, this.y, 'orange'));
+            
+            for(let i=0; i<25; i++) particles.push(new Particle(this.x, this.y, i % 2 ? 'orange' : 'red', 8));
+            
             players.forEach(p => {
                 let d = Math.hypot(p.x - this.x, p.y - this.y);
-                if (d < 50) { p.hp -= Math.floor(50 - d); p.vy = -5; }
+                if(d < 60) {
+                    p.hp -= Math.floor(60 - d);
+                    let ang = Math.atan2(p.y - this.y, p.x - this.x);
+                    p.vx = Math.cos(ang) * 10; p.vy = -8;
+                }
             });
-            setTimeout(nextTurn, 1500);
+            setTimeout(endTurn, 2000);
         }
-        draw() { ctx.fillStyle = 'black'; ctx.beginPath(); ctx.arc(this.x, this.y, 4, 0, Math.PI*2); ctx.fill(); }
+        draw() { ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(this.x, this.y, 5, 0, Math.PI*2); ctx.fill(); }
     }
 
-    // === SYSTEM STEROWANIA ===
-    const joyBase = document.getElementById('joy-base');
-    const joyStick = document.getElementById('joystick-stick');
-    const jumpBtn = document.getElementById('jump-btn');
-
-    joyBase.addEventListener('touchstart', handleJoy);
-    joyBase.addEventListener('touchmove', handleJoy);
-    joyBase.addEventListener('touchend', () => {
-        moveDir = 0; joyStick.style.left = '35px'; joyStick.style.top = '35px';
-    });
-
-    function handleJoy(e) {
-        e.preventDefault();
-        let b = joyBase.getBoundingClientRect();
-        let touch = e.touches[0];
-        let dx = touch.clientX - (b.left + b.width/2);
-        let dist = Math.min(Math.abs(dx), 40);
-        joyStick.style.left = (35 + (dx > 0 ? dist : -dist)) + 'px';
-        moveDir = dx > 10 ? 1 : (dx < -10 ? -1 : 0);
-    }
-
-    jumpBtn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        if (currentActivePlayer && currentActivePlayer.grounded && turnState === 'PLAYING') {
-            currentActivePlayer.vy = -7;
-        }
-    });
-
-    // Celowanie (proca) - na reszcie ekranu
-    let isAiming = false, dragS = {x:0, y:0}, dragC = {x:0, y:0};
-    canvas.addEventListener('touchstart', (e) => {
-        if (turnState !== 'PLAYING') return;
-        isAiming = true; dragS = {x: e.touches[0].clientX, y: e.touches[0].clientY};
-        dragC = dragS;
-    });
-    canvas.addEventListener('touchmove', (e) => {
-        if (isAiming) dragC = {x: e.touches[0].clientX, y: e.touches[0].clientY};
-    });
-    canvas.addEventListener('touchend', () => {
-        if (!isAiming) return;
-        isAiming = false;
-        let vx = (dragS.x - dragC.x) * 0.15;
-        let vy = (dragS.y - dragC.y) * 0.15;
-        if (Math.hypot(vx, vy) > 1) {
-            projectiles.push(new Projectile(currentActivePlayer.x, currentActivePlayer.y - 10, vx, vy));
-            turnState = 'RESOLVING'; playShoot();
-        }
-    });
-
-    function checkCollision(x, y) {
-        if (x < 0 || x > canvas.width || y < 0 || y > canvas.height) return false;
+    // --- GAME ENGINE ---
+    function checkCol(x, y) {
+        if(x < 0 || x > canvas.width || y < 0 || y > canvas.height) return false;
         return tCtx.getImageData(x, y, 1, 1).data[3] > 0;
     }
 
     function generateTerrain() {
-        tCtx.fillStyle = '#2d5a27';
+        tCanvas.width = canvas.width; tCanvas.height = canvas.height;
+        tCtx.fillStyle = '#3e8e41';
         tCtx.beginPath(); tCtx.moveTo(0, canvas.height);
-        for(let x=0; x<=canvas.width; x+=10) {
-            tCtx.lineTo(x, canvas.height - 150 - Math.sin(x/100)*60 - Math.cos(x/50)*20);
+        for(let x=0; x<=canvas.width; x+=20) {
+            let y = canvas.height - 100 - Math.sin(x/150)*100 - Math.cos(x/80)*50;
+            tCtx.lineTo(x, y);
         }
         tCtx.lineTo(canvas.width, canvas.height); tCtx.fill();
     }
 
-    function nextTurn() {
-        currentTeam = currentTeam === 1 ? 2 : 1;
-        let team = players.filter(p => p.team === currentTeam && !p.dead);
-        if (team.length === 0) { alert("KONIEC GRY!"); location.reload(); return; }
-        currentActivePlayer = team[Math.floor(Math.random()*team.length)];
-        timeLeft = 90; turnState = 'PLAYING';
-        if (Math.random() < 0.4) crates.push(new Crate(Math.random()*canvas.width));
-        updateUI();
+    function initGame() {
+        if(gameRunning) return;
+        document.getElementById('start-screen').style.display = 'none';
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        generateTerrain();
+        initAudio();
+        
+        for(let i=0; i<3; i++) {
+            players.push(new Player(100 + i*60, 1, '#ff4b2b'));
+            players.push(new Player(canvas.width - 100 - i*60, 2, '#2b86ff'));
+        }
+        
+        gameRunning = true;
+        startTurn();
+        requestAnimationFrame(loop);
     }
 
-    function updateUI() {
-        let ind = document.getElementById('turn-indicator');
-        ind.innerText = `Tura: ${currentTeam === 1 ? 'CZERWONI' : 'NIEBIESCY'}`;
-        ind.style.color = currentTeam === 1 ? '#ff4444' : '#4444ff';
+    function startTurn() {
+        let alive = players.filter(p => p.team === currentTeam && p.hp > 0);
+        if(alive.length === 0) {
+            currentTeam = currentTeam === 1 ? 2 : 1;
+            alive = players.filter(p => p.team === currentTeam && p.hp > 0);
+        }
+        if(players.filter(p => p.team === 1 && p.hp > 0).length === 0 || 
+           players.filter(p => p.team === 2 && p.hp > 0).length === 0) {
+            alert("KONIEC BITWY!"); location.reload(); return;
+        }
+
+        activePlayer = alive[Math.floor(Math.random() * alive.length)];
+        timeLeft = 60; turnState = 'PLAYING';
+        if(Math.random() < 0.3) crates.push(new Crate(Math.random() * canvas.width));
+        
+        document.getElementById('info').innerText = `TURA: ${currentTeam === 1 ? 'CZERWONI' : 'NIEBIESCY'}`;
+        document.getElementById('info').style.color = activePlayer.color;
     }
 
-    function loop() {
-        ctx.clearRect(0,0,canvas.width, canvas.height);
-        ctx.drawImage(terrainCanvas, 0, 0);
+    function endTurn() {
+        if(turnState === 'RESOLVING') return;
+        turnState = 'RESOLVING';
+        setTimeout(() => {
+            currentTeam = currentTeam === 1 ? 2 : 1;
+            startTurn();
+        }, 1000);
+    }
 
-        if (turnState === 'PLAYING') {
-            if (Date.now() - lastTime > 1000) {
-                timeLeft--; lastTime = Date.now();
-                document.getElementById('timer-display').innerText = timeLeft;
-                if (timeLeft < 10) playTick();
-                if (timeLeft <= 0) nextTurn();
+    // --- INPUT HANDLING ---
+    const knob = document.getElementById('joystick-knob');
+    const joyContainer = document.getElementById('joystick-container');
+    
+    joyContainer.addEventListener('touchstart', handleJoy);
+    joyContainer.addEventListener('touchmove', handleJoy);
+    joyContainer.addEventListener('touchend', () => {
+        moveDir = 0; knob.style.left = '45px';
+    });
+
+    function handleJoy(e) {
+        e.preventDefault();
+        let rect = joyContainer.getBoundingClientRect();
+        let touchX = e.touches[0].clientX - rect.left - 75;
+        let limitedX = Math.max(-40, Math.min(40, touchX));
+        knob.style.left = (45 + limitedX) + 'px';
+        moveDir = limitedX / 40;
+    }
+
+    document.getElementById('jump-btn').addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if(activePlayer && activePlayer.grounded && turnState === 'PLAYING') activePlayer.vy = -8;
+    });
+
+    let isAiming = false, startAim = {x:0, y:0}, currentAim = {x:0, y:0};
+    canvas.addEventListener('touchstart', (e) => {
+        if(turnState !== 'PLAYING') return;
+        isAiming = true; startAim = {x: e.touches[0].clientX, y: e.touches[0].clientY};
+        currentAim = startAim;
+    });
+    canvas.addEventListener('touchmove', (e) => {
+        if(isAiming) currentAim = {x: e.touches[0].clientX, y: e.touches[0].clientY};
+    });
+    canvas.addEventListener('touchend', () => {
+        if(!isAiming) return;
+        isAiming = false;
+        let vx = (startAim.x - currentAim.x) * 0.2;
+        let vy = (startAim.y - currentAim.y) * 0.2;
+        if(Math.hypot(vx, vy) > 2) {
+            projectiles.push(new Projectile(activePlayer.x, activePlayer.y - 15, vx, vy));
+            turnState = 'SHOOTING';
+            playSound(300, 'triangle', 0.2, 0.2);
+        }
+    });
+
+    // --- MAIN LOOP ---
+    function loop(time) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(tCanvas, 0, 0);
+
+        if(turnState === 'PLAYING') {
+            if(time - lastTick > 1000) {
+                timeLeft--; lastTick = time;
+                document.getElementById('timer').innerText = timeLeft;
+                if(timeLeft <= 10) playSound(800, 'sine', 0.05, 0.05);
+                if(timeLeft <= 0) endTurn();
             }
-            if (currentActivePlayer) currentActivePlayer.vx = moveDir * 2.5;
+            if(activePlayer) activePlayer.vx = moveDir * 3;
         }
 
         players.forEach(p => { p.update(); p.draw(); });
         projectiles.forEach((p, i) => { p.update(); p.draw(); if(!p.active) projectiles.splice(i,1); });
-        particles.forEach((p, i) => { p.update(); p.draw(); if(p.life<=0) particles.splice(i,1); });
+        particles.forEach((p, i) => { p.update(); p.draw(); if(p.life <= 0) particles.splice(i,1); });
         crates.forEach(c => { c.update(); c.draw(); });
 
-        if (isAiming && currentActivePlayer) {
-            ctx.strokeStyle = 'white'; ctx.setLineDash([5, 5]);
-            ctx.beginPath(); ctx.moveTo(currentActivePlayer.x, currentActivePlayer.y-10);
-            ctx.lineTo(currentActivePlayer.x + (dragS.x - dragC.x), currentActivePlayer.y-10 + (dragS.y - dragC.y));
+        if(isAiming && activePlayer) {
+            ctx.setLineDash([5, 5]); ctx.strokeStyle = '#fff';
+            ctx.beginPath(); ctx.moveTo(activePlayer.x, activePlayer.y - 15);
+            ctx.lineTo(activePlayer.x + (startAim.x - currentAim.x), activePlayer.y - 15 + (startAim.y - currentAim.y));
             ctx.stroke(); ctx.setLineDash([]);
         }
+
         requestAnimationFrame(loop);
     }
 
-    generateTerrain();
-    for(let i=0; i<3; i++) players.push(new Player(100+i*50, 50, 1, '#ff4444'));
-    for(let i=0; i<3; i++) players.push(new Player(canvas.width-200+i*50, 50, 2, '#4444ff'));
-    nextTurn();
-    loop();
-
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        generateTerrain();
+    });
 </script>
 </body>
 </html>
