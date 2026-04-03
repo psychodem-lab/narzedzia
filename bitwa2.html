@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Worms-style HTML5 Game - Wersja 2.0 (Rozszerzona)</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            touch-action: none;
+            background-color: #000;
+        }
+        canvas { display: block; }
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            text-shadow: 1px 1px 2px black;
+            pointer-events: none;
+        }
+        #timer-display {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            color: white;
+            text-shadow: 1px 1px 2px black;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            color: white;
+            text-shadow: 1px 1px 2px black;
+            font-size: 14px;
+            pointer-events: none;
+            background: rgba(0,0,0,0.4);
+            padding: 10px;
+            border-radius: 8px;
+        }
+        #audio-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 100;
+            font-size: 24px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div id="audio-overlay" onclick="startAudioContext()">KLIKNIJ ABY ROZPOCZĄĆ (Aktywacja Dźwięku)</div>
+
+<div id="ui">
+    <h2 id="turn-indicator">Ładowanie...</h2>
+    <div id="team-health"></div>
+</div>
+<div id="timer-display">Czas: 90</div>
+<div id="controls">
+    Ruch: Strzałki (Lewo, Prawo) / A, D<br>
+    Skok: Strzałka w Górę / W<br>
+    Strzał: Przeciągnij myszką/palcem (jak z procy).
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const terrainCanvas = document.createElement('canvas');
+    terrainCanvas.width = canvas.width;
+    terrainCanvas.height = canvas.height;
+    const tCtx = terrainCanvas.getContext('2d', { willReadFrequently: true });
+
+    // === SYSTEM AUDIO (WEB AUDIO API) ===
+    let audioCtx = null;
+    let isMusicPlaying = false;
+
+    function startAudioContext() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        document.getElementById('audio-overlay').style.display = 'none';
+        
+        if (!isMusicPlaying) {
+            playBackgroundMusic();
+            isMusicPlaying = true;
+        }
+    }
+
+    function playTone(freq, type, duration, vol=0.1) {
+        if (!audioCtx) return;
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+        osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function playShootSound() {
+        if (!audioCtx) return;
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.3); // "Pew" effect
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3);
+        osc.stop(audioCtx.currentTime + 0.3);
+    }
+
+    function playExplosionSound() {
+        if (!audioCtx) return;
+        let bufferSize = audioCtx.sampleRate * 0.5; // 0.5 seconds of noise
+        let buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        let data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+        let noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        let filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 400; // Low rumble
+        let gain = audioCtx.createGain();
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+        noise.start();
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.5);
+    }
+
+    function playTick() {
+        playTone(800, 'square', 0.05, 0.05);
+    }
+
+    function playBackgroundMusic() {
+        if (!audioCtx) return;
+        // Prosty mroczny dron w tle by nie męczył uszu
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(55, audioCtx.currentTime); // Low A
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        gain.gain.value = 0.05; // Bardzo cicho
+        osc.start();
+        
+        // Lekka modulacja
+        setInterval(() => {
+            if(audioCtx) {
+                osc.frequency.linearRampToValueAtTime(55 + Math.random()*10, audioCtx.currentTime + 2);
+            }
+        }, 2000);
+    }
+
+
+    // === USTAWIENIA GRY ===
+    const gravity = 0.2;
+    const explosionRadius = 50;
+    
+    let players = [];
+    let projectiles = [];
+    let particles = [];
+    let crates = [];
+    let currentTeam = 1; // 1 = Czerwoni, 2 = Niebiescy
+    let lastPlayerIndex = { 1: -1, 2: -1 };
+    let currentActivePlayer = null;
+    let isAiming = false;
+    let dragStart = { x: 0, y: 0 };
+    let dragCurrent = { x: 0, y: 0 };
+    let turnState = 'PLAYING'; // PLAYING, SHOOTING, RESOLVING, GAMEOVER
+    let timeLeft = 90;
+    let lastTime = Date.now();
+    let currentMap = {};
+    let globalTurnCount = 0;
+
+    // 5 rodzajów map
+    const mapTypes = [
+        { name: "Zielone Równiny", sky: "#87CEEB", grass: "#2E8B57", dirt: "#8B4513", func: (x) => Math.sin(x/100)*50 + Math.cos(x/250)*80 },
+        { name: "Pustynia", sky: "#FFDAB9", grass: "#DAA520", dirt: "#D2691E", func: (x) => Math.sin(x/200)*40 },
+        { name: "Mars", sky: "#FFA07A", grass: "#B22222", dirt: "#8B0000", func: (x) => Math.abs(Math.sin(x/80)*60) + Math.cos(x/50)*30 },
+        { name: "Lodowiec", sky: "#E0FFFF", grass: "#F0FFFF", dirt: "#4682B4", func: (x) => (x < canvas.width/2) ? Math.sin(x/50)*20 : Math.cos(x/50)*20 },
+        { name: "Kraina Kosmitów", sky: "#4B0082", grass: "#9932CC", dirt: "#483D8B", func: (x) => Math.sin(x/30)*40 + Math.sin(x/150)*100 }
+    ];
+
+    function generateTerrain() {
+        currentMap = mapTypes[Math.floor(Math.random() * mapTypes.length)];
+        document.body.style.backgroundColor = currentMap.sky;
+        tCtx.fillStyle = currentMap.grass;
+        tCtx.beginPath();
+        tCtx.moveTo(0, canvas.height);
+        for (let x = 0; x <= canvas.width; x += 5) {
+            let y = canvas.height - 200 - currentMap.func(x);
+            tCtx.lineTo(x, y);
+        }
+        tCtx.lineTo(canvas.width, canvas.height);
+        tCtx.closePath();
+        tCtx.fill();
+
+        tCtx.globalCompositeOperation = 'source-atop';
+        tCtx.fillStyle = currentMap.dirt;
+        tCtx.fillRect(0, canvas.height - 150, canvas.width, 150);
+        tCtx.globalCompositeOperation = 'source-over';
+    }
+
+    // === KLASY OBIEKTÓW ===
+
+    class Particle {
+        constructor(x, y, color, vx, vy, life) {
+            this.x = x;
+            this.y = y;
+            this.color = color;
+            this.vx = vx;
+            this.vy = vy;
+            this.life = life;
+            this.maxLife = life;
+            this.size = Math.random() * 3 + 1;
+        }
+        update() {
+            this.vy += gravity * 0.5; // Lżejsza grawitacja dla iskier
+            this.x += this.vx;
+            this.y += this.vy;
+            this.life--;
+        }
+        draw() {
+            ctx.globalAlpha = Math.max(0, this.life / this.maxLife);
+            ctx.fillStyle = this.color;
+            ctx.fillRect(this.x, this.y, this.size, this.size);
+            ctx.globalAlpha = 1.0;
+        }
+    }
+
+    class Crate {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.vy = 0;
+            this.width = 16;
+            this.height = 16;
+            this.active = true;
+        }
+        update() {
+            if (!this.active) return;
+            
+            this.vy += gravity;
+            this.y += this.vy;
+            
+            // Kolizja z terenem
+            if (checkTerrainCollision(this.x, this.y + this.height/2)) {
+                this.y -= this.vy;
+                this.vy = 0;
+            }
+
+            // Kolizja z graczami (zbieranie)
+            players.forEach(p => {
+                if (p.hp > 0 && Math.abs(p.x - this.x) < 20 && Math.abs(p.y - this.y) < 20) {
+                    p.hp = Math.min(100, p.hp + 30); // Leczy 30 HP, max 100
+                    this.active = false;
+                    for(let i=0; i<10; i++) {
+                        particles.push(new Particle(this.x, this.y, '#00FF00', (Math.random()-0.5)*4, (Math.random()-0.5)*4, 40));
+                    }
+                }
+            });
+        }
+        draw() {
+            if (!this.active) return;
+            ctx.fillStyle = '#8B4513'; // Brązowa skrzynka
+            ctx.fillRect(this.x - this.width/2, this.y - this.height/2, this.width, this.height);
+            ctx.fillStyle = '#FF0000'; // Czerwony krzyż
+            ctx.fillRect(this.x - 2, this.y - 6, 4, 12);
+            ctx.fillRect(this.x - 6, this.y - 2, 12, 4);
+        }
+    }
+
+    class Player {
+        constructor(x, y, team, color, name) {
+            this.x = x;
+            this.y = y;
+            this.vx = 0;
+            this.vy = 0;
+            this.radius = 10;
+            this.team = team;
+            this.color = color;
+            this.name = name;
+            this.hp = 100;
+            this.isGrounded = false;
+            this.isDead = false;
+        }
+
+        update() {
+            if (this.hp <= 0 && !this.isDead) {
+                this.isDead = true; // Zmiana w nagrobek
+            }
+            if (this.isDead) return;
+
+            // Dymienie na low HP (<20)
+            if (this.hp < 20 && Math.random() < 0.3) {
+                particles.push(new Particle(this.x, this.y - 10, 'gray', (Math.random()-0.5)*2, -1 - Math.random(), 30));
+            }
+
+            let previousVy = this.vy; // Zapamiętanie prędkości do obrażeń od upadku
+            this.vy += gravity;
+            this.y += this.vy;
+            this.x += this.vx;
+
+            this.vx *= 0.8;
+            if (Math.abs(this.vx) < 0.1) this.vx = 0;
+            
+            let isColliding = checkTerrainCollision(this.x, this.y + this.radius);
+            
+            if (isColliding) {
+                // Obrażenia od upadku
+                if (!this.isGrounded && previousVy > 6) {
+                    let fallDamage = Math.floor((previousVy - 6) * 4);
+                    this.hp -= fallDamage;
+                    playTone(200, 'sawtooth', 0.1); // Dźwięk stęknięcia
+                }
+
+                this.isGrounded = true;
+                this.vy = 0;
+                while (checkTerrainCollision(this.x, this.y + this.radius - 1)) {
+                    this.y -= 1;
+                }
+            } else {
+                this.isGrounded = false;
+            }
+
+            if (this.x < this.radius) this.x = this.radius;
+            if (this.x > canvas.width - this.radius) this.x = canvas.width - this.radius;
+
+            // Śmierć przez wypadnięcie za planszę
+            if (this.y > canvas.height + 50) {
+                this.hp = 0;
+                if (currentActivePlayer === this && turnState === 'PLAYING') {
+                    turnState = 'RESOLVING';
+                    setTimeout(nextTurn, 1000);
+                }
+            }
+        }
+
+        draw() {
+            if (this.isDead) {
+                // Rysowanie nagrobka
+                ctx.fillStyle = '#666';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, Math.PI, 0); // Półkole
+                ctx.fillRect(this.x - this.radius, this.y, this.radius*2, this.radius*1.5);
+                ctx.fill();
+                // Krzyż
+                ctx.fillStyle = '#aaa';
+                ctx.fillRect(this.x - 2, this.y - 5, 4, 14);
+                ctx.fillRect(this.x - 5, this.y - 1, 10, 4);
+                return;
+            }
+
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = 'white';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(this.hp, this.x, this.y - 15);
+            
+            if (currentActivePlayer === this && turnState === 'PLAYING') {
+                ctx.fillStyle = 'yellow';
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y - 30);
+                ctx.lineTo(this.x - 5, this.y - 40);
+                ctx.lineTo(this.x + 5, this.y - 40);
+                ctx.fill();
+            }
+        }
+    }
+
+    class Projectile {
+        constructor(x, y, vx, vy) {
+            this.x = x;
+            this.y = y;
+            this.vx = vx;
+            this.vy = vy;
+            this.radius = 4;
+            this.active = true;
+        }
+
+        update() {
+            if (!this.active) return;
+            this.vy += gravity;
+            this.x += this.vx;
+            this.y += this.vy;
+
+            // Wypadnięcie za ekran
+            if (this.x < 0 || this.x > canvas.width || this.y > canvas.height) {
+                this.explode();
+                return;
+            }
+
+            // Kolizja z terenem
+            if (checkTerrainCollision(this.x, this.y)) {
+                this.explode();
+                return;
+            }
+
+            // Bezpośrednie trafienie w gracza
+            for (let i = 0; i < players.length; i++) {
+                let p = players[i];
+                if (p.hp > 0 && !p.isDead) {
+                    let dx = this.x - p.x;
+                    let dy = this.y - p.y;
+                    let dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist < p.radius + this.radius) {
+                        this.explode();
+                        return;
+                    }
+                }
+            }
+        }
+
+        draw() {
+            if (!this.active) return;
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        explode() {
+            this.active = false;
+            createExplosion(this.x, this.y);
+            turnState = 'RESOLVING';
+            setTimeout(() => { nextTurn(); }, 2000);
+        }
+    }
+
+    // === GŁÓWNE FUNKCJE LOGIKI GRY ===
+
+    function init() {
+        generateTerrain();
+        const spawnPlayer = (team, color, name) => {
+            let rx = Math.random() * (canvas.width - 100) + 50;
+            players.push(new Player(rx, 10, team, color, name));
+        };
+        for (let i = 0; i < 5; i++) spawnPlayer(1, '#ff3333', `Czerwony ${i+1}`);
+        for (let i = 0; i < 5; i++) spawnPlayer(2, '#3333ff', `Niebieski ${i+1}`);
+        
+        currentTeam = Math.random() > 0.5 ? 1 : 2;
+        nextTurn();
+        gameLoop();
+    }
+
+    function checkTerrainCollision(x, y) {
+        if (x < 0 || x >= canvas.width || y < 0 || y >= canvas.height) return false;
+        const pixel = tCtx.getImageData(Math.floor(x), Math.floor(y), 1, 1).data;
+        return pixel[3] > 0;
+    }
+
+    function createExplosion(x, y) {
+        playExplosionSound();
+
+        // Niszczenie terenu
+        tCtx.globalCompositeOperation = 'destination-out';
+        tCtx.beginPath();
+        tCtx.arc(x, y, explosionRadius, 0, Math.PI * 2);
+        tCtx.fill();
+        tCtx.globalCompositeOperation = 'source-over';
+
+        // Błysk
+        ctx.fillStyle = 'orange';
+        ctx.beginPath();
+        ctx.arc(x, y, explosionRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Efekt cząsteczkowy (Particle System)
+        for(let i=0; i<20; i++) {
+            let pColor = Math.random() > 0.5 ? 'orange' : (Math.random() > 0.5 ? 'red' : 'gray');
+            particles.push(new Particle(x, y, pColor, (Math.random()-0.5)*10, (Math.random()-0.5)*10, Math.floor(Math.random()*20 + 20)));
+        }
+
+        // Zadawanie obrażeń od wybuchu
+        players.forEach(p => {
+            if (p.hp > 0 && !p.isDead) {
+                let dx = p.x - x;
+                let dy = p.y - y;
+                let dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist < explosionRadius + p.radius) {
+                    let damage = Math.floor((1 - (dist / (explosionRadius + p.radius))) * 50);
+                    p.hp -= damage;
+                    p.vx += (dx / dist) * 7;
+                    p.vy -= 7;
+                    p.isGrounded = false;
+                }
+            }
+        });
+    }
+
+    function nextTurn() {
+        if (checkWinCondition()) return;
+        
+        currentTeam = currentTeam === 1 ? 2 : 1;
+        globalTurnCount++;
+
+        // Zrzut zaopatrzenia co 3 tury
+        if (globalTurnCount % 3 === 0) {
+            crates.push(new Crate(Math.random() * (canvas.width - 100) + 50, -20));
+        }
+
+        if (!players.some(p => p.team === currentTeam && p.hp > 0)) {
+            currentTeam = currentTeam === 1 ? 2 : 1;
+        }
+
+        let teamPlayers = players.filter(p => p.team === currentTeam);
+        let attempts = 0;
+        let foundPlayer = null;
+        
+        do {
+            lastPlayerIndex[currentTeam] = (lastPlayerIndex[currentTeam] + 1) % teamPlayers.length;
+            foundPlayer = teamPlayers[lastPlayerIndex[currentTeam]];
+            attempts++;
+            if(attempts > teamPlayers.length) break;
+        } while (foundPlayer.hp <= 0);
+
+        currentActivePlayer = foundPlayer;
+        timeLeft = 90; 
+        lastTime = Date.now();
+        turnState = 'PLAYING';
+        updateUI();
+    }
+
+    function checkWinCondition() {
+        let team1Alive = players.some(p => p.team === 1 && p.hp > 0);
+        let team2Alive = players.some(p => p.team === 2 && p.hp > 0);
+
+        const indicator = document.getElementById('turn-indicator');
+        if (!team1Alive && !team2Alive) {
+            indicator.innerText = "REMIS!";
+            turnState = 'GAMEOVER';
+            return true;
+        } else if (!team1Alive) {
+            indicator.innerText = "WYGRYWAJĄ NIEBIESCY!";
+            turnState = 'GAMEOVER';
+            return true;
+        } else if (!team2Alive) {
+            indicator.innerText = "WYGRYWAJĄ CZERWONI!";
+            turnState = 'GAMEOVER';
+            return true;
+        }
+        return false;
+    }
+
+    function updateUI() {
+        if (turnState === 'GAMEOVER') return;
+        document.getElementById('turn-indicator').innerText = `Mapa: ${currentMap.name} | Tura: ${currentActivePlayer.name}`;
+        document.getElementById('turn-indicator').style.color = currentActivePlayer.color;
+        
+        let t1hp = players.filter(p=>p.team===1 && p.hp>0).reduce((acc, p) => acc + p.hp, 0);
+        let t2hp = players.filter(p=>p.team===2 && p.hp>0).reduce((acc, p) => acc + p.hp, 0);
+        document.getElementById('team-health').innerText = `Czerwoni HP: ${t1hp} | Niebiescy HP: ${t2hp}`;
+    }
+
+    // === STEROWANIE ===
+    const keys = {};
+    window.addEventListener('keydown', e => {
+        keys[e.key] = true;
+        if ((e.key === 'ArrowUp' || e.key === 'w') && turnState === 'PLAYING') {
+            if (currentActivePlayer && currentActivePlayer.hp > 0 && currentActivePlayer.isGrounded) {
+                currentActivePlayer.vy = -6;
+                currentActivePlayer.isGrounded = false;
+            }
+        }
+    });
+    window.addEventListener('keyup', e => keys[e.key] = false);
+
+    function getPointerPos(e) {
+        if (e.touches) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        return { x: e.clientX, y: e.clientY };
+    }
+
+    function handleStart(e) {
+        if (turnState !== 'PLAYING') return;
+        isAiming = true;
+        let pos = getPointerPos(e);
+        dragStart = pos;
+        dragCurrent = pos;
+    }
+
+    function handleMove(e) {
+        if (!isAiming) return;
+        dragCurrent = getPointerPos(e);
+    }
+
+    function handleEnd(e) {
+        if (!isAiming) return;
+        isAiming = false;
+        
+        let dx = dragStart.x - dragCurrent.x;
+        let dy = dragStart.y - dragCurrent.y;
+        
+        let powerMultiplier = 0.1;
+        let vx = dx * powerMultiplier;
+        let vy = dy * powerMultiplier;
+
+        const maxVelocity = 20;
+        let speed = Math.sqrt(vx*vx + vy*vy);
+        if (speed > maxVelocity) {
+            vx = (vx / speed) * maxVelocity;
+            vy = (vy / speed) * maxVelocity;
+        }
+
+        if (speed > 1 && currentActivePlayer) {
+            playShootSound();
+            projectiles.push(new Projectile(currentActivePlayer.x, currentActivePlayer.y - currentActivePlayer.radius, vx, vy));
+            turnState = 'SHOOTING';
+        }
+    }
+
+    canvas.addEventListener('mousedown', handleStart);
+    canvas.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    canvas.addEventListener('touchstart', handleStart, {passive: false});
+    canvas.addEventListener('touchmove', handleMove, {passive: false});
+    window.addEventListener('touchend', handleEnd);
+
+    // === PĘTLA GRY ===
+    function gameLoop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(terrainCanvas, 0, 0);
+
+        // Obsługa Timera
+        if (turnState === 'PLAYING') {
+            let now = Date.now();
+            if (now - lastTime >= 1000) {
+                timeLeft--;
+                lastTime = now;
+                document.getElementById('timer-display').innerText = `Czas: ${timeLeft}`;
+                
+                // Sygnał tykania poniżej 10 sekund
+                if (timeLeft <= 10 && timeLeft > 0) {
+                    playTick();
+                    document.getElementById('timer-display').style.color = "red";
+                } else {
+                    document.getElementById('timer-display').style.color = "white";
+                }
+
+                if (timeLeft <= 0) {
+                    turnState = 'RESOLVING';
+                    nextTurn();
+                }
+            }
+        } else {
+            lastTime = Date.now();
+        }
+
+        // Ruch aktywnego gracza
+        if (turnState === 'PLAYING' && currentActivePlayer && currentActivePlayer.hp > 0) {
+            if ((keys['ArrowLeft'] || keys['a'])) currentActivePlayer.vx = -2;
+            if ((keys['ArrowRight'] || keys['d'])) currentActivePlayer.vx = 2;
+        }
+
+        // Rysowanie i aktualizacja obiektów
+        crates.forEach(c => { c.update(); c.draw(); });
+        players.forEach(p => { p.update(); p.draw(); });
+        
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let part = particles[i];
+            part.update();
+            part.draw();
+            if (part.life <= 0) particles.splice(i, 1);
+        }
+
+        for (let i = projectiles.length - 1; i >= 0; i--) {
+            let proj = projectiles[i];
+            proj.update();
+            proj.draw();
+            if (!proj.active) projectiles.splice(i, 1);
+        }
+
+        // Linia celowania
+        if (isAiming && turnState === 'PLAYING' && currentActivePlayer) {
+            ctx.beginPath();
+            ctx.moveTo(currentActivePlayer.x, currentActivePlayer.y);
+            let dx = dragStart.x - dragCurrent.x;
+            let dy = dragStart.y - dragCurrent.y;
+            ctx.lineTo(currentActivePlayer.x + dx, currentActivePlayer.y + dy);
+            ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
