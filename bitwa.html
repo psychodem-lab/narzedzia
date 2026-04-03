@@ -2,406 +2,591 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Worms Mobile Professional</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape">
+    <title>Worms Cosmic Warfare - Ultra Edition</title>
     <style>
+        :root {
+            --ui-font: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --accent: #ff0055;
+        }
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            overflow: hidden; font-family: 'Courier New', Courier, monospace;
-            touch-action: none; background-color: #000; color: white;
+            overflow: hidden; background: #050505;
+            font-family: var(--ui-font); touch-action: none;
         }
-        canvas { display: block; background: linear-gradient(to bottom, #1a2a6c, #b21f1f, #fdbb2d); }
-        
-        /* UI OVERLAYS */
-        #ui-top {
-            position: absolute; top: 10px; left: 10px; right: 10px;
-            display: flex; justify-content: space-between; pointer-events: none;
-            z-index: 10; text-shadow: 2px 2px 0px #000;
-        }
-        #timer { font-size: 32px; font-weight: bold; }
-        
-        /* ROTATION WARNING */
-        #rotate-warning {
-            position: fixed; top:0; left:0; width:100%; height:100%;
-            background: #000; display: none; flex-direction: column;
-            justify-content: center; align-items: center; z-index: 9999;
-            text-align: center;
-        }
-        @media (orientation: portrait) {
-            #rotate-warning { display: flex; }
-        }
+        canvas { display: block; filter: saturate(1.2); }
 
-        /* MOBILE CONTROLS */
-        #controls {
-            position: absolute; bottom: 20px; left: 20px; right: 20px;
-            display: flex; justify-content: space-between; align-items: flex-end;
-            pointer-events: none;
+        /* Stylizacja Interfejsu */
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 10;
+            display: flex; flex-direction: column; justify-content: space-between;
+            padding: 20px; box-sizing: border-box;
+            color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.8);
         }
-        .touch-btn {
-            width: 80px; height: 80px; background: rgba(255,255,255,0.2);
-            border: 3px solid #fff; border-radius: 50%; pointer-events: auto;
-            display: flex; justify-content: center; align-items: center;
-            font-weight: bold; user-select: none;
+        .top-bar { display: flex; justify-content: space-between; align-items: flex-start; }
+        .stats { background: rgba(0,0,0,0.5); padding: 15px; border-radius: 15px; border-left: 4px solid var(--accent); backdrop-filter: blur(5px); }
+        #timer-box { font-size: 48px; font-weight: 900; letter-spacing: -2px; color: var(--accent); }
+        
+        /* Ekran powitalny / Rotacja */
+        #overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, #1a1a2e 0%, #0f0f1b 100%);
+            display: flex; flex-direction: column; justify-content: center;
+            align-items: center; z-index: 100; cursor: pointer; text-align: center;
         }
-        #joystick-container {
-            width: 150px; height: 150px; background: rgba(255,255,255,0.1);
-            border-radius: 50%; position: relative; pointer-events: auto;
+        #rotate-hint {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; color: white; display: none;
+            flex-direction: column; justify-content: center; align-items: center; z-index: 200;
         }
-        #joystick-knob {
-            width: 60px; height: 60px; background: #fff; border-radius: 50%;
-            position: absolute; top: 45px; left: 45px;
-        }
+        @media (orientation: portrait) { #rotate-hint { display: flex; } }
 
-        #start-screen {
-            position: fixed; top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.9); display: flex; flex-direction: column;
-            justify-content: center; align-items: center; z-index: 1000; cursor: pointer;
+        /* Przyciski mobilne */
+        .mobile-controls { display: flex; justify-content: space-between; align-items: flex-end; width: 100%; }
+        .joy-stick-outer {
+            width: 140px; height: 140px; background: rgba(255,255,255,0.1);
+            border-radius: 50%; border: 2px solid rgba(255,255,255,0.2);
+            position: relative; pointer-events: auto;
+        }
+        #joy-knob {
+            width: 60px; height: 60px; background: white; border-radius: 50%;
+            position: absolute; top: 40px; left: 40px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        #jump-btn {
+            width: 100px; height: 100px; background: var(--accent);
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            font-weight: bold; font-size: 18px; pointer-events: auto;
+            box-shadow: 0 0 20px rgba(255, 0, 85, 0.4); border: 4px solid white;
         }
     </style>
 </head>
 <body>
 
-<div id="rotate-warning">
-    <h1>PROSZĘ OBRÓCIĆ TELEFON</h1>
-    <p>Gra działa tylko w trybie poziomym.</p>
+<div id="rotate-hint">
+    <h1>OBRÓĆ TELEFON 📱</h1>
+    <p>Do walki wymagany jest tryb poziomy.</p>
 </div>
 
-<div id="start-screen" onclick="initGame()">
-    <h1>WORMS HTML5</h1>
-    <p>Kliknij, aby zacząć bitwę</p>
+<div id="overlay" onclick="startGame()">
+    <h1 style="font-size: 60px; margin-bottom: 0;">COSMIC WARFARE</h1>
+    <p style="color: #aaa; letter-spacing: 5px;">DOTKNIJ, ABY ROZPOCZĄĆ</p>
 </div>
 
-<div id="ui-top">
-    <div id="info">Ładowanie...</div>
-    <div id="timer">60</div>
-</div>
-
-<div id="controls">
-    <div id="joystick-container">
-        <div id="joystick-knob"></div>
+<div id="ui-layer">
+    <div class="top-bar">
+        <div class="stats" id="team-info">
+            <div id="current-player" style="font-size: 20px; font-weight: bold;">Inicjalizacja...</div>
+            <div id="health-bars" style="margin-top: 5px; font-family: monospace;"></div>
+        </div>
+        <div id="timer-box">60</div>
     </div>
-    <div id="jump-btn" class="touch-btn">SKOK</div>
+
+    <div class="mobile-controls">
+        <div class="joy-stick-outer" id="joy-base">
+            <div id="joy-knob"></div>
+        </div>
+        <div id="jump-btn">SKOK</div>
+    </div>
 </div>
 
 <canvas id="gameCanvas"></canvas>
 
 <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const tCanvas = document.createElement('canvas');
-    const tCtx = tCanvas.getContext('2d');
+/**
+ * KONFIGURACJA I STAŁE
+ */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const terrainCanvas = document.createElement('canvas');
+const tCtx = terrainCanvas.getContext('2d');
 
-    let audioCtx, musicNode;
-    let players = [], projectiles = [], particles = [], crates = [];
-    let currentTeam = 1, activePlayer = null;
-    let turnState = 'WAITING', timeLeft = 60, lastTick = 0;
-    let gameRunning = false;
-    let moveDir = 0;
+const CONFIG = {
+    gravity: 0.25,
+    friction: 0.92,
+    airResistance: 0.99,
+    turnTime: 60,
+    explosionPower: 55,
+    fallDamageThreshold: 8
+};
 
-    // --- AUDIO ENGINE ---
-    function initAudio() {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        // Muzyka w tle (Ambient Drone)
-        let osc = audioCtx.createOscillator();
-        let gain = audioCtx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(40, audioCtx.currentTime);
-        let filter = audioCtx.createBiquadFilter();
-        filter.frequency.value = 200;
-        gain.gain.value = 0.02;
-        osc.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
-        osc.start();
-    }
+let game = {
+    running: false,
+    players: [],
+    projectiles: [],
+    particles: [],
+    crates: [],
+    activePlayer: null,
+    currentTeam: 1,
+    turnTimeLeft: CONFIG.turnTime,
+    lastFrame: 0,
+    inputDir: 0,
+    isAiming: false,
+    aimStart: {x:0, y:0},
+    aimEnd: {x:0, y:0}
+};
 
-    function playSound(freq, type, dur, vol) {
-        if(!audioCtx) return;
-        let osc = audioCtx.createOscillator();
-        let gain = audioCtx.createGain();
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + dur);
-        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-        gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + dur);
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + dur);
-    }
-
-    // --- CLASSES ---
-    class Particle {
-        constructor(x, y, color, size = 4) {
-            this.x = x; this.y = y;
-            this.vx = (Math.random() - 0.5) * 10;
-            this.vy = (Math.random() - 0.5) * 10;
-            this.life = 1.0;
-            this.color = color;
-            this.size = Math.random() * size;
-        }
-        update() {
-            this.x += this.vx; this.y += this.vy;
-            this.vy += 0.1; this.life -= 0.02;
-        }
-        draw() {
-            ctx.globalAlpha = this.life;
-            ctx.fillStyle = this.color;
-            ctx.fillRect(this.x, this.y, this.size, this.size);
-            ctx.globalAlpha = 1;
-        }
-    }
-
-    class Crate {
-        constructor(x) { this.x = x; this.y = -50; this.vy = 0; this.active = true; }
-        update() {
-            if(!this.active) return;
-            this.vy += 0.2; this.y += this.vy;
-            if(checkCol(this.x, this.y + 12)) { this.y -= this.vy; this.vy = 0; }
-            players.forEach(p => {
-                if(p.hp > 0 && Math.hypot(p.x - this.x, p.y - this.y) < 20) {
-                    p.hp = Math.min(100, p.hp + 40);
-                    this.active = false;
-                    playSound(600, 'sine', 0.2, 0.1);
-                }
-            });
-        }
-        draw() {
-            if(!this.active) return;
-            ctx.fillStyle = '#8B4513'; ctx.fillRect(this.x-10, this.y-10, 20, 20);
-            ctx.fillStyle = '#fff'; ctx.fillRect(this.x-2, this.y-8, 4, 16);
-            ctx.fillRect(this.x-8, this.y-2, 16, 4);
-        }
-    }
-
-    class Player {
-        constructor(x, team, color) {
-            this.x = x; this.y = 50; this.team = team; this.color = color;
-            this.hp = 100; this.vx = 0; this.vy = 0; this.grounded = false;
-        }
-        update() {
-            if(this.hp <= 0) {
-                if(this.y < canvas.height + 100) { this.vy += 0.3; this.y += this.vy; }
-                return;
-            }
-            
-            let oldVy = this.vy;
-            this.vy += 0.25; // Grawitacja
-            this.x += this.vx; this.y += this.vy;
-            this.vx *= 0.8;
-
-            // Śmierć poza planszą
-            if(this.y > canvas.height) {
-                this.hp = 0;
-                if(activePlayer === this) endTurn();
-            }
-
-            if(checkCol(this.x, this.y + 12)) {
-                if(oldVy > 8) { // Fall Damage
-                    this.hp -= Math.floor(oldVy * 3);
-                    playSound(100, 'square', 0.1, 0.2);
-                }
-                this.vy = 0; this.grounded = true;
-                while(checkCol(this.x, this.y + 11)) this.y--;
-            } else { this.grounded = false; }
-
-            // Low HP effect
-            if(this.hp < 20 && Math.random() < 0.15) {
-                particles.push(new Particle(this.x, this.y - 10, '#555', 6));
-            }
-        }
-        draw() {
-            if(this.hp <= 0) { // Nagrobek
-                ctx.fillStyle = '#aaa';
-                ctx.fillRect(this.x-12, this.y-5, 24, 20);
-                ctx.fillStyle = '#000'; ctx.fillRect(this.x-2, this.y-2, 4, 12);
-                ctx.fillRect(this.x-6, this.y+2, 12, 4);
-                return;
-            }
-            ctx.fillStyle = this.color;
-            ctx.beginPath(); ctx.arc(this.x, this.y, 12, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
-            ctx.fillText(this.hp + " HP", this.x, this.y - 20);
-            if(activePlayer === this && turnState === 'PLAYING') {
-                ctx.fillStyle = 'yellow'; ctx.beginPath();
-                ctx.moveTo(this.x, this.y-35); ctx.lineTo(this.x-5, this.y-45); ctx.lineTo(this.x+5, this.y-45); ctx.fill();
-            }
-        }
-    }
-
-    class Projectile {
-        constructor(x, y, vx, vy) { this.x = x; this.y = y; this.vx = vx; this.vy = vy; this.active = true; }
-        update() {
-            this.vx *= 0.99; this.vy += 0.2;
-            this.x += this.vx; this.y += this.vy;
-            
-            // Kolizja bezpośrednia z graczem
-            players.forEach(p => {
-                if(p.hp > 0 && Math.hypot(p.x - this.x, p.y - this.y) < 15) this.explode();
-            });
-
-            if(checkCol(this.x, this.y) || this.y > canvas.height) this.explode();
-        }
-        explode() {
-            if(!this.active) return;
-            this.active = false;
-            playSound(60, 'sawtooth', 0.5, 0.4);
-            tCtx.globalCompositeOperation = 'destination-out';
-            tCtx.beginPath(); tCtx.arc(this.x, this.y, 50, 0, Math.PI*2); tCtx.fill();
-            tCtx.globalCompositeOperation = 'source-over';
-            
-            for(let i=0; i<25; i++) particles.push(new Particle(this.x, this.y, i % 2 ? 'orange' : 'red', 8));
-            
-            players.forEach(p => {
-                let d = Math.hypot(p.x - this.x, p.y - this.y);
-                if(d < 60) {
-                    p.hp -= Math.floor(60 - d);
-                    let ang = Math.atan2(p.y - this.y, p.x - this.x);
-                    p.vx = Math.cos(ang) * 10; p.vy = -8;
-                }
-            });
-            setTimeout(endTurn, 2000);
-        }
-        draw() { ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(this.x, this.y, 5, 0, Math.PI*2); ctx.fill(); }
-    }
-
-    // --- GAME ENGINE ---
-    function checkCol(x, y) {
-        if(x < 0 || x > canvas.width || y < 0 || y > canvas.height) return false;
-        return tCtx.getImageData(x, y, 1, 1).data[3] > 0;
-    }
-
-    function generateTerrain() {
-        tCanvas.width = canvas.width; tCanvas.height = canvas.height;
-        tCtx.fillStyle = '#3e8e41';
-        tCtx.beginPath(); tCtx.moveTo(0, canvas.height);
-        for(let x=0; x<=canvas.width; x+=20) {
-            let y = canvas.height - 100 - Math.sin(x/150)*100 - Math.cos(x/80)*50;
-            tCtx.lineTo(x, y);
-        }
-        tCtx.lineTo(canvas.width, canvas.height); tCtx.fill();
-    }
-
-    function initGame() {
-        if(gameRunning) return;
-        document.getElementById('start-screen').style.display = 'none';
-        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-        generateTerrain();
-        initAudio();
-        
-        for(let i=0; i<3; i++) {
-            players.push(new Player(100 + i*60, 1, '#ff4b2b'));
-            players.push(new Player(canvas.width - 100 - i*60, 2, '#2b86ff'));
-        }
-        
-        gameRunning = true;
-        startTurn();
-        requestAnimationFrame(loop);
-    }
-
-    function startTurn() {
-        let alive = players.filter(p => p.team === currentTeam && p.hp > 0);
-        if(alive.length === 0) {
-            currentTeam = currentTeam === 1 ? 2 : 1;
-            alive = players.filter(p => p.team === currentTeam && p.hp > 0);
-        }
-        if(players.filter(p => p.team === 1 && p.hp > 0).length === 0 || 
-           players.filter(p => p.team === 2 && p.hp > 0).length === 0) {
-            alert("KONIEC BITWY!"); location.reload(); return;
-        }
-
-        activePlayer = alive[Math.floor(Math.random() * alive.length)];
-        timeLeft = 60; turnState = 'PLAYING';
-        if(Math.random() < 0.3) crates.push(new Crate(Math.random() * canvas.width));
-        
-        document.getElementById('info').innerText = `TURA: ${currentTeam === 1 ? 'CZERWONI' : 'NIEBIESCY'}`;
-        document.getElementById('info').style.color = activePlayer.color;
-    }
-
-    function endTurn() {
-        if(turnState === 'RESOLVING') return;
-        turnState = 'RESOLVING';
-        setTimeout(() => {
-            currentTeam = currentTeam === 1 ? 2 : 1;
-            startTurn();
-        }, 1000);
-    }
-
-    // --- INPUT HANDLING ---
-    const knob = document.getElementById('joystick-knob');
-    const joyContainer = document.getElementById('joystick-container');
+/**
+ * GENERATOR SZUMU TERENU (Multi-layered Sine Noise)
+ */
+function generateNoiseTerrain() {
+    terrainCanvas.width = canvas.width;
+    terrainCanvas.height = canvas.height;
     
-    joyContainer.addEventListener('touchstart', handleJoy);
-    joyContainer.addEventListener('touchmove', handleJoy);
-    joyContainer.addEventListener('touchend', () => {
-        moveDir = 0; knob.style.left = '45px';
-    });
+    tCtx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Gradientowe wypełnienie ziemi
+    const grad = tCtx.createLinearGradient(0, 200, 0, canvas.height);
+    grad.addColorStop(0, '#3a5a40'); // Trawa
+    grad.addColorStop(0.1, '#588157'); // Gleba płytka
+    grad.addColorStop(1, '#344e41'); // Gleba głęboka
 
-    function handleJoy(e) {
-        e.preventDefault();
-        let rect = joyContainer.getBoundingClientRect();
-        let touchX = e.touches[0].clientX - rect.left - 75;
-        let limitedX = Math.max(-40, Math.min(40, touchX));
-        knob.style.left = (45 + limitedX) + 'px';
-        moveDir = limitedX / 40;
+    tCtx.fillStyle = grad;
+    tCtx.beginPath();
+    tCtx.moveTo(0, canvas.height);
+
+    const seed1 = Math.random() * 100;
+    const seed2 = Math.random() * 100;
+
+    for (let x = 0; x <= canvas.width; x += 5) {
+        // Sumowanie trzech fal o różnej częstotliwości (pseudo-szum)
+        let y = canvas.height * 0.7 
+              + Math.sin(x * 0.005 + seed1) * 80 
+              + Math.sin(x * 0.02 + seed2) * 30
+              + Math.sin(x * 0.05) * 10;
+        tCtx.lineTo(x, y);
     }
 
-    document.getElementById('jump-btn').addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        if(activePlayer && activePlayer.grounded && turnState === 'PLAYING') activePlayer.vy = -8;
-    });
+    tCtx.lineTo(canvas.width, canvas.height);
+    tCtx.fill();
+}
 
-    let isAiming = false, startAim = {x:0, y:0}, currentAim = {x:0, y:0};
-    canvas.addEventListener('touchstart', (e) => {
-        if(turnState !== 'PLAYING') return;
-        isAiming = true; startAim = {x: e.touches[0].clientX, y: e.touches[0].clientY};
-        currentAim = startAim;
-    });
-    canvas.addEventListener('touchmove', (e) => {
-        if(isAiming) currentAim = {x: e.touches[0].clientX, y: e.touches[0].clientY};
-    });
-    canvas.addEventListener('touchend', () => {
-        if(!isAiming) return;
-        isAiming = false;
-        let vx = (startAim.x - currentAim.x) * 0.2;
-        let vy = (startAim.y - currentAim.y) * 0.2;
-        if(Math.hypot(vx, vy) > 2) {
-            projectiles.push(new Projectile(activePlayer.x, activePlayer.y - 15, vx, vy));
-            turnState = 'SHOOTING';
-            playSound(300, 'triangle', 0.2, 0.2);
-        }
-    });
+/**
+ * SYSTEM AUDIO (Web Audio API)
+ */
+let audioCtx;
+function initAudio() {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // Ambientowy dron
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 50;
+    gain.gain.value = 0.02;
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start();
+}
 
-    // --- MAIN LOOP ---
-    function loop(time) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(tCanvas, 0, 0);
+function playSfx(freq, type, dur, vol, slide = false) {
+    if(!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    if(slide) osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + dur);
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + dur);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + dur);
+}
 
-        if(turnState === 'PLAYING') {
-            if(time - lastTick > 1000) {
-                timeLeft--; lastTick = time;
-                document.getElementById('timer').innerText = timeLeft;
-                if(timeLeft <= 10) playSound(800, 'sine', 0.05, 0.05);
-                if(timeLeft <= 0) endTurn();
+/**
+ * KLASY OBIEKTÓW
+ */
+class Particle {
+    constructor(x, y, color, size, life = 1.0) {
+        this.x = x; this.y = y;
+        this.vx = (Math.random() - 0.5) * 12;
+        this.vy = (Math.random() - 0.5) * 12;
+        this.color = color;
+        this.size = size;
+        this.life = life;
+        this.decay = Math.random() * 0.02 + 0.01;
+    }
+    update() {
+        this.x += this.vx; this.y += this.vy;
+        this.vy += 0.15; this.life -= this.decay;
+    }
+    draw() {
+        ctx.globalAlpha = this.life;
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+    }
+}
+
+class Player {
+    constructor(x, team, color, name) {
+        this.x = x; this.y = 0;
+        this.vx = 0; this.vy = 0;
+        this.team = team;
+        this.color = color;
+        this.name = name;
+        this.hp = 100;
+        this.radius = 12;
+        this.isGrounded = false;
+        this.dead = false;
+    }
+    update() {
+        if(this.dead) return;
+
+        // Fizyka spadania
+        const prevVy = this.vy;
+        this.vy += CONFIG.gravity;
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vx *= CONFIG.friction;
+
+        // Detekcja kolizji z terenem
+        if (checkTerrain(this.x, this.y + this.radius)) {
+            // Obrażenia od upadku
+            if (!this.isGrounded && prevVy > CONFIG.fallDamageThreshold) {
+                const dmg = Math.floor((prevVy - CONFIG.fallDamageThreshold) * 5);
+                this.hp -= dmg;
+                playSfx(150, 'square', 0.2, 0.2);
             }
-            if(activePlayer) activePlayer.vx = moveDir * 3;
+            this.vy = 0;
+            this.isGrounded = true;
+            while(checkTerrain(this.x, this.y + this.radius - 1)) this.y--;
+        } else {
+            this.isGrounded = false;
         }
 
-        players.forEach(p => { p.update(); p.draw(); });
-        projectiles.forEach((p, i) => { p.update(); p.draw(); if(!p.active) projectiles.splice(i,1); });
-        particles.forEach((p, i) => { p.update(); p.draw(); if(p.life <= 0) particles.splice(i,1); });
-        crates.forEach(c => { c.update(); c.draw(); });
-
-        if(isAiming && activePlayer) {
-            ctx.setLineDash([5, 5]); ctx.strokeStyle = '#fff';
-            ctx.beginPath(); ctx.moveTo(activePlayer.x, activePlayer.y - 15);
-            ctx.lineTo(activePlayer.x + (startAim.x - currentAim.x), activePlayer.y - 15 + (startAim.y - currentAim.y));
-            ctx.stroke(); ctx.setLineDash([]);
+        // Śmierć poza mapą
+        if (this.y > canvas.height + 100 || this.hp <= 0) {
+            this.hp = 0;
+            this.dead = true;
+            if(game.activePlayer === this) endTurn();
         }
 
-        requestAnimationFrame(loop);
+        // Efekt Low HP (Dymienie)
+        if(this.hp < 25 && Math.random() < 0.2) {
+            game.particles.push(new Particle(this.x, this.y - 5, '#444', 4, 0.5));
+        }
+    }
+    draw() {
+        ctx.save();
+        if(this.dead) {
+            // Nagrobek
+            ctx.fillStyle = '#777';
+            ctx.fillRect(this.x - 12, this.y - 15, 24, 25);
+            ctx.fillStyle = '#444';
+            ctx.fillRect(this.x - 2, this.y - 10, 4, 15);
+            ctx.fillRect(this.x - 8, this.y - 4, 16, 4);
+        } else {
+            // Cień
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.beginPath(); ctx.ellipse(this.x, this.y + 10, 10, 4, 0, 0, Math.PI*2); ctx.fill();
+            
+            // Postać
+            ctx.fillStyle = this.color;
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
+            
+            // Oczy (śledzące)
+            ctx.fillStyle = 'white';
+            ctx.beginPath(); ctx.arc(this.x - 4, this.y - 2, 3, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(this.x + 4, this.y - 2, 3, 0, Math.PI*2); ctx.fill();
+            
+            // HP Bar nad głową
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(this.x - 15, this.y - 30, 30, 5);
+            ctx.fillStyle = this.hp > 30 ? '#00ff00' : '#ff0000';
+            ctx.fillRect(this.x - 15, this.y - 30, (this.hp/100)*30, 5);
+        }
+        ctx.restore();
+    }
+}
+
+class Projectile {
+    constructor(x, y, vx, vy) {
+        this.x = x; this.y = y;
+        this.vx = vx; this.vy = vy;
+        this.active = true;
+        this.bounces = 0;
+    }
+    update() {
+        this.vx *= CONFIG.airResistance;
+        this.vy += CONFIG.gravity;
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // Kolizja z graczem
+        game.players.forEach(p => {
+            if(!p.dead && Math.hypot(p.x - this.x, p.y - this.y) < 15) this.explode();
+        });
+
+        // Kolizja z ziemią
+        if(checkTerrain(this.x, this.y)) this.explode();
+        if(this.y > canvas.height + 200) this.active = false;
+    }
+    explode() {
+        if(!this.active) return;
+        this.active = false;
+        
+        playSfx(60, 'sawtooth', 0.6, 0.4, true);
+        
+        // Destrukcja terenu
+        tCtx.globalCompositeOperation = 'destination-out';
+        tCtx.beginPath(); tCtx.arc(this.x, this.y, 45, 0, Math.PI*2); tCtx.fill();
+        tCtx.globalCompositeOperation = 'source-over';
+
+        // Cząsteczki
+        for(let i=0; i<30; i++) {
+            const color = i % 2 === 0 ? '#ff5500' : '#ffcc00';
+            game.particles.push(new Particle(this.x, this.y, color, Math.random()*6 + 2));
+        }
+
+        // Damage Area
+        game.players.forEach(p => {
+            const dist = Math.hypot(p.x - this.x, p.y - this.y);
+            if(dist < 70) {
+                const force = (70 - dist) / 70;
+                p.hp -= Math.floor(force * CONFIG.explosionPower);
+                const angle = Math.atan2(p.y - this.y, p.x - this.x);
+                p.vx += Math.cos(angle) * force * 15;
+                p.vy += Math.sin(angle) * force * 15 - 5;
+                p.isGrounded = false;
+            }
+        });
+
+        setTimeout(endTurn, 1500);
+    }
+    draw() {
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(this.x, this.y, 5, 0, Math.PI*2); ctx.fill();
+        // Smuga
+        game.particles.push(new Particle(this.x, this.y, 'rgba(255,255,255,0.3)', 2, 0.2));
+    }
+}
+
+class Crate {
+    constructor(x) { this.x = x; this.y = -50; this.vy = 0; this.active = true; }
+    update() {
+        if(!this.active) return;
+        this.vy += 0.15; this.y += this.vy;
+        if(checkTerrain(this.x, this.y + 10)) { this.y -= this.vy; this.vy = 0; }
+        game.players.forEach(p => {
+            if(!p.dead && Math.hypot(p.x - this.x, p.y - this.y) < 25) {
+                p.hp = Math.min(100, p.hp + 40);
+                this.active = false;
+                playSfx(800, 'sine', 0.3, 0.2);
+            }
+        });
+    }
+    draw() {
+        if(!this.active) return;
+        ctx.fillStyle = '#ff0055';
+        ctx.fillRect(this.x-10, this.y-10, 20, 20);
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(this.x-10, this.y-10, 20, 20);
+        ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.font = 'bold 15px Arial';
+        ctx.fillText("+", this.x, this.y+6);
+    }
+}
+
+/**
+ * LOGIKA GRY
+ */
+function checkTerrain(x, y) {
+    if(x < 0 || x >= canvas.width || y < 0 || y >= canvas.height) return false;
+    const data = tCtx.getImageData(Math.floor(x), Math.floor(y), 1, 1).data;
+    return data[3] > 0;
+}
+
+function startGame() {
+    document.getElementById('overlay').style.display = 'none';
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    initAudio();
+    generateNoiseTerrain();
+
+    // Dodaj graczy
+    for(let i=0; i<3; i++) {
+        game.players.push(new Player(150 + i*80, 1, '#00d2ff', `Blue ${i+1}`));
+        game.players.push(new Player(canvas.width - 150 - i*80, 2, '#ff0055', `Red ${i+1}`));
     }
 
-    window.addEventListener('resize', () => {
-        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-        generateTerrain();
+    game.running = true;
+    startTurn();
+    requestAnimationFrame(gameLoop);
+}
+
+function startTurn() {
+    let teamMembers = game.players.filter(p => p.team === game.currentTeam && !p.dead);
+    if(teamMembers.length === 0) {
+        game.currentTeam = game.currentTeam === 1 ? 2 : 1;
+        teamMembers = game.players.filter(p => p.team === game.currentTeam && !p.dead);
+    }
+
+    // Win condition check
+    const redAlive = game.players.some(p => p.team === 2 && !p.dead);
+    const blueAlive = game.players.some(p => p.team === 1 && !p.dead);
+    
+    if(!redAlive || !blueAlive) {
+        alert(redAlive ? "CZERWONI WYGRALI!" : "NIEBIESCY WYGRALI!");
+        location.reload();
+        return;
+    }
+
+    game.activePlayer = teamMembers[Math.floor(Math.random() * teamMembers.length)];
+    game.turnTimeLeft = CONFIG.turnTime;
+    game.turnState = 'PLAYING';
+    
+    // Zrzut co kilka tur
+    if(Math.random() < 0.4) game.crates.push(new Crate(Math.random() * (canvas.width - 200) + 100));
+
+    updateUI();
+}
+
+function endTurn() {
+    if(game.turnState === 'RESOLVING') return;
+    game.turnState = 'RESOLVING';
+    setTimeout(() => {
+        game.currentTeam = game.currentTeam === 1 ? 2 : 1;
+        startTurn();
+    }, 1000);
+}
+
+function updateUI() {
+    document.getElementById('current-player').innerText = `TURA: ${game.activePlayer.name}`;
+    document.getElementById('current-player').style.color = game.activePlayer.color;
+    
+    const hBars = document.getElementById('health-bars');
+    const t1hp = game.players.filter(p=>p.team===1).reduce((s,p)=>s+p.hp,0);
+    const t2hp = game.players.filter(p=>p.team===2).reduce((s,p)=>s+p.hp,0);
+    hBars.innerHTML = `<span style="color:#00d2ff">TEAM BLUE: ${t1hp}</span> | <span style="color:#ff0055">TEAM RED: ${t2hp}</span>`;
+}
+
+/**
+ * STEROWANIE
+ */
+const knob = document.getElementById('joy-knob');
+const joyBase = document.getElementById('joy-base');
+
+joyBase.addEventListener('touchstart', (e) => handleJoy(e));
+joyBase.addEventListener('touchmove', (e) => handleJoy(e));
+joyBase.addEventListener('touchend', () => {
+    game.inputDir = 0;
+    knob.style.transform = `translate(0px, 0px)`;
+});
+
+function handleJoy(e) {
+    e.preventDefault();
+    const rect = joyBase.getBoundingClientRect();
+    const touch = e.touches[0];
+    const centerX = rect.left + rect.width/2;
+    const dx = touch.clientX - centerX;
+    const dist = Math.max(-40, Math.min(40, dx));
+    knob.style.transform = `translate(${dist}px, 0px)`;
+    game.inputDir = dist / 40;
+}
+
+document.getElementById('jump-btn').addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    if(game.activePlayer && game.activePlayer.isGrounded && game.turnState === 'PLAYING') {
+        game.activePlayer.vy = -8.5;
+    }
+});
+
+// Celowanie proca
+canvas.addEventListener('touchstart', (e) => {
+    if(game.turnState !== 'PLAYING') return;
+    game.isAiming = true;
+    game.aimStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    game.aimEnd = game.aimStart;
+});
+
+canvas.addEventListener('touchmove', (e) => {
+    if(game.isAiming) game.aimEnd = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+});
+
+canvas.addEventListener('touchend', () => {
+    if(!game.isAiming) return;
+    game.isAiming = false;
+    const dx = (game.aimStart.x - game.aimEnd.x) * 0.18;
+    const dy = (game.aimStart.y - game.aimEnd.y) * 0.18;
+    
+    if(Math.hypot(dx, dy) > 2) {
+        game.projectiles.push(new Projectile(game.activePlayer.x, game.activePlayer.y - 15, dx, dy));
+        game.turnState = 'SHOOTING';
+        playSfx(400, 'triangle', 0.15, 0.2);
+    }
+});
+
+/**
+ * GŁÓWNA PĘTLA
+ */
+function gameLoop(time) {
+    // Tło (Kosmiczny gradient)
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    bgGrad.addColorStop(0, '#0f0f1b');
+    bgGrad.addColorStop(1, '#1a1a2e');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Gwiazdy (statyczne)
+    ctx.fillStyle = "white";
+    for(let i=0; i<50; i++) {
+        let x = (Math.sin(i*123) * 0.5 + 0.5) * canvas.width;
+        let y = (Math.cos(i*456) * 0.5 + 0.5) * canvas.height;
+        ctx.globalAlpha = 0.3;
+        ctx.fillRect(x, y, 2, 2);
+    }
+    ctx.globalAlpha = 1;
+
+    // Rysuj teren
+    ctx.drawImage(terrainCanvas, 0, 0);
+
+    if(game.turnState === 'PLAYING') {
+        // Ruch
+        game.activePlayer.vx = game.inputDir * 3.5;
+        
+        // Timer
+        if(time - game.lastFrame > 1000) {
+            game.turnTimeLeft--;
+            game.lastFrame = time;
+            document.getElementById('timer-box').innerText = game.turnTimeLeft;
+            if(game.turnTimeLeft <= 10) playSfx(1200, 'sine', 0.05, 0.05);
+            if(game.turnTimeLeft <= 0) endTurn();
+        }
+    }
+
+    // Aktualizacje i rysowanie
+    game.crates.forEach(c => { c.update(); c.draw(); });
+    game.players.forEach(p => { p.update(); p.draw(); });
+    game.particles.forEach((p, i) => { 
+        p.update(); p.draw(); 
+        if(p.life <= 0) game.particles.splice(i, 1); 
     });
+    game.projectiles.forEach((p, i) => { 
+        p.update(); p.draw(); 
+        if(!p.active) game.projectiles.splice(i, 1); 
+    });
+
+    // Celownik
+    if(game.isAiming && game.activePlayer) {
+        ctx.beginPath();
+        ctx.setLineDash([5, 10]);
+        ctx.strokeStyle = "rgba(255,255,255,0.5)";
+        ctx.lineWidth = 3;
+        ctx.moveTo(game.activePlayer.x, game.activePlayer.y - 15);
+        ctx.lineTo(game.activePlayer.x + (game.aimStart.x - game.aimEnd.x), game.activePlayer.y - 15 + (game.aimStart.y - game.aimEnd.y));
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    requestAnimationFrame(gameLoop);
+}
+
+window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    generateNoiseTerrain();
+});
+
 </script>
 </body>
 </html>
