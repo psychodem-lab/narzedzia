@@ -522,23 +522,27 @@
         lastPlayerIndex = { 1: -1, 2: -1 };
         globalTurnCount = 0;
 
-        const spawnPlayer = (team, color, name) => {
-            let rx = Math.random() * (worldWidth - 200) + 100;
-            let ry = 0;
-            while (ry < worldHeight && !checkTerrainCollision(rx, ry)) {
-        ry += 5;    }
-            players.push(new Player(rx, 10, team, color, name));
-        };
-        players.push(new Player(rx, ry - 12, team, color, name));
-        };
-    
-        for (let i = 0; i < 5; i++) spawnPlayer(1, '#ff3333', `Czerwony ${i+1}`);
-        for (let i = 0; i < 5; i++) spawnPlayer(2, '#3333ff', `Niebieski ${i+1}`);
-        
-        currentTeam = Math.random() > 0.5 ? 1 : 2;
-        nextTurn();
-        gameLoop();
+    const spawnPlayer = (team, color, name) => {
+    let rx = Math.random() * (worldWidth - 200) + 100;
+    let ry = 0;
+
+    // Szukanie kolizji z terenem od góry do dołu
+    while (ry < worldHeight && !checkTerrainCollision(rx, ry)) {
+        ry += 5;
     }
+
+    // Dodajemy gracza tylko raz, używając obliczonego ry (z małym offsetem -12)
+    players.push(new Player(rx, ry - 12, team, color, name));
+};
+
+// Inicjalizacja drużyn
+for (let i = 0; i < 5; i++) spawnPlayer(1, '#ff3333', `Czerwony ${i+1}`);
+for (let i = 0; i < 5; i++) spawnPlayer(2, '#3333ff', `Niebieski ${i+1}`);
+
+// Ustawienie stanu początkowego gry
+currentTeam = Math.random() > 0.5 ? 1 : 2;
+nextTurn();
+gameLoop();
 
     function checkTerrainCollision(x, y) {
         if (x < 0 || x >= worldWidth || y < 0 || y >= worldHeight) return false;
