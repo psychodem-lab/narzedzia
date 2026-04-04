@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Worms-style HTML5 Game - Wersja 3.0 (Rozbudowana)</title>
+    <title>Worms-style HTML5 Game - Wersja 2.0 (Rozszerzona)</title>
     <style>
         body, html {
             margin: 0;
@@ -45,92 +45,23 @@
             padding: 10px;
             border-radius: 8px;
         }
-        
-        /* Menu Ustawień */
-        #menu-overlay {
+        #audio-overlay {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.85);
+            background: rgba(0,0,0,0.8);
             display: flex;
             justify-content: center;
             align-items: center;
             color: white;
-            z-index: 200;
-        }
-        .settings-container {
-            background: rgba(30, 30, 30, 0.95);
-            padding: 30px;
-            border-radius: 12px;
-            border: 2px solid #555;
-            text-align: center;
-            box-shadow: 0 0 20px rgba(0,0,0,0.8);
-        }
-        .settings-container h1 { margin-top: 0; color: #ffeb3b; }
-        .setting-group {
-            margin: 20px 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .setting-group label { margin-bottom: 8px; font-weight: bold; }
-        .setting-group select, .setting-group input {
-            padding: 10px;
-            width: 250px;
-            font-size: 16px;
-            background: #444;
-            color: white;
-            border: 1px solid #777;
-            border-radius: 6px;
-        }
-        #start-btn {
-            margin-top: 25px;
-            padding: 15px 50px;
-            font-size: 20px;
-            font-weight: bold;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 8px;
+            z-index: 100;
+            font-size: 24px;
             cursor: pointer;
-            transition: background 0.2s;
         }
-        #start-btn:hover { background: #45a049; }
     </style>
 </head>
 <body>
 
-<div id="menu-overlay">
-    <div class="settings-container">
-        <h1>Worms HTML5 - V3</h1>
-        
-        <div class="setting-group">
-            <label for="setTime">Czas na turę (sekundy):</label>
-            <input type="number" id="setTime" value="90" min="10" max="300">
-        </div>
-        
-        <div class="setting-group">
-            <label for="setMap">Wybór mapy:</label>
-            <select id="setMap">
-                <option value="-1">🌍 Losowa</option>
-                <option value="0">🌲 Zielone Równiny</option>
-                <option value="1">🏜️ Pustynia</option>
-                <option value="2">🔴 Mars</option>
-                <option value="3">❄️ Lodowiec</option>
-                <option value="4">👾 Kraina Kosmitów</option>
-            </select>
-        </div>
-        
-        <div class="setting-group">
-            <label for="setControls">Rodzaj sterowania:</label>
-            <select id="setControls">
-                <option value="keyboard">⌨️ Klawiatura + Mysz</option>
-                <option value="touch">📱 Dotykowe (Wirtualny Joystick)</option>
-            </select>
-        </div>
-        
-        <button id="start-btn" onclick="startGameFromMenu()">START BATTLE</button>
-    </div>
-</div>
+<div id="audio-overlay" onclick="startAudioContext()">KLIKNIJ ABY ROZPOCZĄĆ (Aktywacja Dźwięku)</div>
 
 <div id="ui">
     <h2 id="turn-indicator">Ładowanie...</h2>
@@ -138,9 +69,9 @@
 </div>
 <div id="timer-display">Czas: 90</div>
 <div id="controls">
-    Ruch: Strzałki / Joystick (Lewa strona)<br>
-    Skok: Strzałka w Górę / Joystick w górę<br>
-    Strzał: Przeciągnij i puść (Prawa strona ekranu)
+    Ruch: Strzałki (Lewo, Prawo) / A, D<br>
+    Skok: Strzałka w Górę / W<br>
+    Strzał: Przeciągnij myszką/palcem (jak z procy).
 </div>
 
 <canvas id="gameCanvas"></canvas>
@@ -148,18 +79,13 @@
 <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    
-    const terrainCanvas = document.createElement('canvas');
-    const tCtx = terrainCanvas.getContext('2d', { willReadFrequently: true });
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-    // === ZMIENNE GLOBALNE I SKALOWANIE ===
-    let configuredTime = 90;
-    let controlMode = 'keyboard';
-    
-    // Skalowanie świata (większa mapa niż ekran)
-    let worldWidth = 2000;
-    let worldHeight = 1200;
-    let camera = { x: 0, y: 0 };
+    const terrainCanvas = document.createElement('canvas');
+    terrainCanvas.width = canvas.width;
+    terrainCanvas.height = canvas.height;
+    const tCtx = terrainCanvas.getContext('2d', { willReadFrequently: true });
 
     // === SYSTEM AUDIO (WEB AUDIO API) ===
     let audioCtx = null;
@@ -172,6 +98,8 @@
         if (audioCtx.state === 'suspended') {
             audioCtx.resume();
         }
+        document.getElementById('audio-overlay').style.display = 'none';
+        
         if (!isMusicPlaying) {
             playBackgroundMusic();
             isMusicPlaying = true;
@@ -198,7 +126,7 @@
         let gain = audioCtx.createGain();
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.3);
+        osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.3); // "Pew" effect
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         osc.start();
@@ -209,7 +137,7 @@
 
     function playExplosionSound() {
         if (!audioCtx) return;
-        let bufferSize = audioCtx.sampleRate * 0.5;
+        let bufferSize = audioCtx.sampleRate * 0.5; // 0.5 seconds of noise
         let buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         let data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) {
@@ -219,7 +147,7 @@
         noise.buffer = buffer;
         let filter = audioCtx.createBiquadFilter();
         filter.type = 'lowpass';
-        filter.frequency.value = 400;
+        filter.frequency.value = 400; // Low rumble
         let gain = audioCtx.createGain();
         noise.connect(filter);
         filter.connect(gain);
@@ -229,18 +157,23 @@
         gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.5);
     }
 
-    function playTick() { playTone(800, 'square', 0.05, 0.05); }
+    function playTick() {
+        playTone(800, 'square', 0.05, 0.05);
+    }
 
     function playBackgroundMusic() {
         if (!audioCtx) return;
+        // Prosty mroczny dron w tle by nie męczył uszu
         let osc = audioCtx.createOscillator();
         let gain = audioCtx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(55, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(55, audioCtx.currentTime); // Low A
         osc.connect(gain);
         gain.connect(audioCtx.destination);
-        gain.gain.value = 0.05;
+        gain.gain.value = 0.05; // Bardzo cicho
         osc.start();
+        
+        // Lekka modulacja
         setInterval(() => {
             if(audioCtx) {
                 osc.frequency.linearRampToValueAtTime(55 + Math.random()*10, audioCtx.currentTime + 2);
@@ -248,72 +181,73 @@
         }, 2000);
     }
 
+
     // === USTAWIENIA GRY ===
     const gravity = 0.2;
-    const explosionRadius = 60;
+    const explosionRadius = 50;
+    
     let players = [];
     let projectiles = [];
     let particles = [];
     let crates = [];
-    let currentTeam = 1;
+    let currentTeam = 1; // 1 = Czerwoni, 2 = Niebiescy
     let lastPlayerIndex = { 1: -1, 2: -1 };
     let currentActivePlayer = null;
     let isAiming = false;
-    let aimPointerId = null;
     let dragStart = { x: 0, y: 0 };
     let dragCurrent = { x: 0, y: 0 };
-    let turnState = 'PLAYING';
+    let turnState = 'PLAYING'; // PLAYING, SHOOTING, RESOLVING, GAMEOVER
     let timeLeft = 90;
     let lastTime = Date.now();
     let currentMap = {};
     let globalTurnCount = 0;
-    
-    // Joystick state
-    let joystick = { active: false, x: 0, y: 0, thumbX: 0, thumbY: 0, pointerId: null, radius: 50 };
 
+    // 5 rodzajów map
     const mapTypes = [
         { name: "Zielone Równiny", sky: "#87CEEB", grass: "#2E8B57", dirt: "#8B4513", func: (x) => Math.sin(x/100)*50 + Math.cos(x/250)*80 },
         { name: "Pustynia", sky: "#FFDAB9", grass: "#DAA520", dirt: "#D2691E", func: (x) => Math.sin(x/200)*40 },
         { name: "Mars", sky: "#FFA07A", grass: "#B22222", dirt: "#8B0000", func: (x) => Math.abs(Math.sin(x/80)*60) + Math.cos(x/50)*30 },
-        { name: "Lodowiec", sky: "#E0FFFF", grass: "#F0FFFF", dirt: "#4682B4", func: (x) => (x < worldWidth/2) ? Math.sin(x/50)*20 : Math.cos(x/50)*20 },
+        { name: "Lodowiec", sky: "#E0FFFF", grass: "#F0FFFF", dirt: "#4682B4", func: (x) => (x < canvas.width/2) ? Math.sin(x/50)*20 : Math.cos(x/50)*20 },
         { name: "Kraina Kosmitów", sky: "#4B0082", grass: "#9932CC", dirt: "#483D8B", func: (x) => Math.sin(x/30)*40 + Math.sin(x/150)*100 }
     ];
 
-    function generateTerrain(mapIndex) {
-        if (mapIndex === -1) currentMap = mapTypes[Math.floor(Math.random() * mapTypes.length)];
-        else currentMap = mapTypes[mapIndex];
-
+    function generateTerrain() {
+        currentMap = mapTypes[Math.floor(Math.random() * mapTypes.length)];
         document.body.style.backgroundColor = currentMap.sky;
-        
-        tCtx.clearRect(0, 0, worldWidth, worldHeight);
         tCtx.fillStyle = currentMap.grass;
         tCtx.beginPath();
-        tCtx.moveTo(0, worldHeight);
-        
-        // Zmiana generowania żeby pasowała do wielkości mapy (skalowanie)
-        for (let x = 0; x <= worldWidth; x += 5) {
-            let y = worldHeight - 300 - currentMap.func(x);
+        tCtx.moveTo(0, canvas.height);
+        for (let x = 0; x <= canvas.width; x += 5) {
+            let y = canvas.height - 200 - currentMap.func(x);
             tCtx.lineTo(x, y);
         }
-        tCtx.lineTo(worldWidth, worldHeight);
+        tCtx.lineTo(canvas.width, canvas.height);
         tCtx.closePath();
         tCtx.fill();
 
         tCtx.globalCompositeOperation = 'source-atop';
         tCtx.fillStyle = currentMap.dirt;
-        tCtx.fillRect(0, worldHeight - 250, worldWidth, 250);
+        tCtx.fillRect(0, canvas.height - 150, canvas.width, 150);
         tCtx.globalCompositeOperation = 'source-over';
     }
 
     // === KLASY OBIEKTÓW ===
+
     class Particle {
         constructor(x, y, color, vx, vy, life) {
-            this.x = x; this.y = y; this.color = color; this.vx = vx; this.vy = vy;
-            this.life = life; this.maxLife = life; this.size = Math.random() * 3 + 1;
+            this.x = x;
+            this.y = y;
+            this.color = color;
+            this.vx = vx;
+            this.vy = vy;
+            this.life = life;
+            this.maxLife = life;
+            this.size = Math.random() * 3 + 1;
         }
         update() {
-            this.vy += gravity * 0.5;
-            this.x += this.vx; this.y += this.vy;
+            this.vy += gravity * 0.5; // Lżejsza grawitacja dla iskier
+            this.x += this.vx;
+            this.y += this.vy;
             this.life--;
         }
         draw() {
@@ -326,30 +260,41 @@
 
     class Crate {
         constructor(x, y) {
-            this.x = x; this.y = y; this.vy = 0; this.width = 16; this.height = 16; this.active = true;
+            this.x = x;
+            this.y = y;
+            this.vy = 0;
+            this.width = 16;
+            this.height = 16;
+            this.active = true;
         }
         update() {
             if (!this.active) return;
+            
             this.vy += gravity;
             this.y += this.vy;
             
+            // Kolizja z terenem
             if (checkTerrainCollision(this.x, this.y + this.height/2)) {
-                this.y -= this.vy; this.vy = 0;
+                this.y -= this.vy;
+                this.vy = 0;
             }
 
+            // Kolizja z graczami (zbieranie)
             players.forEach(p => {
                 if (p.hp > 0 && Math.abs(p.x - this.x) < 20 && Math.abs(p.y - this.y) < 20) {
-                    p.hp = Math.min(100, p.hp + 30);
+                    p.hp = Math.min(100, p.hp + 30); // Leczy 30 HP, max 100
                     this.active = false;
-                    for(let i=0; i<10; i++) particles.push(new Particle(this.x, this.y, '#00FF00', (Math.random()-0.5)*4, (Math.random()-0.5)*4, 40));
+                    for(let i=0; i<10; i++) {
+                        particles.push(new Particle(this.x, this.y, '#00FF00', (Math.random()-0.5)*4, (Math.random()-0.5)*4, 40));
+                    }
                 }
             });
         }
         draw() {
             if (!this.active) return;
-            ctx.fillStyle = '#8B4513';
+            ctx.fillStyle = '#8B4513'; // Brązowa skrzynka
             ctx.fillRect(this.x - this.width/2, this.y - this.height/2, this.width, this.height);
-            ctx.fillStyle = '#FF0000';
+            ctx.fillStyle = '#FF0000'; // Czerwony krzyż
             ctx.fillRect(this.x - 2, this.y - 6, 4, 12);
             ctx.fillRect(this.x - 6, this.y - 2, 12, 4);
         }
@@ -357,21 +302,31 @@
 
     class Player {
         constructor(x, y, team, color, name) {
-            this.x = x; this.y = y; this.vx = 0; this.vy = 0; this.radius = 10;
-            this.team = team; this.color = color; this.name = name;
-            this.hp = 100; // Zawsze startuje ze 100
-            this.isGrounded = false; this.isDead = false;
+            this.x = x;
+            this.y = y;
+            this.vx = 0;
+            this.vy = 0;
+            this.radius = 10;
+            this.team = team;
+            this.color = color;
+            this.name = name;
+            this.hp = 100;
+            this.isGrounded = false;
+            this.isDead = false;
         }
 
         update() {
-            if (this.hp <= 0 && !this.isDead) this.isDead = true;
+            if (this.hp <= 0 && !this.isDead) {
+                this.isDead = true; // Zmiana w nagrobek
+            }
             if (this.isDead) return;
 
+            // Dymienie na low HP (<20)
             if (this.hp < 20 && Math.random() < 0.3) {
                 particles.push(new Particle(this.x, this.y - 10, 'gray', (Math.random()-0.5)*2, -1 - Math.random(), 30));
             }
 
-            let previousVy = this.vy;
+            let previousVy = this.vy; // Zapamiętanie prędkości do obrażeń od upadku
             this.vy += gravity;
             this.y += this.vy;
             this.x += this.vx;
@@ -382,11 +337,13 @@
             let isColliding = checkTerrainCollision(this.x, this.y + this.radius);
             
             if (isColliding) {
+                // Obrażenia od upadku
                 if (!this.isGrounded && previousVy > 6) {
                     let fallDamage = Math.floor((previousVy - 6) * 4);
                     this.hp -= fallDamage;
-                    playTone(200, 'sawtooth', 0.1);
+                    playTone(200, 'sawtooth', 0.1); // Dźwięk stęknięcia
                 }
+
                 this.isGrounded = true;
                 this.vy = 0;
                 while (checkTerrainCollision(this.x, this.y + this.radius - 1)) {
@@ -397,13 +354,11 @@
             }
 
             if (this.x < this.radius) this.x = this.radius;
-            if (this.x > worldWidth - this.radius) this.x = worldWidth - this.radius;
-            
-            // System: Śmierć przez wypadnięcie poza dolną powiększoną mapę
-            if (this.y > worldHeight + 50) {
+            if (this.x > canvas.width - this.radius) this.x = canvas.width - this.radius;
+
+            // Śmierć przez wypadnięcie za planszę
+            if (this.y > canvas.height + 50) {
                 this.hp = 0;
-                this.isDead = true;
-                createExplosion(this.x, worldHeight - 10); // Efekt dla widza
                 if (currentActivePlayer === this && turnState === 'PLAYING') {
                     turnState = 'RESOLVING';
                     setTimeout(nextTurn, 1000);
@@ -413,12 +368,13 @@
 
         draw() {
             if (this.isDead) {
-                if (this.y > worldHeight) return; // Nie rysuj nagrobka, gdy spadł w przepaść
+                // Rysowanie nagrobka
                 ctx.fillStyle = '#666';
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, Math.PI, 0);
+                ctx.arc(this.x, this.y, this.radius, Math.PI, 0); // Półkole
                 ctx.fillRect(this.x - this.radius, this.y, this.radius*2, this.radius*1.5);
                 ctx.fill();
+                // Krzyż
                 ctx.fillStyle = '#aaa';
                 ctx.fillRect(this.x - 2, this.y - 5, 4, 14);
                 ctx.fillRect(this.x - 5, this.y - 1, 10, 4);
@@ -434,7 +390,7 @@
             ctx.fillStyle = 'white';
             ctx.font = '10px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(this.hp + "%", this.x, this.y - 15);
+            ctx.fillText(this.hp, this.x, this.y - 15);
             
             if (currentActivePlayer === this && turnState === 'PLAYING') {
                 ctx.fillStyle = 'yellow';
@@ -449,7 +405,12 @@
 
     class Projectile {
         constructor(x, y, vx, vy) {
-            this.x = x; this.y = y; this.vx = vx; this.vy = vy; this.radius = 4; this.active = true;
+            this.x = x;
+            this.y = y;
+            this.vx = vx;
+            this.vy = vy;
+            this.radius = 4;
+            this.active = true;
         }
 
         update() {
@@ -458,21 +419,28 @@
             this.x += this.vx;
             this.y += this.vy;
 
-            if (this.x < 0 || this.x > worldWidth || this.y > worldHeight + 100) {
-                this.explode(); return;
+            // Wypadnięcie za ekran
+            if (this.x < 0 || this.x > canvas.width || this.y > canvas.height) {
+                this.explode();
+                return;
             }
 
+            // Kolizja z terenem
             if (checkTerrainCollision(this.x, this.y)) {
-                this.explode(); return;
+                this.explode();
+                return;
             }
 
+            // Bezpośrednie trafienie w gracza
             for (let i = 0; i < players.length; i++) {
                 let p = players[i];
                 if (p.hp > 0 && !p.isDead) {
-                    let dx = this.x - p.x; let dy = this.y - p.y;
+                    let dx = this.x - p.x;
+                    let dy = this.y - p.y;
                     let dist = Math.sqrt(dx*dx + dy*dy);
                     if (dist < p.radius + this.radius) {
-                        this.explode(); return;
+                        this.explode();
+                        return;
                     }
                 }
             }
@@ -494,97 +462,62 @@
         }
     }
 
-    // === INICJALIZACJA GRY Z MENU ===
-    function startGameFromMenu() {
-        configuredTime = parseInt(document.getElementById('setTime').value);
-        let selectedMap = parseInt(document.getElementById('setMap').value);
-        controlMode = document.getElementById('setControls').value;
+    // === GŁÓWNE FUNKCJE LOGIKI GRY ===
 
-        document.getElementById('menu-overlay').style.display = 'none';
-        startAudioContext();
-
-        // Ustawienia świata
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+    function init() {
+        generateTerrain();
+        const spawnPlayer = (team, color, name) => {
+            let rx = Math.random() * (canvas.width - 100) + 50;
+            players.push(new Player(rx, 10, team, color, name));
+        };
+        for (let i = 0; i < 5; i++) spawnPlayer(1, '#ff3333', `Czerwony ${i+1}`);
+        for (let i = 0; i < 5; i++) spawnPlayer(2, '#3333ff', `Niebieski ${i+1}`);
         
-        worldWidth = Math.max(window.innerWidth * 1.5, 2000);
-        worldHeight = Math.max(window.innerHeight * 1.5, 1200);
-
-        terrainCanvas.width = worldWidth;
-        terrainCanvas.height = worldHeight;
-
-        generateTerrain(selectedMap);
-
-        players = [];
-        crates = [];
-        projectiles = [];
-        particles = [];
-        lastPlayerIndex = { 1: -1, 2: -1 };
-        globalTurnCount = 0;
-
-    const spawnPlayer = (team, color, name) => {
-   /**
- * Tworzy i dodaje nowego gracza do gry w bezpiecznej pozycji.
- * @param {number} team - Numer drużyny (np. 1 lub 2).
- * @param {string} color - Kolor gracza w formacie hex lub nazwy.
- * @param {string} name - Nazwa wyświetlana gracza.
- */
-const spawnPlayer = (team, color, name) => {
-    // 1. Losowanie pozycji poziomej (z marginesem 50px od krawędzi)
-    const margin = 50;
-    let rx = Math.random() * (canvas.width - (margin * 2)) + margin;
-    
-    // 2. Szukanie podłoża (startujemy od góry ekranu)
-    let ry = 0;
-    const step = 5; // Dokładność sprawdzania (im mniejszy, tym precyzyjniej)
-
-    // Pętla szuka pierwszego punktu kolizji z terenem
-    while (ry < canvas.height && !checkTerrainCollision(rx, ry)) {
-        ry += step;
+        currentTeam = Math.random() > 0.5 ? 1 : 2;
+        nextTurn();
+        gameLoop();
     }
 
-    // 3. Tworzenie instancji gracza
-    // Odejmujemy mały offset (np. 12-15px), aby gracz stał NA ziemi, a nie W niej.
-    const playerOffset = 12;
-    const newPlayer = new Player(rx, ry - playerOffset, team, color, name);
-
-    // 4. Dodanie do globalnej tablicy graczy
-    players.push(newPlayer);
-};
-
     function checkTerrainCollision(x, y) {
-        if (x < 0 || x >= worldWidth || y < 0 || y >= worldHeight) return false;
+        if (x < 0 || x >= canvas.width || y < 0 || y >= canvas.height) return false;
         const pixel = tCtx.getImageData(Math.floor(x), Math.floor(y), 1, 1).data;
         return pixel[3] > 0;
     }
 
     function createExplosion(x, y) {
         playExplosionSound();
+
+        // Niszczenie terenu
         tCtx.globalCompositeOperation = 'destination-out';
         tCtx.beginPath();
         tCtx.arc(x, y, explosionRadius, 0, Math.PI * 2);
         tCtx.fill();
         tCtx.globalCompositeOperation = 'source-over';
-        
+
+        // Błysk
         ctx.fillStyle = 'orange';
         ctx.beginPath();
         ctx.arc(x, y, explosionRadius, 0, Math.PI * 2);
         ctx.fill();
 
-        for(let i=0; i<25; i++) {
+        // Efekt cząsteczkowy (Particle System)
+        for(let i=0; i<20; i++) {
             let pColor = Math.random() > 0.5 ? 'orange' : (Math.random() > 0.5 ? 'red' : 'gray');
-            particles.push(new Particle(x, y, pColor, (Math.random()-0.5)*12, (Math.random()-0.5)*12, Math.floor(Math.random()*25 + 20)));
+            particles.push(new Particle(x, y, pColor, (Math.random()-0.5)*10, (Math.random()-0.5)*10, Math.floor(Math.random()*20 + 20)));
         }
 
+        // Zadawanie obrażeń od wybuchu
         players.forEach(p => {
             if (p.hp > 0 && !p.isDead) {
-                let dx = p.x - x; let dy = p.y - y;
+                let dx = p.x - x;
+                let dy = p.y - y;
                 let dist = Math.sqrt(dx * dx + dy * dy);
+                
                 if (dist < explosionRadius + p.radius) {
                     let damage = Math.floor((1 - (dist / (explosionRadius + p.radius))) * 50);
                     p.hp -= damage;
-                    p.vx += (dx / dist) * 8;
-                    p.vy -= 8;
+                    p.vx += (dx / dist) * 7;
+                    p.vy -= 7;
                     p.isGrounded = false;
                 }
             }
@@ -593,11 +526,13 @@ const spawnPlayer = (team, color, name) => {
 
     function nextTurn() {
         if (checkWinCondition()) return;
+        
         currentTeam = currentTeam === 1 ? 2 : 1;
         globalTurnCount++;
-        
+
+        // Zrzut zaopatrzenia co 3 tury
         if (globalTurnCount % 3 === 0) {
-            crates.push(new Crate(Math.random() * (worldWidth - 100) + 50, -20));
+            crates.push(new Crate(Math.random() * (canvas.width - 100) + 50, -20));
         }
 
         if (!players.some(p => p.team === currentTeam && p.hp > 0)) {
@@ -616,7 +551,7 @@ const spawnPlayer = (team, color, name) => {
         } while (foundPlayer.hp <= 0);
 
         currentActivePlayer = foundPlayer;
-        timeLeft = configuredTime; // Pobrane z ustawień
+        timeLeft = 90; 
         lastTime = Date.now();
         turnState = 'PLAYING';
         updateUI();
@@ -625,11 +560,21 @@ const spawnPlayer = (team, color, name) => {
     function checkWinCondition() {
         let team1Alive = players.some(p => p.team === 1 && p.hp > 0);
         let team2Alive = players.some(p => p.team === 2 && p.hp > 0);
+
         const indicator = document.getElementById('turn-indicator');
-        
-        if (!team1Alive && !team2Alive) { indicator.innerText = "REMIS!"; turnState = 'GAMEOVER'; return true; }
-        else if (!team1Alive) { indicator.innerText = "WYGRYWAJĄ NIEBIESCY!"; turnState = 'GAMEOVER'; return true; }
-        else if (!team2Alive) { indicator.innerText = "WYGRYWAJĄ CZERWONI!"; turnState = 'GAMEOVER'; return true; }
+        if (!team1Alive && !team2Alive) {
+            indicator.innerText = "REMIS!";
+            turnState = 'GAMEOVER';
+            return true;
+        } else if (!team1Alive) {
+            indicator.innerText = "WYGRYWAJĄ NIEBIESCY!";
+            turnState = 'GAMEOVER';
+            return true;
+        } else if (!team2Alive) {
+            indicator.innerText = "WYGRYWAJĄ CZERWONI!";
+            turnState = 'GAMEOVER';
+            return true;
+        }
         return false;
     }
 
@@ -637,9 +582,10 @@ const spawnPlayer = (team, color, name) => {
         if (turnState === 'GAMEOVER') return;
         document.getElementById('turn-indicator').innerText = `Mapa: ${currentMap.name} | Tura: ${currentActivePlayer.name}`;
         document.getElementById('turn-indicator').style.color = currentActivePlayer.color;
+        
         let t1hp = players.filter(p=>p.team===1 && p.hp>0).reduce((acc, p) => acc + p.hp, 0);
         let t2hp = players.filter(p=>p.team===2 && p.hp>0).reduce((acc, p) => acc + p.hp, 0);
-        document.getElementById('team-health').innerText = `Czerwoni HP: ${t1hp}% | Niebiescy HP: ${t2hp}%`;
+        document.getElementById('team-health').innerText = `Czerwoni HP: ${t1hp} | Niebiescy HP: ${t2hp}`;
     }
 
     // === STEROWANIE ===
@@ -648,86 +594,35 @@ const spawnPlayer = (team, color, name) => {
         keys[e.key] = true;
         if ((e.key === 'ArrowUp' || e.key === 'w') && turnState === 'PLAYING') {
             if (currentActivePlayer && currentActivePlayer.hp > 0 && currentActivePlayer.isGrounded) {
-                currentActivePlayer.vy = -6; currentActivePlayer.isGrounded = false;
+                currentActivePlayer.vy = -6;
+                currentActivePlayer.isGrounded = false;
             }
         }
     });
     window.addEventListener('keyup', e => keys[e.key] = false);
 
-    // Dynamiczny system dotyku (Multi-touch)
+    function getPointerPos(e) {
+        if (e.touches) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        return { x: e.clientX, y: e.clientY };
+    }
+
     function handleStart(e) {
         if (turnState !== 'PLAYING') return;
-
-        if (e.changedTouches) {
-            e.preventDefault();
-            for(let i = 0; i < e.changedTouches.length; i++) {
-                let touch = e.changedTouches[i];
-                if (controlMode === 'touch' && touch.clientX < canvas.width / 2 && !joystick.active) {
-                    joystick.active = true;
-                    joystick.pointerId = touch.identifier;
-                    joystick.x = touch.clientX;
-                    joystick.y = touch.clientY;
-                    joystick.thumbX = touch.clientX;
-                    joystick.thumbY = touch.clientY;
-                } else if (!isAiming) {
-                    isAiming = true;
-                    aimPointerId = touch.identifier;
-                    dragStart = { x: touch.clientX, y: touch.clientY };
-                    dragCurrent = { x: touch.clientX, y: touch.clientY };
-                }
-            }
-        } else {
-            isAiming = true;
-            dragStart = { x: e.clientX, y: e.clientY };
-            dragCurrent = { x: e.clientX, y: e.clientY };
-        }
+        isAiming = true;
+        let pos = getPointerPos(e);
+        dragStart = pos;
+        dragCurrent = pos;
     }
 
     function handleMove(e) {
-        if (e.changedTouches) {
-            e.preventDefault();
-            for(let i = 0; i < e.changedTouches.length; i++) {
-                let touch = e.changedTouches[i];
-                if (joystick.active && touch.identifier === joystick.pointerId) {
-                    let dx = touch.clientX - joystick.x;
-                    let dy = touch.clientY - joystick.y;
-                    let dist = Math.sqrt(dx*dx + dy*dy);
-                    if (dist > joystick.radius) { dx = (dx / dist) * joystick.radius; dy = (dy / dist) * joystick.radius; }
-                    joystick.thumbX = joystick.x + dx;
-                    joystick.thumbY = joystick.y + dy;
-
-                    keys['ArrowLeft'] = dx < -10;
-                    keys['ArrowRight'] = dx > 10;
-                    if (dy < -25 && currentActivePlayer && currentActivePlayer.hp > 0 && currentActivePlayer.isGrounded) {
-                        currentActivePlayer.vy = -6; currentActivePlayer.isGrounded = false;
-                    }
-                } else if (isAiming && touch.identifier === aimPointerId) {
-                    dragCurrent = { x: touch.clientX, y: touch.clientY };
-                }
-            }
-        } else if (isAiming) {
-            dragCurrent = { x: e.clientX, y: e.clientY };
-        }
+        if (!isAiming) return;
+        dragCurrent = getPointerPos(e);
     }
 
     function handleEnd(e) {
-        if (e.changedTouches) {
-            for(let i = 0; i < e.changedTouches.length; i++) {
-                let touch = e.changedTouches[i];
-                if (joystick.active && touch.identifier === joystick.pointerId) {
-                    joystick.active = false;
-                    keys['ArrowLeft'] = false; keys['ArrowRight'] = false;
-                } else if (isAiming && touch.identifier === aimPointerId) {
-                    shootProjectile();
-                }
-            }
-        } else if (isAiming) {
-            shootProjectile();
-        }
-    }
-
-    function shootProjectile() {
+        if (!isAiming) return;
         isAiming = false;
+        
         let dx = dragStart.x - dragCurrent.x;
         let dy = dragStart.y - dragCurrent.y;
         
@@ -735,8 +630,12 @@ const spawnPlayer = (team, color, name) => {
         let vx = dx * powerMultiplier;
         let vy = dy * powerMultiplier;
 
+        const maxVelocity = 20;
         let speed = Math.sqrt(vx*vx + vy*vy);
-        if (speed > 20) { vx = (vx / speed) * 20; vy = (vy / speed) * 20; }
+        if (speed > maxVelocity) {
+            vx = (vx / speed) * maxVelocity;
+            vy = (vy / speed) * maxVelocity;
+        }
 
         if (speed > 1 && currentActivePlayer) {
             playShootSound();
@@ -752,64 +651,61 @@ const spawnPlayer = (team, color, name) => {
     canvas.addEventListener('touchmove', handleMove, {passive: false});
     window.addEventListener('touchend', handleEnd);
 
-    // === GŁÓWNA PĘTLA ===
+    // === PĘTLA GRY ===
     function gameLoop() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // System Kamery Podążającej (Skalowanie)
-        let targetX = canvas.width / 2;
-        let targetY = canvas.height / 2;
-
-        if (projectiles.length > 0) {
-            targetX = projectiles[0].x; targetY = projectiles[0].y;
-        } else if (currentActivePlayer) {
-            targetX = currentActivePlayer.x; targetY = currentActivePlayer.y;
-        }
-
-        camera.x += (targetX - canvas.width / 2 - camera.x) * 0.1;
-        camera.y += (targetY - canvas.height / 2 - camera.y) * 0.1;
-        camera.x = Math.max(0, Math.min(camera.x, worldWidth - canvas.width));
-        camera.y = Math.max(0, Math.min(camera.y, worldHeight - canvas.height));
-
-        ctx.save();
-        ctx.translate(-camera.x, -camera.y);
-
         ctx.drawImage(terrainCanvas, 0, 0);
 
+        // Obsługa Timera
         if (turnState === 'PLAYING') {
             let now = Date.now();
             if (now - lastTime >= 1000) {
                 timeLeft--;
                 lastTime = now;
                 document.getElementById('timer-display').innerText = `Czas: ${timeLeft}`;
-                if (timeLeft <= 10 && timeLeft > 0) { playTick(); document.getElementById('timer-display').style.color = "red"; } 
-                else { document.getElementById('timer-display').style.color = "white"; }
-                if (timeLeft <= 0) { turnState = 'RESOLVING'; nextTurn(); }
+                
+                // Sygnał tykania poniżej 10 sekund
+                if (timeLeft <= 10 && timeLeft > 0) {
+                    playTick();
+                    document.getElementById('timer-display').style.color = "red";
+                } else {
+                    document.getElementById('timer-display').style.color = "white";
+                }
+
+                if (timeLeft <= 0) {
+                    turnState = 'RESOLVING';
+                    nextTurn();
+                }
             }
         } else {
             lastTime = Date.now();
         }
 
+        // Ruch aktywnego gracza
         if (turnState === 'PLAYING' && currentActivePlayer && currentActivePlayer.hp > 0) {
             if ((keys['ArrowLeft'] || keys['a'])) currentActivePlayer.vx = -2;
             if ((keys['ArrowRight'] || keys['d'])) currentActivePlayer.vx = 2;
         }
 
+        // Rysowanie i aktualizacja obiektów
         crates.forEach(c => { c.update(); c.draw(); });
         players.forEach(p => { p.update(); p.draw(); });
         
         for (let i = particles.length - 1; i >= 0; i--) {
             let part = particles[i];
-            part.update(); part.draw();
+            part.update();
+            part.draw();
             if (part.life <= 0) particles.splice(i, 1);
         }
 
         for (let i = projectiles.length - 1; i >= 0; i--) {
             let proj = projectiles[i];
-            proj.update(); proj.draw();
+            proj.update();
+            proj.draw();
             if (!proj.active) projectiles.splice(i, 1);
         }
 
+        // Linia celowania
         if (isAiming && turnState === 'PLAYING' && currentActivePlayer) {
             ctx.beginPath();
             ctx.moveTo(currentActivePlayer.x, currentActivePlayer.y);
@@ -821,27 +717,10 @@ const spawnPlayer = (team, color, name) => {
             ctx.stroke();
         }
 
-        ctx.restore();
-
-        // Rysowanie UI w przestrzeni ekranu (na wierzchu)
-        if (controlMode === 'touch' && joystick.active) {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-            ctx.beginPath(); ctx.arc(joystick.x, joystick.y, joystick.radius, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-            ctx.beginPath(); ctx.arc(joystick.thumbX, joystick.thumbY, joystick.radius / 2, 0, Math.PI * 2); ctx.fill();
-        }
-
         requestAnimationFrame(gameLoop);
     }
-    
-    // Zapobiegamy błędom przy skalowaniu okna
-    window.addEventListener('resize', () => {
-        if(turnState !== 'GAMEOVER' && document.getElementById('menu-overlay').style.display === 'none'){
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-    });
 
+    window.onload = init;
 </script>
 </body>
 </html>
