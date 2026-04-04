@@ -523,26 +523,34 @@
         globalTurnCount = 0;
 
     const spawnPlayer = (team, color, name) => {
-    let rx = Math.random() * (worldWidth - 200) + 100;
+   /**
+ * Tworzy i dodaje nowego gracza do gry w bezpiecznej pozycji.
+ * @param {number} team - Numer drużyny (np. 1 lub 2).
+ * @param {string} color - Kolor gracza w formacie hex lub nazwy.
+ * @param {string} name - Nazwa wyświetlana gracza.
+ */
+const spawnPlayer = (team, color, name) => {
+    // 1. Losowanie pozycji poziomej (z marginesem 50px od krawędzi)
+    const margin = 50;
+    let rx = Math.random() * (canvas.width - (margin * 2)) + margin;
+    
+    // 2. Szukanie podłoża (startujemy od góry ekranu)
     let ry = 0;
+    const step = 5; // Dokładność sprawdzania (im mniejszy, tym precyzyjniej)
 
-    // Szukanie kolizji z terenem od góry do dołu
-    while (ry < worldHeight && !checkTerrainCollision(rx, ry)) {
-        ry += 5;
+    // Pętla szuka pierwszego punktu kolizji z terenem
+    while (ry < canvas.height && !checkTerrainCollision(rx, ry)) {
+        ry += step;
     }
 
-    // Dodajemy gracza tylko raz, używając obliczonego ry (z małym offsetem -12)
-    players.push(new Player(rx, ry - 12, team, color, name));
+    // 3. Tworzenie instancji gracza
+    // Odejmujemy mały offset (np. 12-15px), aby gracz stał NA ziemi, a nie W niej.
+    const playerOffset = 12;
+    const newPlayer = new Player(rx, ry - playerOffset, team, color, name);
+
+    // 4. Dodanie do globalnej tablicy graczy
+    players.push(newPlayer);
 };
-
-// Inicjalizacja drużyn
-for (let i = 0; i < 5; i++) spawnPlayer(1, '#ff3333', `Czerwony ${i+1}`);
-for (let i = 0; i < 5; i++) spawnPlayer(2, '#3333ff', `Niebieski ${i+1}`);
-
-// Ustawienie stanu początkowego gry
-currentTeam = Math.random() > 0.5 ? 1 : 2;
-nextTurn();
-gameLoop();
 
     function checkTerrainCollision(x, y) {
         if (x < 0 || x >= worldWidth || y < 0 || y >= worldHeight) return false;
