@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gry</title>
+    <link rel="shortcut icon" type="image/png" href="cbt.png" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: white;
+            color: #333;
+        }
+        header {
+            background-color: #FAFAFA;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            width: 100%; 
+            box-sizing: border-box;
+            margin: 0 auto;
+        }
+          .logo-wrapper a {
+            text-decoration: none;
+            border: none;
+        }
+
+        .logo-wrapper img {
+            max-height: 100px; 
+            width: auto;
+            display: inline-block;
+            margin-top: 0; 
+            border: 0;
+        }
+        .container {
+            width: 80%;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        h2 {
+            color: #4CAF50; /* Zielony */
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 5px;
+            text-align: center;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+            display: flex; /* Układ elementów w rzędzie/siatce */
+            flex-wrap: wrap; /* Zawijanie w kolejny wiersz */
+            justify-content: center;
+        }
+        ul li {
+            background-color: #E8F5E9; /* Jasny zielony box */
+            margin: 10px;
+            padding: 20px;
+            width: 200px; /* Stała szerokość boxa */
+            text-align: center;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        ul li:hover {
+            transform: translateY(-5px); /* Efekt uniesienia przy najechaniu */
+        }
+        ul li a {
+            text-decoration: none;
+            color: #1B5E20; /* Ciemniejszy zielony */
+            font-weight: bold;
+            display: block;
+            font-size: 1.1em;
+        }
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .back-link a {
+            color: #4CAF50;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+  <div class="logo-wrapper">
+            <a href="https://psychodem-lab.github.io/CBT/Biblioteka.html" title="Powrót do Narzędziownika">
+                <img src="logo.png" alt="Logo Psychodem">
+            </a>
+        </div>
+    </header>
+
+    <div class="container">
+        <h2>Gry relaksacyjne</h2>
+
+        <ul>
+            <li><a href="proces.html"> Process Based CBT</a></li>
+            <li><a href="podroz.html"> Konceptualizacja </a></li>
+        </ul>
+    </div>   
+</body>
+</html>
