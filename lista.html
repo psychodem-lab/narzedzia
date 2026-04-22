@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" type="image/png" href="cbt.png" />
+    <title>Lista Problemów Terapeutycznych</title>
+    
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            line-height: 1.6; 
+            margin: 20px; 
+            background-color: #FAFAFA;
+            color: #1a237e; 
+        }
+        
+        .container { 
+            max-width: 850px; 
+            margin: 0 auto; 
+            background-color: #ffffff; 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); 
+            margin-bottom: 40px; 
+        }
+
+        .logo-wrapper { text-align: center; margin-bottom: 20px; }
+        .logo-wrapper img { max-height: 80px; width: auto; }
+        
+        h1 { color: #b71c1c; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
+
+        .step-container { margin-bottom: 30px; }
+        
+        .step-title {
+            background-color: #ffebee;
+            color: #b71c1c;
+            padding: 10px 15px;
+            border-radius: 8px 8px 0 0;
+            font-weight: bold;
+            border-left: 5px solid #ef5350;
+        }
+
+        .step-content {
+            padding: 20px;
+            border: 1px solid #ffebee;
+            border-top: none;
+            background-color: #fcfcfc;
+            border-radius: 0 0 8px 8px;
+        }
+
+        textarea { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #ccc; 
+            border-radius: 5px; 
+            box-sizing: border-box; 
+            resize: vertical; 
+            font-family: inherit;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background-color: white;
+        }
+
+        th { background-color: #fce4ec; color: #880e4f; padding: 10px; text-align: left; border: 1px solid #f8bbd0; }
+        td { border: 1px solid #f8bbd0; padding: 5px; vertical-align: top; }
+        
+        td textarea { border: none; border-radius: 0; min-height: 60px; display: block; width: 100%; box-shadow: none; resize: none; }
+        td textarea:focus { outline: 2px solid #f8bbd0; }
+        
+        .example-table td { padding: 10px; background-color: #fdfdfd; color: #555; font-size: 0.95em; }
+
+        .citation {
+            font-size: 0.85em;
+            color: #555;
+            border-top: 1px solid #eee;
+            margin-top: 20px;
+            padding-top: 10px;
+        }
+
+        .action-buttons { text-align: center; margin-top: 30px; }
+        .print-btn { background-color: #e53935; color: white; padding: 12px 25px; border: none; border-radius: 25px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .clear-btn { background-color: #757575; color: white; padding: 12px 25px; border: none; border-radius: 25px; font-weight: bold; cursor: pointer; margin-left: 10px; }
+        
+        .print-btn:hover { background-color: #c62828; }
+
+        @media print {
+            .action-buttons, .logo-wrapper { display: none; }
+            .container { box-shadow: none; width: 100%; margin: 0; padding: 0; }
+            body { background-color: white; }
+            textarea { border: 1px solid #eee; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="logo-wrapper">
+        <a href="index.html"><img src="logo.png" alt="Logo"></a>
+    </div>
+
+    <div class="container">
+        <h1>Lista Problemów Terapeutycznych</h1>
+
+        <form id="cbt-problem-list">
+            
+            <div class="step-container">
+                <div class="step-title">1. Dlaczego tworzymy listę problemów?</div>
+                <div class="step-content">
+                    <p>Zidentyfikowanie konkretnych trudności pozwala zrozumieć mechanizmy podtrzymujące objawy. Dobra lista problemów powinna opisywać zachowania, emocje i myśli, które utrudniają codzienne funkcjonowanie.</p>
+                    <ul>
+                        <li><strong>Bądź konkretny:</strong> Zamiast "mam depresję", napisz "trudność z wstawaniem z łóżka".</li>
+                        <li><strong>Monitoruj wpływ:</strong> Oceń, jak bardzo dany problem dezorganizuje Twoje życie.</li>
+                        <li><strong>Ustal priorytety:</strong> Nie wszystko trzeba rozwiązać natychmiast.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="step-container">
+                <div class="step-title">2. Przykłady Problemów i Ich Operacjonalizacja</div>
+                <div class="step-content">
+                    <table class="example-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 30%;">Kategoria</th>
+                                <th style="width: 70%;">Opis problemu (obserwowalny)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Emocje / Nastrój</strong></td>
+                                <td>Silny lęk (80/100) podczas rozmów z przełożonym, objawiający się drżeniem rąk.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Zachowanie</strong></td>
+                                <td>Odkładanie trudnych zadań na ostatnią chwilę (prokrastynacja) średnio 4 razy w tygodniu.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Relacje</strong></td>
+                                <td>Unikanie konfrontacji i nieumiejętność odmawiania, prowadząca do poczucia bycia wykorzystywanym.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="step-container">
+                <div class="step-title">3. Twój Arkusz Problemów</div>
+                <div class="step-content">
+                    <p>Wypisz trudności, z którymi mierzysz się obecnie. <br>
+                    <em>Skala 0-100: 0 = brak wpływu/cierpienia, 100 = maksymalny wpływ/cierpienie.</em></p>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 40%;">Opis problemu</th>
+                                <th style="width: 20%;">Częstotliwość<br><span style="font-size:0.8em; font-weight:normal;">(np. daily, 3x/week)</span></th>
+                                <th style="width: 20%;">Nasilenie cierpienia (0-100)</th>
+                                <th style="width: 20%;">Wpływ na życie (0-100)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><textarea placeholder="Np. Trudności z zasypianiem przez natrętne myśli..."></textarea></td>
+                                <td><textarea placeholder="Codziennie"></textarea></td>
+                                <td><textarea placeholder="70"></textarea></td>
+                                <td><textarea placeholder="80"></textarea></td>
+                            </tr>
+                            <tr>
+                                <td><textarea></textarea></td>
+                                <td><textarea></textarea></td>
+                                <td><textarea></textarea></td>
+                                <td><textarea></textarea></td>
+                            </tr>
+                            <tr>
+                                <td><textarea></textarea></td>
+                                <td><textarea></textarea></td>
+                                <td><textarea></textarea></td>
+                                <td><textarea></textarea></td>
+                            </tr>
+                            <tr>
+                                <td><textarea></textarea></td>
+                                <td><textarea></textarea></td>
+                                <td><textarea></textarea></td>
+                                <td><textarea></textarea></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="step-container">
+                <div class="step-title">4. Analiza Priorytetów</div>
+                <div class="step-content">
+                    <p>Wybierz jeden problem, który najbardziej przeszkadza Ci w osiągnięciu celów i przeanalizuj go głębiej.</p>
+                    
+                    <label><strong>1. Wybrany problem priorytetowy:</strong></label>
+                    <textarea style="margin-bottom: 15px; min-height: 40px;"></textarea>
+                    
+                    <label><strong>2. Co wyzwala ten problem?</strong> (Sytuacje, osoby, pory dnia)</label>
+                    <textarea placeholder="Np. Kiedy mam oddać raport w pracy..." style="margin-bottom: 15px; min-height: 60px;"></textarea>
+
+                    <label><strong>3. Jakie są konsekwencje tego problemu w krótkim i długim terminie?</strong></label>
+                    <textarea placeholder="Krótkoterminowe: Chwilowa ulga. Długoterminowe: Wzrost lęku, zaległości." style="min-height: 80px;"></textarea>
+                </div>
+            </div>
+
+            <div class="citation">
+                <strong>Źródła wiedzy:</strong><br>
+                1. Persons, J. B. (2008). <em>The Case Formulation Approach to Cognitive-Behavior Therapy.</em> Guilford Press.<br>
+                2. Beck, J. S. (2011). <em>Cognitive Behavior Therapy: Basics and Beyond.</em> Guilford Press. <br>
+                3. Tarrier, N. (2006). <em>Case Formulation in Cognitive Behaviour Therapy.</em> Routledge.
+            </div>
+
+            <div class="action-buttons">
+                <button type="button" class="print-btn" onclick="window.print()">🖨️ Drukuj Listę Problemów</button>
+                <button type="reset" class="clear-btn">🗑️ Wyczyść wszystko</button>
+            </div>
+
+        </form>
+    </div>
+</body>
+</html>
