@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" type="image/png" href="cbt.png" />
+    <title>Wyznaczanie Celów Terapeutycznych</title>
+    
+    <style>
+        /* Stylistyka bazowa zgodna z Twoim szablonem */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            line-height: 1.6; 
+            margin: 20px; 
+            background-color: #FAFAFA;
+            color: #1a237e; 
+        }
+        
+        .container { 
+            max-width: 850px; 
+            margin: 0 auto; 
+            background-color: #ffffff; 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); 
+            margin-bottom: 40px; 
+        }
+
+        .logo-wrapper { text-align: center; margin-bottom: 20px; }
+        .logo-wrapper img { max-height: 80px; width: auto; }
+        
+        h1 { color: #0d47a1; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Stylizacja kroków */
+        .step-container { margin-bottom: 30px; }
+        
+        .step-title {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            padding: 10px 15px;
+            border-radius: 8px 8px 0 0;
+            font-weight: bold;
+            border-left: 5px solid #4caf50;
+        }
+
+        .step-content {
+            padding: 20px;
+            border: 1px solid #e8f5e9;
+            border-top: none;
+            background-color: #fcfcfc;
+            border-radius: 0 0 8px 8px;
+        }
+
+        textarea { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #ccc; 
+            border-radius: 5px; 
+            box-sizing: border-box; 
+            resize: vertical; 
+            font-family: inherit;
+        }
+
+        /* Stylizacja tabel */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background-color: white;
+        }
+
+        th { background-color: #f1f8e9; color: #2e7d32; padding: 10px; text-align: left; border: 1px solid #c8e6c9; }
+        td { border: 1px solid #c8e6c9; padding: 5px; vertical-align: top; }
+        
+        /* Specyficzne dla tabeli inputowej */
+        td textarea { border: none; border-radius: 0; min-height: 60px; display: block; width: 100%; box-shadow: none; resize: none; }
+        td textarea:focus { outline: 2px solid #a5d6a7; }
+        
+        /* Tabela z przykładem (statyczna) */
+        .example-table td { padding: 10px; background-color: #fdfdfd; color: #555; font-size: 0.95em; }
+
+        ul { margin-top: 0; padding-left: 20px; }
+        li { margin-bottom: 5px; }
+
+        .citation {
+            font-size: 0.85em;
+            color: #555;
+            border-top: 1px solid #eee;
+            margin-top: 20px;
+            padding-top: 10px;
+        }
+
+        .action-buttons { text-align: center; margin-top: 30px; }
+        .print-btn { background-color: #4caf50; color: white; padding: 12px 25px; border: none; border-radius: 25px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .clear-btn { background-color: #e53935; color: white; padding: 12px 25px; border: none; border-radius: 25px; font-weight: bold; cursor: pointer; margin-left: 10px; }
+        
+        .print-btn:hover { background-color: #43a047; }
+
+        @media print {
+            .action-buttons, .logo-wrapper { display: none; }
+            .container { box-shadow: none; width: 100%; margin: 0; padding: 0; }
+            body { background-color: white; }
+            textarea { border: 1px solid #eee; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="logo-wrapper">
+        <a href="index.html"><img src="logo.png" alt="Logo"></a>
+    </div>
+
+    <div class="container">
+        <h1>Wyznaczanie Celów Terapeutycznych</h1>
+
+        <form id="cbt-goal-setting">
+            
+            <div class="step-container">
+                <div class="step-title">1. Jak wyznaczać dobre cele? (Zasada SMART)</div>
+                <div class="step-content">
+                    <p>Aby terapia była skuteczna, cele powinny być <strong>SMART</strong>. Zamiast mówić "chcę czuć się lepiej", spróbuj doprecyzować swoje dążenia:</p>
+                    <ul>
+                        <li><strong>S (Skonkretyzowany):</strong> Co dokładnie chcesz osiągnąć? (np. "Będę wychodzić do ludzi").</li>
+                        <li><strong>M (Mierzalny):</strong> Po czym poznasz, że cel został osiągnięty? (np. "Raz w tygodniu pójdę do kina").</li>
+                        <li><strong>A (Atrakcyjny/Ambitny):</strong> Czy ten cel jest dla Ciebie ważny?</li>
+                        <li><strong>R (Realistyczny):</strong> Czy jest to możliwe do osiągnięcia w Twojej obecnej sytuacji?</li>
+                        <li><strong>T (Terminowy):</strong> W jakim czasie chcesz to zrealizować?</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="step-container">
+                <div class="step-title">2. Przykłady Celów Terapeutycznych</div>
+                <div class="step-content">
+                    <p>Poniżej znajdziesz przykłady dobrze sformułowanych celów w różnych obszarach.</p>
+                    <table class="example-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 30%;">Obszar</th>
+                                <th style="width: 70%;">Przykład celu (Zoperacjonalizowany)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Relacje społeczne</strong></td>
+                                <td>"W ciągu najbliższego miesiąca zadzwonię do jednego znajomego w tygodniu, aby umówić się na kawę".</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Zdrowie psychiczne</strong></td>
+                                <td>"Będę stosować technikę relaksacji oddechowej codziennie wieczorem przez 10 minut przez najbliższe 2 tygodnie".</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Asertywność</strong></td>
+                                <td>"W pracy, gdy dostanę dodatkowe zadanie ponad siły, użyję komunikatu: 'Chętnie pomogę, ale mam teraz inne priorytety' przynajmniej raz w tygodniu".</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="step-container">
+                <div class="step-title">3. Twoja Lista Celów</div>
+                <div class="step-content">
+                    <p>Wypisz swoje cele. Spróbuj określić, po czym poznasz zmianę (wskaźnik sukcesu).</p>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 30%;">Obszar życia</th>
+                                <th style="width: 40%;">Cel (Co chcę zmienić?)</th>
+                                <th style="width: 30%;">Wskaźnik zmiany (Po czym poznam?)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="background-color: #f1f8e9; font-weight: bold; text-align: center; vertical-align: middle;">Krótkoterminowy<br><span style="font-size:0.8em; font-weight:normal;">(Najbliższe tygodnie)</span></td>
+                                <td><textarea placeholder="Np. Zacznę regularnie spacerować..."></textarea></td>
+                                <td><textarea placeholder="3 spacery po 20 min w tygodniu."></textarea></td>
+                            </tr>
+                            <tr>
+                                <td style="background-color: #f1f8e9; font-weight: bold; text-align: center; vertical-align: middle;">Krótkoterminowy</td>
+                                <td><textarea></textarea></td>
+                                <td><textarea></textarea></td>
+                            </tr>
+
+                            <tr>
+                                <td style="background-color: #e8f5e9; font-weight: bold; text-align: center; vertical-align: middle;">Średnioterminowy<br><span style="font-size:0.8em; font-weight:normal;">(Kilka miesięcy)</span></td>
+                                <td><textarea placeholder="Np. Poprawię relacje z partnerem..."></textarea></td>
+                                <td><textarea placeholder="Jedna długa rozmowa bez telefonu w tygodniu."></textarea></td>
+                            </tr>
+
+                            <tr>
+                                <td style="background-color: #c8e6c9; font-weight: bold; text-align: center; vertical-align: middle;">Długoterminowy<br><span style="font-size:0.8em; font-weight:normal;">(Koniec terapii)</span></td>
+                                <td><textarea placeholder="Np. Podejmę nową pracę lub kurs..."></textarea></td>
+                                <td><textarea placeholder="Wysłanie CV i pójście na rozmowę."></textarea></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="step-container">
+                <div class="step-title">4. Plan Działania dla Najważniejszego Celu</div>
+                <div class="step-content">
+                    <p>Wybierz jeden cel z powyższej listy i rozbij go na mniejsze kroki.</p>
+                    
+                    <label><strong>1. Wybrany cel główny:</strong></label>
+                    <textarea placeholder="Wpisz wybrany cel..." style="margin-bottom: 15px; min-height: 40px;"></textarea>
+                    
+                    <label><strong>2. Jakie są trzy pierwsze, małe kroki?</strong> (Metoda małych kroków)</label>
+                    <textarea placeholder="1. ...&#10;2. ...&#10;3. ..." style="margin-bottom: 15px; min-height: 80px;"></textarea>
+
+                    <label><strong>3. Potencjalne przeszkody i jak sobie z nimi poradzisz?</strong></label>
+                    <textarea placeholder="Np. Brak czasu -> Wyznaczę stałą godzinę w kalendarzu." style="min-height: 60px;"></textarea>
+                </div>
+            </div>
+
+            <div class="citation">
+                <strong>Źródła wiedzy i metodologii:</strong><br>
+                1. Locke, E. A., & Latham, G. P. (2002). <em>Building a practically useful theory of goal setting and task motivation.</em> American Psychologist.<br>
+                2. Beck, J. S. (2011). <em>Cognitive Behavior Therapy: Basics and Beyond.</em> Guilford Press. <br>
+                3. Wampold, B. E. (2015). <em>The Importance of the Therapeutic Alliance and the Goal Consensus.</em> APA.
+            </div>
+
+            <div class="action-buttons">
+                <button type="button" class="print-btn" onclick="window.print()">🖨️ Drukuj Plan Celów</button>
+                <button type="reset" class="clear-btn">🗑️ Wyczyść formularz</button>
+            </div>
+
+        </form>
+    </div>
+</body>
+</html>
