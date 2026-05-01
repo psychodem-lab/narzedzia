@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduMapa - Baza Wiedzy i Mapa Myśli</title>
+    <!-- Wykorzystanie bibliotek z Twojego pierwotnego projektu -->
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; }
+        #network-container { width: 100%; height: 100%; background: #f8fafc; cursor: grab; }
+        #network-container:active { cursor: grabbing; }
+        
+        /* Stylizacja paska przewijania dla panelu bocznego */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Wymuszenie zawijania tekstu w notatkach */
+        .content-display { white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans text-slate-900 h-screen flex flex-col">
+
+    <!-- Nagłówek -->
+    <header class="bg-indigo-900 text-white p-3 shadow-md border-b-4 border-indigo-500 z-10 flex-shrink-0">
+        <div class="w-full flex justify-between items-center px-4">
+            <h1 class="text-xl font-black uppercase tracking-tighter flex items-center gap-2">
+                <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                Edu<span class="text-indigo-400">Mapa</span>
+            </h1>
+            <div class="flex gap-3">
+                <button onclick="exportData()" class="text-xs bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded font-bold uppercase transition shadow-sm">Zapisz na dysk (JSON)</button>
+                <label class="text-xs bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded font-bold cursor-pointer uppercase transition shadow-sm">
+                    Wczytaj mapę <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
+                </label>
+            </div>
+        </div>
+    </header>
+
+    <!-- Główny kontener -->
+    <main class="flex-1 flex overflow-hidden relative">
+        
+        <!-- Obszar mapy myśli (Z lewej) -->
+        <div class="flex-1 relative border-r border-slate-300 shadow-inner">
+            <div id="network-container"></div>
+            
+            <!-- Pływające menu narzędziowe -->
+            <div class="absolute bottom-6 left-6 bg-white p-3 rounded-xl shadow-lg border border-slate-200 flex gap-2">
+                <button onclick="network.fit()" class="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-700 text-xs font-bold transition" title="Wyśrodkuj widok">Wyśrodkuj</button>
+                <div class="w-px bg-slate-300 mx-1"></div>
+                <button onclick="deleteSelected()" class="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded text-xs font-bold transition">Usuń zaznaczone</button>
+            </div>
+        </div>
+
+        <!-- Panel boczny (Z prawej) -->
+        <aside class="w-[400px] bg-white flex flex-col shadow-[-4px_0_15px_rgba(0,0,0,0.05)] z-10 flex-shrink-0">
+            
+            <!-- Sekcja Dodawania -->
+            <div class="p-5 border-b border-slate-200 bg-slate-50">
+                <h2 class="text-xs font-black text-slate-500 uppercase mb-3 tracking-widest">Dodaj Nowe Pojęcie</h2>
+                <input type="text" id="newNodeTitle" placeholder="Tytuł (np. Psychoterapia)" class="w-full p-2.5 mb-2 border border-slate-300 rounded bg-white text-sm outline-none focus:ring-2 ring-indigo-400">
+                <button onclick="addNewNode()" class="w-full bg-indigo-600 text-white font-bold py-2.5 rounded hover:bg-indigo-700 transition shadow text-sm">
+                    Dodaj pojęcie
+                </button>
+                <p id="add-hint" class="text-[10px] text-slate-400 mt-2 italic text-center">
+                    Kliknij węzeł na mapie, aby dodać pojęcie jako jego podkategorię.
+                </p>
+            </div>
+
+            <!-- Sekcja Szczegółów i Edycji (Pojawia się po zaznaczeniu węzła) -->
+            <div id="node-details-panel" class="flex-1 overflow-y-auto custom-scrollbar p-5 hidden flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xs font-black text-indigo-600 uppercase tracking-widest">Szczegóły Pojęcia</h2>
+                    <span id="node-id-display" class="text-[9px] text-slate-400 font-mono"></span>
+                </div>
+
+                <label class="text-[10px] font-bold uppercase text-slate-400 mb-1">Tytuł na mapie:</label>
+                <input type="text" id="editNodeTitle" class="w-full p-2.5 mb-4 border border-slate-300 rounded bg-white text-sm outline-none focus:border-indigo-500 font-bold">
+
+                <label class="text-[10px] font-bold uppercase text-slate-400 mb-1">Rozwinięcie / Notatki:</label>
+                <textarea id="editNodeContent" rows="12" placeholder="Wpisz definicje, zasady, rozszerzone informacje..." class="w-full p-3 mb-4 border border-slate-300 rounded bg-white text-sm outline-none focus:border-indigo-500 custom-scrollbar resize-y leading-relaxed text-slate-700"></textarea>
+
+                <div class="mb-6">
+                    <label class="text-[10px] font-bold uppercase text-slate-400 mb-1 block">Kolor węzła:</label>
+                    <div class="flex gap-2">
+                        <button onclick="changeNodeColor('#6366f1')" class="w-6 h-6 rounded-full bg-indigo-500 hover:ring-2 ring-offset-1 ring-indigo-500 transition"></button>
+                        <button onclick="changeNodeColor('#10b981')" class="w-6 h-6 rounded-full bg-emerald-500 hover:ring-2 ring-offset-1 ring-emerald-500 transition"></button>
+                        <button onclick="changeNodeColor('#f59e0b')" class="w-6 h-6 rounded-full bg-amber-500 hover:ring-2 ring-offset-1 ring-amber-500 transition"></button>
+                        <button onclick="changeNodeColor('#ef4444')" class="w-6 h-6 rounded-full bg-red-500 hover:ring-2 ring-offset-1 ring-red-500 transition"></button>
+                        <button onclick="changeNodeColor('#8b5cf6')" class="w-6 h-6 rounded-full bg-purple-500 hover:ring-2 ring-offset-1 ring-purple-500 transition"></button>
+                        <button onclick="changeNodeColor('#64748b')" class="w-6 h-6 rounded-full bg-slate-500 hover:ring-2 ring-offset-1 ring-slate-500 transition"></button>
+                    </div>
+                </div>
+
+                <div class="mt-auto space-y-2">
+                    <button onclick="saveNodeChanges()" class="w-full bg-slate-900 text-white font-bold py-3 rounded hover:bg-black transition shadow-lg text-sm uppercase">Zapisz Zmiany</button>
+                    <button onclick="deselectCurrentNode()" class="w-full bg-white text-slate-500 border border-slate-300 font-bold py-2 rounded hover:bg-slate-50 transition text-xs uppercase">Anuluj</button>
+                </div>
+            </div>
+
+            <!-- Stan pusty (Gdy nic nie jest zaznaczone) -->
+            <div id="empty-state-panel" class="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-400">
+                <svg class="w-16 h-16 mb-4 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+                <p class="text-sm">Kliknij na dowolny węzeł na mapie, aby przeczytać jego treść i rozpocząć edycję.</p>
+            </div>
+
+        </aside>
+    </main>
+
+    <script>
+        // Inicjalizacja danych strukturalnych - każdy węzeł ma teraz pole 'content'
+        let nodes = new vis.DataSet([
+            { id: 1, label: 'Psychologia', content: 'Nauka badająca mechanizmy i prawa rządzące psychiką oraz zachowaniami człowieka.', color: '#6366f1' },
+            { id: 2, label: 'Psychoterapia', content: 'Metoda leczenia zaburzeń psychicznych i rozwiązywania problemów emocjonalnych za pomocą środków psychologicznych.', color: '#10b981' },
+            { id: 3, label: 'Psychologia Poznawcza', content: 'Dział psychologii zajmujący się badaniem procesów i struktur poznawczych (uwaga, pamięć, myślenie).', color: '#f59e0b' }
+        ]);
+        
+        let edges = new vis.DataSet([
+            { from: 1, to: 2, arrows: 'to' },
+            { from: 1, to: 3, arrows: 'to' }
+        ]);
+
+        const container = document.getElementById('network-container');
+        const data = { nodes: nodes, edges: edges };
+        
+        // Konfiguracja wyglądu mapy[cite: 1]
+        const options = {
+            nodes: {
+                shape: 'box',
+                margin: 12,
+                font: { size: 14, face: 'Inter, sans-serif', color: '#ffffff', bold: true },
+                borderWidth: 0,
+                shadow: { enabled: true, color: 'rgba(0,0,0,0.15)', size: 10, x: 2, y: 3 },
+                widthConstraint: { maximum: 200 }
+            },
+            edges: {
+                color: { color: '#94a3b8', highlight: '#6366f1' },
+                width: 2,
+                smooth: { type: 'continuous', roundness: 0.5 },
+                arrows: { to: { enabled: true, scaleFactor: 0.8 } }
+            },
+            physics: {
+                enabled: true,
+                solver: 'forceAtlas2Based',
+                forceAtlas2Based: {
+                    gravitationalConstant: -100,
+                    centralGravity: 0.01,
+                    springLength: 150,
+                    springConstant: 0.08
+                }
+            },
+            interaction: { hover: true, selectConnectedEdges: false }
+        };
+
+        const network = new vis.Network(container, data, options);
+
+        let currentNodeId = null;
+
+        // --- GŁÓWNA LOGIKA INTERFEJSU ---
+
+        // Nasłuchiwanie na zaznaczenie węzła[cite: 1]
+        network.on("selectNode", function (params) {
+            const nodeId = params.nodes[0];
+            openNodeDetails(nodeId);
+            
+            // Zmiana podpowiedzi w polu dodawania
+            const parentNode = nodes.get(nodeId);
+            document.getElementById('add-hint').innerHTML = `Zostanie dodane jako podkategoria dla: <strong class="text-indigo-600">${parentNode.label}</strong>`;
+        });
+
+        // Nasłuchiwanie na odznaczenie[cite: 1]
+        network.on("deselectNode", function () {
+            deselectCurrentNode();
+        });
+
+        function openNodeDetails(nodeId) {
+            currentNodeId = nodeId;
+            const node = nodes.get(nodeId);
+            
+            // Wypełnianie panelu danymi
+            document.getElementById('editNodeTitle').value = node.label || '';
+            document.getElementById('editNodeContent').value = node.content || '';
+            document.getElementById('node-id-display').innerText = `ID: ${node.id}`;
+
+            // Przełączanie widoczności paneli
+            document.getElementById('empty-state-panel').classList.add('hidden');
+            document.getElementById('node-details-panel').classList.remove('hidden');
+            document.getElementById('node-details-panel').classList.add('flex');
+        }
+
+        function deselectCurrentNode() {
+            currentNodeId = null;
+            network.unselectAll();
+            
+            // Reset interfejsu
+            document.getElementById('node-details-panel').classList.add('hidden');
+            document.getElementById('node-details-panel').classList.remove('flex');
+            document.getElementById('empty-state-panel').classList.remove('hidden');
+            document.getElementById('add-hint').innerHTML = `Kliknij węzeł na mapie, aby dodać pojęcie jako jego podkategoria.<br>Jeśli nic nie zaznaczysz, utworzysz nowy główny węzeł.`;
+        }
+
+        // --- AKCJE NA DANYCH ---
+
+        function addNewNode() {
+            const titleInput = document.getElementById('newNodeTitle');
+            const title = titleInput.value.trim();
+            
+            if (!title) {
+                alert("Wpisz tytuł pojęcia!");
+                return;
+            }
+
+            const newNodeId = Date.now(); // Unikalne ID
+            
+            // Dodawanie węzła[cite: 1]
+            nodes.add({
+                id: newNodeId,
+                label: title,
+                content: '',
+                color: '#6366f1' // Domyślny kolor (Indygo)
+            });
+
+            // Tworzenie hierarchii: jeśli coś jest zaznaczone, połącz je (Zaznaczony -> Nowy)
+            const selectedNodes = network.getSelectedNodes();
+            if (selectedNodes.length > 0) {
+                const parentId = selectedNodes[0];
+                edges.add({
+                    from: parentId,
+                    to: newNodeId,
+                    arrows: 'to'
+                });
+            }
+
+            // Czyszczenie pola
+            titleInput.value = '';
+            
+            // Automatyczne zaznaczenie nowego węzła, by od razu pisać notatki
+            network.selectNodes([newNodeId]);
+            openNodeDetails(newNodeId);
+        }
+
+        function saveNodeChanges() {
+            if (!currentNodeId) return;
+
+            const newTitle = document.getElementById('editNodeTitle').value;
+            const newContent = document.getElementById('editNodeContent').value;
+
+            nodes.update({
+                id: currentNodeId,
+                label: newTitle,
+                content: newContent
+            });
+            
+            // Zakończenie edycji wywołuje lekki efekt zapisu (opcjonalne, dla UX)
+            const btn = document.querySelector('button[onclick="saveNodeChanges()"]');
+            const originalText = btn.innerText;
+            btn.innerText = "Zapisano ✓";
+            btn.classList.add('bg-emerald-600');
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.classList.remove('bg-emerald-600');
+            }, 1000);
+        }
+
+        function changeNodeColor(hexColor) {
+            if (!currentNodeId) return;
+            nodes.update({
+                id: currentNodeId,
+                color: hexColor
+            });
+        }
+
+        function deleteSelected() {
+            const selectedNodes = network.getSelectedNodes();
+            const selectedEdges = network.getSelectedEdges();
+            
+            if (selectedNodes.length === 0 && selectedEdges.length === 0) {
+                alert("Wybierz pojęcie lub połączenie do usunięcia.");
+                return;
+            }
+
+            if (confirm("Czy na pewno chcesz usunąć zaznaczone elementy?")) {
+                if (selectedNodes.length > 0) nodes.remove(selectedNodes);[cite: 1]
+                if (selectedEdges.length > 0) edges.remove(selectedEdges);[cite: 1]
+                deselectCurrentNode();
+            }
+        }
+
+        // --- IMPORT / EKSPORT (wg wzoru z pierwowzoru) ---
+
+        function exportData() {
+            const positions = network.getPositions();
+            const nodesData = nodes.get().map(node => {
+                if (positions[node.id]) {
+                    return { ...node, x: positions[node.id].x, y: positions[node.id].y };
+                }
+                return node;
+            });
+            
+            const dataToExport = JSON.stringify({ nodes: nodesData, edges: edges.get() });
+            const blob = new Blob([dataToExport], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `EduMapa-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();[cite: 1]
+        }
+
+        function importData(e) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const imported = JSON.parse(event.target.result);
+                    nodes.clear();
+                    edges.clear();
+                    deselectCurrentNode();
+                    
+                    nodes.add(imported.nodes);
+                    edges.add(imported.edges);
+                    setTimeout(() => network.fit(), 200);
+                } catch (error) {
+                    alert("Błąd odczytu pliku. Upewnij się, że to poprawny plik EduMapy.");
+                }
+            };
+            reader.readAsText(e.target.files[0]);[cite: 1]
+            // Reset input file żeby można było załadować ten sam plik ponownie
+            e.target.value = '';
+        }
+
+        // Obsługa klawiszy (Szybkie usuwanie)[cite: 1]
+        window.addEventListener('keydown', function(e) {
+            if (e.key === "Delete") {
+                if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                    deleteSelected();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
