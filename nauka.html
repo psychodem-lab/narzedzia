@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EduMapa - Baza Wiedzy i Mapa Myśli</title>
-    <!-- Wykorzystanie bibliotek z Twojego pierwotnego projektu -->
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -12,19 +11,16 @@
         #network-container { width: 100%; height: 100%; background: #f8fafc; cursor: grab; }
         #network-container:active { cursor: grabbing; }
         
-        /* Stylizacja paska przewijania dla panelu bocznego */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        /* Wymuszenie zawijania tekstu w notatkach */
         .content-display { white-space: pre-wrap; word-wrap: break-word; }
     </style>
 </head>
 <body class="bg-slate-100 font-sans text-slate-900 h-screen flex flex-col">
 
-    <!-- Nagłówek -->
     <header class="bg-indigo-900 text-white p-3 shadow-md border-b-4 border-indigo-500 z-10 flex-shrink-0">
         <div class="w-full flex justify-between items-center px-4">
             <h1 class="text-xl font-black uppercase tracking-tighter flex items-center gap-2">
@@ -40,14 +36,10 @@
         </div>
     </header>
 
-    <!-- Główny kontener -->
     <main class="flex-1 flex overflow-hidden relative">
-        
-        <!-- Obszar mapy myśli (Z lewej) -->
         <div class="flex-1 relative border-r border-slate-300 shadow-inner">
             <div id="network-container"></div>
             
-            <!-- Pływające menu narzędziowe -->
             <div class="absolute bottom-6 left-6 bg-white p-3 rounded-xl shadow-lg border border-slate-200 flex gap-2">
                 <button onclick="network.fit()" class="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-700 text-xs font-bold transition" title="Wyśrodkuj widok">Wyśrodkuj</button>
                 <div class="w-px bg-slate-300 mx-1"></div>
@@ -55,13 +47,10 @@
             </div>
         </div>
 
-        <!-- Panel boczny (Z prawej) -->
         <aside class="w-[400px] bg-white flex flex-col shadow-[-4px_0_15px_rgba(0,0,0,0.05)] z-10 flex-shrink-0">
-            
-            <!-- Sekcja Dodawania -->
             <div class="p-5 border-b border-slate-200 bg-slate-50">
                 <h2 class="text-xs font-black text-slate-500 uppercase mb-3 tracking-widest">Dodaj Nowe Pojęcie</h2>
-                <input type="text" id="newNodeTitle" placeholder="Tytuł (np. Psychoterapia)" class="w-full p-2.5 mb-2 border border-slate-300 rounded bg-white text-sm outline-none focus:ring-2 ring-indigo-400">
+                <input type="text" id="newNodeTitle" placeholder="Tytuł (np. Psychoterapia)" onkeypress="handleEnter(event)" class="w-full p-2.5 mb-2 border border-slate-300 rounded bg-white text-sm outline-none focus:ring-2 ring-indigo-400">
                 <button onclick="addNewNode()" class="w-full bg-indigo-600 text-white font-bold py-2.5 rounded hover:bg-indigo-700 transition shadow text-sm">
                     Dodaj pojęcie
                 </button>
@@ -70,7 +59,6 @@
                 </p>
             </div>
 
-            <!-- Sekcja Szczegółów i Edycji (Pojawia się po zaznaczeniu węzła) -->
             <div id="node-details-panel" class="flex-1 overflow-y-auto custom-scrollbar p-5 hidden flex-col">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xs font-black text-indigo-600 uppercase tracking-widest">Szczegóły Pojęcia</h2>
@@ -101,17 +89,14 @@
                 </div>
             </div>
 
-            <!-- Stan pusty (Gdy nic nie jest zaznaczone) -->
             <div id="empty-state-panel" class="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-400">
                 <svg class="w-16 h-16 mb-4 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
                 <p class="text-sm">Kliknij na dowolny węzeł na mapie, aby przeczytać jego treść i rozpocząć edycję.</p>
             </div>
-
         </aside>
     </main>
 
     <script>
-        // Inicjalizacja danych strukturalnych - każdy węzeł ma teraz pole 'content'
         let nodes = new vis.DataSet([
             { id: 1, label: 'Psychologia', content: 'Nauka badająca mechanizmy i prawa rządzące psychiką oraz zachowaniami człowieka.', color: '#6366f1' },
             { id: 2, label: 'Psychoterapia', content: 'Metoda leczenia zaburzeń psychicznych i rozwiązywania problemów emocjonalnych za pomocą środków psychologicznych.', color: '#10b981' },
@@ -126,7 +111,6 @@
         const container = document.getElementById('network-container');
         const data = { nodes: nodes, edges: edges };
         
-        // Konfiguracja wyglądu mapy[cite: 1]
         const options = {
             nodes: {
                 shape: 'box',
@@ -156,22 +140,16 @@
         };
 
         const network = new vis.Network(container, data, options);
-
         let currentNodeId = null;
 
-        // --- GŁÓWNA LOGIKA INTERFEJSU ---
-
-        // Nasłuchiwanie na zaznaczenie węzła[cite: 1]
         network.on("selectNode", function (params) {
             const nodeId = params.nodes[0];
             openNodeDetails(nodeId);
             
-            // Zmiana podpowiedzi w polu dodawania
             const parentNode = nodes.get(nodeId);
             document.getElementById('add-hint').innerHTML = `Zostanie dodane jako podkategoria dla: <strong class="text-indigo-600">${parentNode.label}</strong>`;
         });
 
-        // Nasłuchiwanie na odznaczenie[cite: 1]
         network.on("deselectNode", function () {
             deselectCurrentNode();
         });
@@ -180,12 +158,10 @@
             currentNodeId = nodeId;
             const node = nodes.get(nodeId);
             
-            // Wypełnianie panelu danymi
             document.getElementById('editNodeTitle').value = node.label || '';
             document.getElementById('editNodeContent').value = node.content || '';
             document.getElementById('node-id-display').innerText = `ID: ${node.id}`;
 
-            // Przełączanie widoczności paneli
             document.getElementById('empty-state-panel').classList.add('hidden');
             document.getElementById('node-details-panel').classList.remove('hidden');
             document.getElementById('node-details-panel').classList.add('flex');
@@ -195,14 +171,17 @@
             currentNodeId = null;
             network.unselectAll();
             
-            // Reset interfejsu
             document.getElementById('node-details-panel').classList.add('hidden');
             document.getElementById('node-details-panel').classList.remove('flex');
             document.getElementById('empty-state-panel').classList.remove('hidden');
             document.getElementById('add-hint').innerHTML = `Kliknij węzeł na mapie, aby dodać pojęcie jako jego podkategoria.<br>Jeśli nic nie zaznaczysz, utworzysz nowy główny węzeł.`;
         }
 
-        // --- AKCJE NA DANYCH ---
+        function handleEnter(e) {
+            if (e.key === 'Enter') {
+                addNewNode();
+            }
+        }
 
         function addNewNode() {
             const titleInput = document.getElementById('newNodeTitle');
@@ -213,17 +192,15 @@
                 return;
             }
 
-            const newNodeId = Date.now(); // Unikalne ID
+            const newNodeId = Date.now();
             
-            // Dodawanie węzła[cite: 1]
             nodes.add({
                 id: newNodeId,
                 label: title,
                 content: '',
-                color: '#6366f1' // Domyślny kolor (Indygo)
+                color: '#6366f1'
             });
 
-            // Tworzenie hierarchii: jeśli coś jest zaznaczone, połącz je (Zaznaczony -> Nowy)
             const selectedNodes = network.getSelectedNodes();
             if (selectedNodes.length > 0) {
                 const parentId = selectedNodes[0];
@@ -234,10 +211,7 @@
                 });
             }
 
-            // Czyszczenie pola
             titleInput.value = '';
-            
-            // Automatyczne zaznaczenie nowego węzła, by od razu pisać notatki
             network.selectNodes([newNodeId]);
             openNodeDetails(newNodeId);
         }
@@ -254,7 +228,6 @@
                 content: newContent
             });
             
-            // Zakończenie edycji wywołuje lekki efekt zapisu (opcjonalne, dla UX)
             const btn = document.querySelector('button[onclick="saveNodeChanges()"]');
             const originalText = btn.innerText;
             btn.innerText = "Zapisano ✓";
@@ -283,13 +256,11 @@
             }
 
             if (confirm("Czy na pewno chcesz usunąć zaznaczone elementy?")) {
-                if (selectedNodes.length > 0) nodes.remove(selectedNodes);[cite: 1]
-                if (selectedEdges.length > 0) edges.remove(selectedEdges);[cite: 1]
+                if (selectedNodes.length > 0) nodes.remove(selectedNodes);
+                if (selectedEdges.length > 0) edges.remove(selectedEdges);
                 deselectCurrentNode();
             }
         }
-
-        // --- IMPORT / EKSPORT (wg wzoru z pierwowzoru) ---
 
         function exportData() {
             const positions = network.getPositions();
@@ -305,7 +276,7 @@
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
             a.download = `EduMapa-${new Date().toISOString().split('T')[0]}.json`;
-            a.click();[cite: 1]
+            a.click();
         }
 
         function importData(e) {
@@ -324,12 +295,10 @@
                     alert("Błąd odczytu pliku. Upewnij się, że to poprawny plik EduMapy.");
                 }
             };
-            reader.readAsText(e.target.files[0]);[cite: 1]
-            // Reset input file żeby można było załadować ten sam plik ponownie
+            reader.readAsText(e.target.files[0]);
             e.target.value = '';
         }
 
-        // Obsługa klawiszy (Szybkie usuwanie)[cite: 1]
         window.addEventListener('keydown', function(e) {
             if (e.key === "Delete") {
                 if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
