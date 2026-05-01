@@ -11,46 +11,68 @@
         #network-container { width: 100%; height: 100%; background: #f8fafc; cursor: grab; }
         #network-container:active { cursor: grabbing; }
         
+        /* Stylizacja paska przewijania dla panelu bocznego */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
+        /* Wymuszenie zawijania tekstu w notatkach */
         .content-display { white-space: pre-wrap; word-wrap: break-word; }
     </style>
 </head>
 <body class="bg-slate-100 font-sans text-slate-900 h-screen flex flex-col">
 
-    <header class="bg-indigo-900 text-white p-3 shadow-md border-b-4 border-indigo-500 z-10 flex-shrink-0">
+    <header class="bg-indigo-900 text-white p-3 shadow-md border-b-4 border-indigo-500 z-20 flex-shrink-0 relative">
         <div class="w-full flex justify-between items-center px-4">
             <h1 class="text-xl font-black uppercase tracking-tighter flex items-center gap-2">
                 <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
                 Edu<span class="text-indigo-400">Mapa</span>
             </h1>
-            <div class="flex gap-3">
+            <div class="flex gap-3 items-center">
                 <button onclick="exportData()" class="text-xs bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded font-bold uppercase transition shadow-sm">Zapisz na dysk (JSON)</button>
                 <label class="text-xs bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded font-bold cursor-pointer uppercase transition shadow-sm">
                     Wczytaj mapę <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
                 </label>
+                <div class="w-px h-6 bg-indigo-700 mx-2"></div>
+                <button id="learningModeBtn" onclick="toggleLearningMode()" class="text-xs bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded font-bold uppercase transition shadow-sm text-white">
+                    Tryb Nauki
+                </button>
             </div>
         </div>
     </header>
 
     <main class="flex-1 flex overflow-hidden relative">
+        
         <div class="flex-1 relative border-r border-slate-300 shadow-inner">
             <div id="network-container"></div>
             
-            <div class="absolute bottom-6 left-6 bg-white p-3 rounded-xl shadow-lg border border-slate-200 flex gap-2">
+            <div id="tools-panel" class="absolute bottom-6 left-6 bg-white p-3 rounded-xl shadow-lg border border-slate-200 flex gap-2 transition-opacity">
                 <button onclick="network.fit()" class="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-700 text-xs font-bold transition" title="Wyśrodkuj widok">Wyśrodkuj</button>
                 <div class="w-px bg-slate-300 mx-1"></div>
                 <button onclick="deleteSelected()" class="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded text-xs font-bold transition">Usuń zaznaczone</button>
             </div>
+
+            <div id="learning-modal" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm transition-all" onclick="closeLearningModal(event)">
+                <div class="bg-white rounded-2xl shadow-2xl w-[700px] max-w-[90%] max-h-[80vh] flex flex-col transform transition-transform" onclick="event.stopPropagation()">
+                    <div class="p-6 border-b border-slate-200 flex justify-between items-center bg-indigo-50 rounded-t-2xl">
+                        <h2 id="learning-modal-title" class="text-xl font-black text-indigo-900"></h2>
+                        <button onclick="closeLearningModal()" class="text-slate-400 hover:text-red-500 transition p-1 bg-white rounded-full shadow-sm">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                    <div class="p-8 overflow-y-auto custom-scrollbar flex-1">
+                        <div id="learning-modal-content" class="content-display text-slate-700 text-lg leading-relaxed"></div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <aside class="w-[400px] bg-white flex flex-col shadow-[-4px_0_15px_rgba(0,0,0,0.05)] z-10 flex-shrink-0">
+        <aside id="sidebar" class="w-[400px] bg-white flex flex-col shadow-[-4px_0_15px_rgba(0,0,0,0.05)] z-10 flex-shrink-0 transition-all duration-300">
+            
             <div class="p-5 border-b border-slate-200 bg-slate-50">
                 <h2 class="text-xs font-black text-slate-500 uppercase mb-3 tracking-widest">Dodaj Nowe Pojęcie</h2>
-                <input type="text" id="newNodeTitle" placeholder="Tytuł (np. Psychoterapia)" onkeypress="handleEnter(event)" class="w-full p-2.5 mb-2 border border-slate-300 rounded bg-white text-sm outline-none focus:ring-2 ring-indigo-400">
+                <input type="text" id="newNodeTitle" placeholder="Tytuł (np. Psychoterapia)" class="w-full p-2.5 mb-2 border border-slate-300 rounded bg-white text-sm outline-none focus:ring-2 ring-indigo-400">
                 <button onclick="addNewNode()" class="w-full bg-indigo-600 text-white font-bold py-2.5 rounded hover:bg-indigo-700 transition shadow text-sm">
                     Dodaj pojęcie
                 </button>
@@ -93,10 +115,12 @@
                 <svg class="w-16 h-16 mb-4 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
                 <p class="text-sm">Kliknij na dowolny węzeł na mapie, aby przeczytać jego treść i rozpocząć edycję.</p>
             </div>
+
         </aside>
     </main>
 
     <script>
+        // Inicjalizacja danych strukturalnych - każdy węzeł ma teraz pole 'content'
         let nodes = new vis.DataSet([
             { id: 1, label: 'Psychologia', content: 'Nauka badająca mechanizmy i prawa rządzące psychiką oraz zachowaniami człowieka.', color: '#6366f1' },
             { id: 2, label: 'Psychoterapia', content: 'Metoda leczenia zaburzeń psychicznych i rozwiązywania problemów emocjonalnych za pomocą środków psychologicznych.', color: '#10b981' },
@@ -111,6 +135,7 @@
         const container = document.getElementById('network-container');
         const data = { nodes: nodes, edges: edges };
         
+        // Konfiguracja wyglądu mapy
         const options = {
             nodes: {
                 shape: 'box',
@@ -136,22 +161,40 @@
                     springConstant: 0.08
                 }
             },
-            interaction: { hover: true, selectConnectedEdges: false }
+            interaction: { hover: true, selectConnectedEdges: false, dragNodes: true }
         };
 
         const network = new vis.Network(container, data, options);
-        let currentNodeId = null;
 
+        let currentNodeId = null;
+        let isLearningMode = false;
+
+        // --- GŁÓWNA LOGIKA INTERFEJSU ---
+
+        // Nasłuchiwanie na zaznaczenie węzła
         network.on("selectNode", function (params) {
             const nodeId = params.nodes[0];
-            openNodeDetails(nodeId);
             
-            const parentNode = nodes.get(nodeId);
-            document.getElementById('add-hint').innerHTML = `Zostanie dodane jako podkategoria dla: <strong class="text-indigo-600">${parentNode.label}</strong>`;
+            if (isLearningMode) {
+                // W trybie nauki: wyświetl modal z treścią
+                const node = nodes.get(nodeId);
+                document.getElementById('learning-modal-title').innerText = node.label || 'Brak tytułu';
+                document.getElementById('learning-modal-content').innerText = node.content || 'Brak notatek dla tego pojęcia.';
+                document.getElementById('learning-modal').classList.remove('hidden');
+            } else {
+                // W trybie edycji: otwórz panel boczny
+                openNodeDetails(nodeId);
+                
+                const parentNode = nodes.get(nodeId);
+                document.getElementById('add-hint').innerHTML = `Zostanie dodane jako podkategoria dla: <strong class="text-indigo-600">${parentNode.label}</strong>`;
+            }
         });
 
+        // Nasłuchiwanie na odznaczenie
         network.on("deselectNode", function () {
-            deselectCurrentNode();
+            if (!isLearningMode) {
+                deselectCurrentNode();
+            }
         });
 
         function openNodeDetails(nodeId) {
@@ -177,13 +220,54 @@
             document.getElementById('add-hint').innerHTML = `Kliknij węzeł na mapie, aby dodać pojęcie jako jego podkategoria.<br>Jeśli nic nie zaznaczysz, utworzysz nowy główny węzeł.`;
         }
 
-        function handleEnter(e) {
-            if (e.key === 'Enter') {
-                addNewNode();
+        // --- TRYB NAUKI ---
+
+        function toggleLearningMode() {
+            isLearningMode = !isLearningMode;
+            const sidebar = document.getElementById('sidebar');
+            const toolsPanel = document.getElementById('tools-panel');
+            const btn = document.getElementById('learningModeBtn');
+
+            if (isLearningMode) {
+                // Aktywacja trybu nauki
+                sidebar.classList.add('hidden');
+                toolsPanel.classList.add('hidden');
+                
+                btn.innerText = "Wyjdź z trybu nauki";
+                btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-500');
+                btn.classList.add('bg-red-500', 'hover:bg-red-400');
+                
+                deselectCurrentNode();
+                network.setOptions({ interaction: { dragNodes: false } }); // Blokuje przesuwanie
+            } else {
+                // Wyjście z trybu nauki
+                sidebar.classList.remove('hidden');
+                toolsPanel.classList.remove('hidden');
+                
+                btn.innerText = "Tryb Nauki";
+                btn.classList.remove('bg-red-500', 'hover:bg-red-400');
+                btn.classList.add('bg-emerald-600', 'hover:bg-emerald-500');
+                
+                closeLearningModal();
+                network.setOptions({ interaction: { dragNodes: true } });
+            }
+            
+            // Dopasuj mapę do nowej szerokości okna po schowaniu/pokazaniu panelu
+            setTimeout(() => network.fit(), 100); 
+        }
+
+        function closeLearningModal(e) {
+            document.getElementById('learning-modal').classList.add('hidden');
+            if (isLearningMode) {
+                network.unselectAll(); // Odznacz węzeł, aby można było kliknąć go ponownie
             }
         }
 
+        // --- AKCJE NA DANYCH ---
+
         function addNewNode() {
+            if (isLearningMode) return; // Zabezpieczenie przed dodawaniem w trybie nauki
+
             const titleInput = document.getElementById('newNodeTitle');
             const title = titleInput.value.trim();
             
@@ -192,7 +276,7 @@
                 return;
             }
 
-            const newNodeId = Date.now();
+            const newNodeId = Date.now(); 
             
             nodes.add({
                 id: newNodeId,
@@ -212,6 +296,7 @@
             }
 
             titleInput.value = '';
+            
             network.selectNodes([newNodeId]);
             openNodeDetails(newNodeId);
         }
@@ -247,6 +332,8 @@
         }
 
         function deleteSelected() {
+            if (isLearningMode) return; // Zabezpieczenie
+
             const selectedNodes = network.getSelectedNodes();
             const selectedEdges = network.getSelectedEdges();
             
@@ -261,6 +348,8 @@
                 deselectCurrentNode();
             }
         }
+
+        // --- IMPORT / EKSPORT ---
 
         function exportData() {
             const positions = network.getPositions();
@@ -299,11 +388,15 @@
             e.target.value = '';
         }
 
+        // Obsługa klawiszy (Szybkie usuwanie i zamykanie okna)
         window.addEventListener('keydown', function(e) {
-            if (e.key === "Delete") {
+            if (e.key === "Delete" && !isLearningMode) {
                 if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
                     deleteSelected();
                 }
+            }
+            if (e.key === "Escape" && isLearningMode) {
+                closeLearningModal();
             }
         });
     </script>
