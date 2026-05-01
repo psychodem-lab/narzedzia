@@ -57,9 +57,13 @@
                 <div class="bg-white rounded-2xl shadow-2xl w-[700px] max-w-[90%] max-h-[80vh] flex flex-col transform transition-transform" onclick="event.stopPropagation()">
                     <div class="p-6 border-b border-slate-200 flex justify-between items-center bg-indigo-50 rounded-t-2xl">
                         <h2 id="learning-modal-title" class="text-xl font-black text-indigo-900"></h2>
-                        <button onclick="closeLearningModal()" class="text-slate-400 hover:text-red-500 transition p-1 bg-white rounded-full shadow-sm">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                        </button>
+                        <div class="flex items-center gap-3">
+                            <button id="btn-collapse-learn" onclick="toggleCollapseNode(currentNodeId)" class="hidden items-center gap-1 text-xs bg-indigo-200 text-indigo-800 hover:bg-indigo-300 px-3 py-1.5 rounded font-bold uppercase transition shadow-sm border border-indigo-300">
+                                </button>
+                            <button onclick="closeLearningModal()" class="text-slate-400 hover:text-red-500 transition p-1 bg-white rounded-full shadow-sm">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
                     </div>
                     <div class="p-8 overflow-y-auto custom-scrollbar flex-1">
                         <div id="learning-modal-content" class="content-display text-slate-700 text-lg leading-relaxed"></div>
@@ -106,6 +110,8 @@
                 </div>
 
                 <div class="mt-auto space-y-2">
+                    <button id="btn-collapse-edit" onclick="toggleCollapseNode(currentNodeId)" class="w-full bg-indigo-100 text-indigo-800 font-bold py-2 rounded hover:bg-indigo-200 transition shadow-sm text-xs uppercase hidden items-center justify-center gap-1 border border-indigo-300">
+                        </button>
                     <button onclick="saveNodeChanges()" class="w-full bg-slate-900 text-white font-bold py-3 rounded hover:bg-black transition shadow-lg text-sm uppercase">Zapisz Zmiany</button>
                     <button onclick="deselectCurrentNode()" class="w-full bg-white text-slate-500 border border-slate-300 font-bold py-2 rounded hover:bg-slate-50 transition text-xs uppercase">Anuluj</button>
                 </div>
@@ -114,17 +120,18 @@
             <div id="empty-state-panel" class="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-400">
                 <svg class="w-16 h-16 mb-4 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
                 <p class="text-sm">Kliknij na dowolny węzeł na mapie, aby przeczytać jego treść i rozpocząć edycję.</p>
+                <p class="text-[11px] mt-4 bg-slate-100 p-2 rounded w-full border border-slate-200">Wskazówka: Użyj <strong>dwukliku</strong> na węźle, aby szybko zwinąć lub rozwinąć jego podkategorie.</p>
             </div>
 
         </aside>
     </main>
 
     <script>
-        // Inicjalizacja danych strukturalnych - każdy węzeł ma teraz pole 'content' oraz stałe pozycje (x, y)
+        // Inicjalizacja danych strukturalnych - węzły z opcją collapsed
         let nodes = new vis.DataSet([
-            { id: 1, label: 'Psychologia', content: 'Nauka badająca mechanizmy i prawa rządzące psychiką oraz zachowaniami człowieka.', color: '#6366f1', x: 0, y: 0 },
-            { id: 2, label: 'Psychoterapia', content: 'Metoda leczenia zaburzeń psychicznych i rozwiązywania problemów emocjonalnych za pomocą środków psychologicznych.', color: '#10b981', x: -150, y: 150 },
-            { id: 3, label: 'Psychologia Poznawcza', content: 'Dział psychologii zajmujący się badaniem procesów i struktur poznawczych (uwaga, pamięć, myślenie).', color: '#f59e0b', x: 150, y: 150 }
+            { id: 1, label: 'Psychologia', content: 'Nauka badająca mechanizmy i prawa rządzące psychiką oraz zachowaniami człowieka.', color: '#6366f1', x: 0, y: 0, collapsed: false },
+            { id: 2, label: 'Psychoterapia', content: 'Metoda leczenia zaburzeń psychicznych i rozwiązywania problemów emocjonalnych za pomocą środków psychologicznych.', color: '#10b981', x: -150, y: 150, collapsed: false },
+            { id: 3, label: 'Psychologia Poznawcza', content: 'Dział psychologii zajmujący się badaniem procesów i struktur poznawczych (uwaga, pamięć, myślenie).', color: '#f59e0b', x: 150, y: 150, collapsed: false }
         ]);
         
         let edges = new vis.DataSet([
@@ -135,7 +142,7 @@
         const container = document.getElementById('network-container');
         const data = { nodes: nodes, edges: edges };
         
-        // Konfiguracja wyglądu mapy - ZMIANA: physics.enabled = false
+        // Konfiguracja wyglądu mapy
         const options = {
             nodes: {
                 shape: 'box',
@@ -152,7 +159,7 @@
                 arrows: { to: { enabled: true, scaleFactor: 0.8 } }
             },
             physics: {
-                enabled: false // <-- TO ZATRZYMUJE "PŁYWANIE" WĘZŁÓW
+                enabled: false // Zatrzymuje "pływanie" węzłów
             },
             interaction: { hover: true, selectConnectedEdges: false, dragNodes: true }
         };
@@ -162,28 +169,129 @@
         let currentNodeId = null;
         let isLearningMode = false;
 
+        // --- ZWIJANIE I ROZWIJANIE HIERARCHII ---
+
+        function toggleCollapseNode(nodeId) {
+            if (!nodeId) return;
+            const node = nodes.get(nodeId);
+            if (!node) return;
+
+            const childrenEdges = edges.get({ filter: e => e.from === nodeId });
+            if (childrenEdges.length === 0) return; // Nie ma co zwijać
+
+            const isCollapsed = !node.collapsed;
+            
+            // Pobranie koloru bazowego węzła, by dopasować kolor
+            let bgColor = typeof node.color === 'string' ? node.color : (node.color?.background || '#6366f1');
+
+            // Aktualizacja węzła o status i wskaźnik wizualny
+            nodes.update({
+                id: nodeId,
+                collapsed: isCollapsed,
+                borderWidth: isCollapsed ? 4 : 0,
+                color: {
+                    background: bgColor,
+                    border: isCollapsed ? '#1e293b' : 'transparent', // Ciemna ramka jeśli zwinięte
+                    highlight: {
+                        background: bgColor,
+                        border: isCollapsed ? '#1e293b' : '#ffffff'
+                    }
+                },
+                shapeProperties: { borderDashes: isCollapsed ? [6, 4] : false } // Przerywana ramka jeśli zwinięte
+            });
+
+            updateVisibility();
+            updateCollapseButtons(nodeId);
+        }
+
+        function updateVisibility() {
+            let allNodes = nodes.get();
+            let hiddenSet = new Set();
+            let collapsedNodes = allNodes.filter(n => n.collapsed);
+
+            // Rekursywnie znajdź wszystkie ukryte węzły podległe pod zwinięte
+            collapsedNodes.forEach(cNode => {
+                let descendants = getAllDescendants(cNode.id);
+                descendants.forEach(dId => hiddenSet.add(dId));
+            });
+
+            // Aktualizacja tylko węzłów, którym zmienił się status
+            let updates = [];
+            allNodes.forEach(n => {
+                let shouldBeHidden = hiddenSet.has(n.id);
+                if (n.hidden !== shouldBeHidden) {
+                    updates.push({ id: n.id, hidden: shouldBeHidden });
+                }
+            });
+
+            if (updates.length > 0) {
+                nodes.update(updates);
+            }
+        }
+
+        function getAllDescendants(nodeId, visited = new Set()) {
+            let descendants = [];
+            let childEdges = edges.get({ filter: e => e.from === nodeId });
+            childEdges.forEach(e => {
+                if (!visited.has(e.to)) {
+                    visited.add(e.to);
+                    descendants.push(e.to);
+                    descendants = descendants.concat(getAllDescendants(e.to, visited));
+                }
+            });
+            return descendants;
+        }
+
+        function updateCollapseButtons(nodeId) {
+            const btnEdit = document.getElementById('btn-collapse-edit');
+            const btnLearn = document.getElementById('btn-collapse-learn');
+            if (!nodeId || (!btnEdit && !btnLearn)) return;
+
+            const node = nodes.get(nodeId);
+            const children = edges.get({ filter: e => e.from === nodeId });
+            const hasChildren = children.length > 0;
+
+            const icon = node.collapsed ? '🔽' : '🔼';
+            const text = node.collapsed ? 'Rozwiń podkategorie' : 'Zwiń podkategorie';
+            const content = `<span class="text-base leading-none">${icon}</span> ${text}`;
+
+            if (btnEdit) {
+                btnEdit.style.display = hasChildren ? 'flex' : 'none';
+                btnEdit.innerHTML = content;
+            }
+            if (btnLearn) {
+                btnLearn.style.display = hasChildren ? 'flex' : 'none';
+                btnLearn.innerHTML = content;
+            }
+        }
+
+        // Obsługa dwukliku do szybkiego zwijania
+        network.on("doubleClick", function (params) {
+            if (params.nodes.length > 0) {
+                toggleCollapseNode(params.nodes[0]);
+            }
+        });
+
         // --- GŁÓWNA LOGIKA INTERFEJSU ---
 
-        // Nasłuchiwanie na zaznaczenie węzła
         network.on("selectNode", function (params) {
             const nodeId = params.nodes[0];
+            currentNodeId = nodeId;
             
+            updateCollapseButtons(nodeId);
+
             if (isLearningMode) {
-                // W trybie nauki: wyświetl modal z treścią
                 const node = nodes.get(nodeId);
                 document.getElementById('learning-modal-title').innerText = node.label || 'Brak tytułu';
                 document.getElementById('learning-modal-content').innerText = node.content || 'Brak notatek dla tego pojęcia.';
                 document.getElementById('learning-modal').classList.remove('hidden');
             } else {
-                // W trybie edycji: otwórz panel boczny
                 openNodeDetails(nodeId);
-                
                 const parentNode = nodes.get(nodeId);
                 document.getElementById('add-hint').innerHTML = `Zostanie dodane jako podkategoria dla: <strong class="text-indigo-600">${parentNode.label}</strong>`;
             }
         });
 
-        // Nasłuchiwanie na odznaczenie
         network.on("deselectNode", function () {
             if (!isLearningMode) {
                 deselectCurrentNode();
@@ -222,7 +330,6 @@
             const btn = document.getElementById('learningModeBtn');
 
             if (isLearningMode) {
-                // Aktywacja trybu nauki
                 sidebar.classList.add('hidden');
                 toolsPanel.classList.add('hidden');
                 
@@ -231,9 +338,8 @@
                 btn.classList.add('bg-red-500', 'hover:bg-red-400');
                 
                 deselectCurrentNode();
-                network.setOptions({ interaction: { dragNodes: false } }); // Blokuje przesuwanie
+                network.setOptions({ interaction: { dragNodes: false } }); 
             } else {
-                // Wyjście z trybu nauki
                 sidebar.classList.remove('hidden');
                 toolsPanel.classList.remove('hidden');
                 
@@ -244,22 +350,20 @@
                 closeLearningModal();
                 network.setOptions({ interaction: { dragNodes: true } });
             }
-            
-            // Dopasuj mapę do nowej szerokości okna po schowaniu/pokazaniu panelu
             setTimeout(() => network.fit(), 100); 
         }
 
         function closeLearningModal(e) {
             document.getElementById('learning-modal').classList.add('hidden');
             if (isLearningMode) {
-                network.unselectAll(); // Odznacz węzeł, aby można było kliknąć go ponownie
+                network.unselectAll(); 
             }
         }
 
         // --- AKCJE NA DANYCH ---
 
         function addNewNode() {
-            if (isLearningMode) return; // Zabezpieczenie przed dodawaniem w trybie nauki
+            if (isLearningMode) return; 
 
             const titleInput = document.getElementById('newNodeTitle');
             const title = titleInput.value.trim();
@@ -271,18 +375,14 @@
 
             const newNodeId = Date.now(); 
             const selectedNodes = network.getSelectedNodes();
-            
             let newX, newY;
             
-            // Jeśli fizyka jest wyłączona, musimy sami ustalić gdzie węzeł się pojawi
             if (selectedNodes.length > 0) {
                 const parentId = selectedNodes[0];
                 const pos = network.getPositions([parentId])[parentId];
-                // Wstawiamy obok i nieco poniżej rodzica
                 newX = pos.x + (Math.random() * 80 - 40) + 150; 
                 newY = pos.y + (Math.random() * 80 - 40) + 100;
             } else {
-                // Jeśli nie ma rodzica, wstawiamy na środku aktualnego widoku
                 const viewCenter = network.getViewPosition();
                 newX = viewCenter.x + (Math.random() * 50 - 25);
                 newY = viewCenter.y + (Math.random() * 50 - 25);
@@ -294,7 +394,8 @@
                 content: '',
                 color: '#6366f1',
                 x: newX,
-                y: newY
+                y: newY,
+                collapsed: false
             });
 
             if (selectedNodes.length > 0) {
@@ -304,10 +405,16 @@
                     to: newNodeId,
                     arrows: 'to'
                 });
+                
+                // Aktualizujemy przycisk u rodzica (bo właśnie dostał dziecko)
+                updateCollapseButtons(parentId);
             }
 
             titleInput.value = '';
             
+            // Ukrywamy nowy węzeł od razu, jeśli rodzic był zwinięty
+            updateVisibility(); 
+
             network.selectNodes([newNodeId]);
             openNodeDetails(newNodeId);
         }
@@ -336,14 +443,24 @@
 
         function changeNodeColor(hexColor) {
             if (!currentNodeId) return;
+            const node = nodes.get(currentNodeId);
+            const isCollapsed = node.collapsed || false;
+
             nodes.update({
                 id: currentNodeId,
-                color: hexColor
+                color: {
+                    background: hexColor,
+                    border: isCollapsed ? '#1e293b' : 'transparent',
+                    highlight: {
+                        background: hexColor,
+                        border: isCollapsed ? '#1e293b' : '#ffffff'
+                    }
+                }
             });
         }
 
         function deleteSelected() {
-            if (isLearningMode) return; // Zabezpieczenie
+            if (isLearningMode) return; 
 
             const selectedNodes = network.getSelectedNodes();
             const selectedEdges = network.getSelectedEdges();
@@ -357,6 +474,7 @@
                 if (selectedNodes.length > 0) nodes.remove(selectedNodes);
                 if (selectedEdges.length > 0) edges.remove(selectedEdges);
                 deselectCurrentNode();
+                updateVisibility(); // Usunięcie może wpłynąć na widoczność osieroconych węzłów
             }
         }
 
@@ -365,10 +483,12 @@
         function exportData() {
             const positions = network.getPositions();
             const nodesData = nodes.get().map(node => {
+                let exportNode = { ...node };
                 if (positions[node.id]) {
-                    return { ...node, x: positions[node.id].x, y: positions[node.id].y };
+                    exportNode.x = positions[node.id].x;
+                    exportNode.y = positions[node.id].y;
                 }
-                return node;
+                return exportNode;
             });
             
             const dataToExport = JSON.stringify({ nodes: nodesData, edges: edges.get() });
@@ -390,6 +510,7 @@
                     
                     nodes.add(imported.nodes);
                     edges.add(imported.edges);
+                    updateVisibility(); // Upewnij się, że stan zwiniętych węzłów po wgraniu jest poprawny
                     setTimeout(() => network.fit(), 200);
                 } catch (error) {
                     alert("Błąd odczytu pliku. Upewnij się, że to poprawny plik EduMapy.");
@@ -399,7 +520,7 @@
             e.target.value = '';
         }
 
-        // Obsługa klawiszy (Szybkie usuwanie i zamykanie okna)
+        // Obsługa klawiszy
         window.addEventListener('keydown', function(e) {
             if (e.key === "Delete" && !isLearningMode) {
                 if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
