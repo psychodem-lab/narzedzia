@@ -120,11 +120,11 @@
     </main>
 
     <script>
-        // Inicjalizacja danych strukturalnych - każdy węzeł ma teraz pole 'content'
+        // Inicjalizacja danych strukturalnych - każdy węzeł ma teraz pole 'content' oraz stałe pozycje (x, y)
         let nodes = new vis.DataSet([
-            { id: 1, label: 'Psychologia', content: 'Nauka badająca mechanizmy i prawa rządzące psychiką oraz zachowaniami człowieka.', color: '#6366f1' },
-            { id: 2, label: 'Psychoterapia', content: 'Metoda leczenia zaburzeń psychicznych i rozwiązywania problemów emocjonalnych za pomocą środków psychologicznych.', color: '#10b981' },
-            { id: 3, label: 'Psychologia Poznawcza', content: 'Dział psychologii zajmujący się badaniem procesów i struktur poznawczych (uwaga, pamięć, myślenie).', color: '#f59e0b' }
+            { id: 1, label: 'Psychologia', content: 'Nauka badająca mechanizmy i prawa rządzące psychiką oraz zachowaniami człowieka.', color: '#6366f1', x: 0, y: 0 },
+            { id: 2, label: 'Psychoterapia', content: 'Metoda leczenia zaburzeń psychicznych i rozwiązywania problemów emocjonalnych za pomocą środków psychologicznych.', color: '#10b981', x: -150, y: 150 },
+            { id: 3, label: 'Psychologia Poznawcza', content: 'Dział psychologii zajmujący się badaniem procesów i struktur poznawczych (uwaga, pamięć, myślenie).', color: '#f59e0b', x: 150, y: 150 }
         ]);
         
         let edges = new vis.DataSet([
@@ -135,7 +135,7 @@
         const container = document.getElementById('network-container');
         const data = { nodes: nodes, edges: edges };
         
-        // Konfiguracja wyglądu mapy
+        // Konfiguracja wyglądu mapy - ZMIANA: physics.enabled = false
         const options = {
             nodes: {
                 shape: 'box',
@@ -152,14 +152,7 @@
                 arrows: { to: { enabled: true, scaleFactor: 0.8 } }
             },
             physics: {
-                enabled: true,
-                solver: 'forceAtlas2Based',
-                forceAtlas2Based: {
-                    gravitationalConstant: -100,
-                    centralGravity: 0.01,
-                    springLength: 150,
-                    springConstant: 0.08
-                }
+                enabled: false // <-- TO ZATRZYMUJE "PŁYWANIE" WĘZŁÓW
             },
             interaction: { hover: true, selectConnectedEdges: false, dragNodes: true }
         };
@@ -277,15 +270,33 @@
             }
 
             const newNodeId = Date.now(); 
+            const selectedNodes = network.getSelectedNodes();
+            
+            let newX, newY;
+            
+            // Jeśli fizyka jest wyłączona, musimy sami ustalić gdzie węzeł się pojawi
+            if (selectedNodes.length > 0) {
+                const parentId = selectedNodes[0];
+                const pos = network.getPositions([parentId])[parentId];
+                // Wstawiamy obok i nieco poniżej rodzica
+                newX = pos.x + (Math.random() * 80 - 40) + 150; 
+                newY = pos.y + (Math.random() * 80 - 40) + 100;
+            } else {
+                // Jeśli nie ma rodzica, wstawiamy na środku aktualnego widoku
+                const viewCenter = network.getViewPosition();
+                newX = viewCenter.x + (Math.random() * 50 - 25);
+                newY = viewCenter.y + (Math.random() * 50 - 25);
+            }
             
             nodes.add({
                 id: newNodeId,
                 label: title,
                 content: '',
-                color: '#6366f1'
+                color: '#6366f1',
+                x: newX,
+                y: newY
             });
 
-            const selectedNodes = network.getSelectedNodes();
             if (selectedNodes.length > 0) {
                 const parentId = selectedNodes[0];
                 edges.add({
