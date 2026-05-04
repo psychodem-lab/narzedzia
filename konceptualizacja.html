@@ -83,7 +83,7 @@
             box-sizing: border-box;
             resize: vertical;
             background-color: #f8fafc;
-            overflow-y: hidden; /* Ukrywa pasek przewijania ułatwiając dynamiczne rozszerzanie */
+            overflow-y: hidden;
         }
         textarea:focus, input[type="text"]:focus {
             outline: none;
@@ -163,6 +163,17 @@
         .print-btn:hover {
             background-color: #1e40af;
         }
+
+        /* Klasa dla "lustrzanego odbicia" tekstu - niewidoczna na ekranie */
+        .print-mirror {
+            display: none;
+            white-space: pre-wrap;      /* Zachowuje entery/nowe linie */
+            overflow-wrap: break-word;  /* Zawija długie słowa */
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-top: 10px;
+        }
         
         /* Zmodyfikowane reguły dla wydruku */
         @media print {
@@ -182,15 +193,24 @@
                 page-break-inside: avoid; 
                 margin-bottom: 15px;
             }
-            textarea, input[type="text"] { 
+            
+            /* KLUCZOWA ZMIANA: Ukrywamy kłopotliwe textare na wydruku */
+            textarea { 
+                display: none !important; 
+            }
+            
+            /* ...i pokazujemy nasze "lustro", które przeglądarka traktuje jak zwykły tekst */
+            .print-mirror {
+                display: block !important;
+                color: #000;
+            }
+
+            /* Inputy jednolinijkowe zazwyczaj nie stwarzają problemu, więc zostają */
+            input[type="text"] { 
                 border: none; 
                 background: transparent; 
-                resize: none; 
-                min-height: auto; 
                 padding: 0;
-                overflow: visible !important; /* Wymusza pokazanie całego tekstu */
-                height: auto !important; /* Pozwala na elastyczną wysokość */
-                color: #000; /* Gwarantuje czarny tekst na wydruku */
+                color: #000; 
             }
             .section-title { 
                 page-break-after: avoid; 
@@ -206,8 +226,8 @@
 
 <div class="container">
     <header>
-        <h1>Konceptualizacja CBT</h1>
-        
+        <h1>Zaawansowana Konceptualizacja CBT</h1>
+        <div class="subtitle">  - </div>
     </header>
 
     <h2 class="section-title">CZĘŚĆ I: Makro-poziom (Tło i Kontekst)</h2>
@@ -388,26 +408,48 @@
         }
     }
 
-    // Funkcja dynamicznie dopasowująca wysokość textarea
-    function resizeTextarea(ta) {
-        ta.style.height = 'auto'; // Najpierw resetujemy
-        ta.style.height = ta.scrollHeight + 'px'; // Rozciągamy do rzeczywistej wielkości tekstu
-    }
-
-    // Inicjalizacja dla wszystkich pól textarea na stronie
     const textareas = document.querySelectorAll('textarea');
     
     textareas.forEach(ta => {
-        // Dopasowuje wysokość podczas wpisywania tekstu
-        ta.addEventListener('input', function() {
-            resizeTextarea(this);
-        });
+        // 1. Tworzymy ukryty element <div> tuż pod każdym <textarea>
+        const mirror = document.createElement('div');
+        mirror.className = 'print-mirror';
+        ta.parentNode.insertBefore(mirror, ta.nextSibling);
+
+        // Funkcja synchronizująca treść między <textarea> a <div>
+        function updateTextareaAndMirror() {
+            // Rozciąganie pola na bieżąco podczas wpisywania (dla wygody na ekranie)
+            ta.style.height = 'auto';
+            ta.style.height = ta.scrollHeight + 'px';
+            
+            // Przerzucanie tekstu do ukrytego diva
+            if (ta.value) {
+                mirror.textContent = ta.value;
+                mirror.style.color = '#000'; // Normalny kolor tekstu na wydruku
+            } else {
+                mirror.textContent = ta.placeholder;
+                mirror.style.color = '#64748b'; // Szary kolor dla podpowiedzi (placeholdera)
+            }
+        }
+
+        // 2. Nasłuchujemy zdarzenia wpisywania tekstu
+        ta.addEventListener('input', updateTextareaAndMirror);
+        
+        // Wywołujemy od razu, by zainicjować "lustra" np. placeholderami
+        updateTextareaAndMirror();
     });
 
-    // Kluczowe rozwiązanie: wymusza rozszerzenie wszystkich pól tekstowych na ułamek sekundy przed otwarciem okna drukowania/zapisu do PDF
+    // 3. Dodatkowe zabezpieczenie upewniające się, że lustra mają świeży tekst tuż przed drukiem
     window.addEventListener('beforeprint', () => {
         textareas.forEach(ta => {
-            resizeTextarea(ta);
+            const mirror = ta.nextElementSibling;
+            if (mirror && mirror.classList.contains('print-mirror')) {
+                if (ta.value) {
+                    mirror.textContent = ta.value;
+                } else {
+                    mirror.textContent = ta.placeholder;
+                }
+            }
         });
     });
 </script>
