@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+\<!DOCTYPE html>
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
@@ -83,6 +83,7 @@
             box-sizing: border-box;
             resize: vertical;
             background-color: #f8fafc;
+            overflow-y: hidden; /* Ukrywa pasek przewijania ułatwiając dynamiczne rozszerzanie */
         }
         textarea:focus, input[type="text"]:focus {
             outline: none;
@@ -162,13 +163,42 @@
         .print-btn:hover {
             background-color: #1e40af;
         }
+        
+        /* Zmodyfikowane reguły dla wydruku */
         @media print {
-            .btn-helper, .print-btn { display: none; }
-            body { background: white; padding: 0; }
-            .container { max-width: 100%; }
-            .level-card { box-shadow: none; border-color: #000; page-break-inside: avoid; }
-            textarea { border: none; background: transparent; resize: none; min-height: auto; padding: 0;}
-            .section-title { page-break-after: avoid; }
+            .btn-helper, .print-btn { 
+                display: none; 
+            }
+            body { 
+                background: white; 
+                padding: 0; 
+            }
+            .container { 
+                max-width: 100%; 
+            }
+            .level-card { 
+                box-shadow: none; 
+                border-color: #000; 
+                page-break-inside: avoid; 
+                margin-bottom: 15px;
+            }
+            textarea, input[type="text"] { 
+                border: none; 
+                background: transparent; 
+                resize: none; 
+                min-height: auto; 
+                padding: 0;
+                overflow: visible !important; /* Wymusza pokazanie całego tekstu */
+                height: auto !important; /* Pozwala na elastyczną wysokość */
+                color: #000; /* Gwarantuje czarny tekst na wydruku */
+            }
+            .section-title { 
+                page-break-after: avoid; 
+            }
+            .arrow-down {
+                page-break-after: avoid;
+                page-break-before: avoid;
+            }
         }
     </style>
 </head>
@@ -335,6 +365,7 @@
 
     <div class="hypothesis-box">
         <h3>Hipoteza Robocza (Case Formulation Hypothesis)</h3>
+        
         <p style="font-size: 0.9em; color: #166534; margin-bottom: 15px;">
             <em>Sklej zebrane informacje w narrację. Uzupełnij poniższy schemat swoimi danymi:</em><br>
             "Z powodu <strong>[Wczesnych doświadczeń - pkt 1]</strong>, pacjent wykształcił przekonanie kluczowe <strong>[pkt 8]</strong>. Aby przetrwać i chronić się przed bólem, przyjął zasadę <strong>[pkt 7]</strong>. Kiedy nastąpił wyzwalacz <strong>[pkt 2]</strong>, aktywowały się myśli <strong>[pkt 5]</strong>, co doprowadziło do emocji <strong>[pkt 6]</strong> i zachowań <strong>[pkt 9]</strong>. Problem jest obecnie podtrzymywany przez <strong>[pkt 10]</strong>, jednak rokowania są korzystne dzięki zasobom takim jak <strong>[pkt 3]</strong>."
@@ -347,6 +378,7 @@
 </div>
 
 <script>
+    // Obsługa paneli z pytaniami pomocniczymi
     function toggleHelper(id) {
         var panel = document.getElementById(id);
         if (panel.style.display === "block") {
@@ -355,6 +387,29 @@
             panel.style.display = "block";
         }
     }
+
+    // Funkcja dynamicznie dopasowująca wysokość textarea
+    function resizeTextarea(ta) {
+        ta.style.height = 'auto'; // Najpierw resetujemy
+        ta.style.height = ta.scrollHeight + 'px'; // Rozciągamy do rzeczywistej wielkości tekstu
+    }
+
+    // Inicjalizacja dla wszystkich pól textarea na stronie
+    const textareas = document.querySelectorAll('textarea');
+    
+    textareas.forEach(ta => {
+        // Dopasowuje wysokość podczas wpisywania tekstu
+        ta.addEventListener('input', function() {
+            resizeTextarea(this);
+        });
+    });
+
+    // Kluczowe rozwiązanie: wymusza rozszerzenie wszystkich pól tekstowych na ułamek sekundy przed otwarciem okna drukowania/zapisu do PDF
+    window.addEventListener('beforeprint', () => {
+        textareas.forEach(ta => {
+            resizeTextarea(ta);
+        });
+    });
 </script>
 
 </body>
