@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zaawansowana Konceptualizacja CBT (Model Zintegrowany)</title>
+    <title>Zaawansowana Konceptualizacja CBT </title>
     <style>
         :root {
             --primary: #1e3a8a;
@@ -143,6 +143,23 @@
         .hypothesis-box h3 {
             color: var(--success);
             margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .btn-generate {
+            background-color: var(--success);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            transition: background 0.3s;
+            display: inline-block;
+        }
+        .btn-generate:hover {
+            background-color: #047857;
         }
         .print-btn {
             display: block;
@@ -164,21 +181,21 @@
             background-color: #1e40af;
         }
 
-        /* Klasa dla "lustrzanego odbicia" tekstu - niewidoczna na ekranie */
+        /* Klasa dla "lustrzanego odbicia" tekstu */
         .print-mirror {
             display: none;
-            white-space: pre-wrap;      /* Zachowuje entery/nowe linie */
-            overflow-wrap: break-word;  /* Zawija długie słowa */
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
             font-family: inherit;
             font-size: 14px;
             line-height: 1.6;
             margin-top: 10px;
         }
         
-        /* Zmodyfikowane reguły dla wydruku */
+        /* Reguły dla wydruku */
         @media print {
-            .btn-helper, .print-btn { 
-                display: none; 
+            .btn-helper, .print-btn, .btn-generate { 
+                display: none !important; 
             }
             body { 
                 background: white; 
@@ -193,19 +210,13 @@
                 page-break-inside: avoid; 
                 margin-bottom: 15px;
             }
-            
-            /* KLUCZOWA ZMIANA: Ukrywamy kłopotliwe textare na wydruku */
             textarea { 
                 display: none !important; 
             }
-            
-            /* ...i pokazujemy nasze "lustro", które przeglądarka traktuje jak zwykły tekst */
             .print-mirror {
                 display: block !important;
                 color: #000;
             }
-
-            /* Inputy jednolinijkowe zazwyczaj nie stwarzają problemu, więc zostają */
             input[type="text"] { 
                 border: none; 
                 background: transparent; 
@@ -226,8 +237,8 @@
 
 <div class="container">
     <header>
-        <h1>Zaawansowana Konceptualizacja CBT</h1>
-        <div class="subtitle">  - </div>
+        <h1> Konceptualizacja CBT </h1>
+      
     </header>
 
     <h2 class="section-title">CZĘŚĆ I: Makro-poziom (Tło i Kontekst)</h2>
@@ -243,7 +254,7 @@
                 <li>Czy występuje genetyczna lub biologiczna podatność (np. wywiad rodzinny w kierunku depresji)?</li>
             </ul>
         </div>
-        <textarea placeholder="Opisz wczesne doświadczenia, relacje z opiekunami, genetykę..."></textarea>
+        <textarea id="ta-1" placeholder="Opisz wczesne doświadczenia, relacje z opiekunami, genetykę..."></textarea>
     </div>
 
     <div class="level-card">
@@ -257,7 +268,7 @@
                 <li>Jaki ukryty schemat został aktywowany przez to konkretne zdarzenie?</li>
             </ul>
         </div>
-        <textarea placeholder="Opisz bezpośrednie powody zgłoszenia się na terapię i niedawne kryzysy..."></textarea>
+        <textarea id="ta-2" placeholder="Opisz bezpośrednie powody zgłoszenia się na terapię i niedawne kryzysy..."></textarea>
     </div>
 
     <div class="level-card strengths">
@@ -271,7 +282,7 @@
                 <li>Gdzie w życiu pacjenta problem <strong>nie</strong> występuje? Kiedy funkcjonuje optymalnie?</li>
             </ul>
         </div>
-        <textarea placeholder="Wypisz mocne strony, talenty, relacje wspierające..."></textarea>
+        <textarea id="ta-3" placeholder="Wypisz mocne strony, talenty, relacje wspierające..."></textarea>
     </div>
 
     <h2 class="section-title">CZĘŚĆ II: Mikro-poziom (Przekrój Poznawczy)</h2>
@@ -285,7 +296,7 @@
                 <li>Tylko suche fakty: Kto? Co? Gdzie? Kiedy? (Jak z zapisu kamery wideo).</li>
             </ul>
         </div>
-        <textarea placeholder="Konkretna sytuacja "tu i teraz"..."></textarea>
+        <textarea id="ta-4" placeholder="Konkretna sytuacja "tu i teraz"..."></textarea>
     </div>
     <div class="arrow-down">↓</div>
 
@@ -301,8 +312,8 @@
                 <li><strong>Zniekształcenia:</strong> Czy traktujesz emocje jako dowód (uzasadnienie emocjonalne)?</li>
             </ul>
         </div>
-        <input type="text" placeholder="Zidentyfikowane zniekształcenia (np. katastrofizacja, myślenie dychotomiczne)...">
-        <textarea placeholder="Strumień myśli w danej sytuacji..."></textarea>
+        <input type="text" id="ta-5-dist" placeholder="Zidentyfikowane zniekształcenia (np. katastrofizacja, myślenie dychotomiczne)...">
+        <textarea id="ta-5" placeholder="Strumień myśli w danej sytuacji..."></textarea>
     </div>
     <div class="arrow-down">↓</div>
 
@@ -316,7 +327,7 @@
                 <li>Gdzie w ciele było to odczuwalne? (Napięcie mięśni, płytki oddech, ucisk w klatce).</li>
             </ul>
         </div>
-        <textarea placeholder="Smutek 80%, Lęk 90%... Odczucia z ciała..."></textarea>
+        <textarea id="ta-6" placeholder="Smutek 80%, Lęk 90%... Odczucia z ciała..."></textarea>
     </div>
     <div class="arrow-down">↓</div>
 
@@ -331,7 +342,7 @@
                 <li><strong>Koszty:</strong> Co by się stało, gdybyś choć raz złamał tę zasadę? W czym ona pomaga, a w czym ogranicza?</li>
             </ul>
         </div>
-        <textarea placeholder="Zasady (Muszę...), Postawy (To okropne, gdy...), Założenia (Jeśli..., to...)..."></textarea>
+        <textarea id="ta-7" placeholder="Zasady (Muszę...), Postawy (To okropne, gdy...), Założenia (Jeśli..., to...)..."></textarea>
     </div>
     <div class="arrow-down">↓</div>
 
@@ -347,7 +358,7 @@
                 <li>Kategoria bezradności (nieadekwatność) vs Kategoria nieatrakcyjności (niezasługiwanie na miłość).</li>
             </ul>
         </div>
-        <textarea placeholder="Absolutne prawdy o sobie (Jestem...), innych (Ludzie są...), świecie (Świat jest...)..."></textarea>
+        <textarea id="ta-8" placeholder="Absolutne prawdy o sobie (Jestem...), innych (Ludzie są...), świecie (Świat jest...)..."></textarea>
     </div>
     <div class="arrow-down">↓</div>
 
@@ -362,7 +373,7 @@
                 <li><strong>Sygnały bezpieczeństwa:</strong> Czego/kogo potrzebujesz obok siebie, by przetrwać tę sytuację?</li>
             </ul>
         </div>
-        <textarea placeholder="Unikanie, perfekcjonizm, wycofanie, poszukiwanie zapewnień..."></textarea>
+        <textarea id="ta-9" placeholder="Unikanie, perfekcjonizm, wycofanie, poszukiwanie zapewnień..."></textarea>
     </div>
 
     <h2 class="section-title">CZĘŚĆ III: Dynamika Podtrzymująca</h2>
@@ -378,7 +389,7 @@
                 <li><strong>Środowisko:</strong> Czy osoby z otoczenia (nieświadomie) wzmacniają problem (np. wyręczając pacjenta)?</li>
             </ul>
         </div>
-        <textarea placeholder="Opisz mechanizmy błędnego koła, jatrogenię, czynniki środowiskowe..."></textarea>
+        <textarea id="ta-10" placeholder="Opisz mechanizmy błędnego koła, jatrogenię, czynniki środowiskowe..."></textarea>
     </div>
 
     <h2 class="section-title">CZĘŚĆ IV: Synteza</h2>
@@ -387,10 +398,12 @@
         <h3>Hipoteza Robocza (Case Formulation Hypothesis)</h3>
         
         <p style="font-size: 0.9em; color: #166534; margin-bottom: 15px;">
-            <em>Sklej zebrane informacje w narrację. Uzupełnij poniższy schemat swoimi danymi:</em><br>
-            "Z powodu <strong>[Wczesnych doświadczeń - pkt 1]</strong>, pacjent wykształcił przekonanie kluczowe <strong>[pkt 8]</strong>. Aby przetrwać i chronić się przed bólem, przyjął zasadę <strong>[pkt 7]</strong>. Kiedy nastąpił wyzwalacz <strong>[pkt 2]</strong>, aktywowały się myśli <strong>[pkt 5]</strong>, co doprowadziło do emocji <strong>[pkt 6]</strong> i zachowań <strong>[pkt 9]</strong>. Problem jest obecnie podtrzymywany przez <strong>[pkt 10]</strong>, jednak rokowania są korzystne dzięki zasobom takim jak <strong>[pkt 3]</strong>."
+            <em>Sklej zebrane informacje w narrację. Możesz to zrobić ręcznie lub użyć przycisku poniżej, by wygenerować automatyczny szkic na podstawie wcześniej wpisanych danych (pamiętaj o ewentualnym poprawieniu gramatyki):</em>
         </p>
-        <textarea placeholder="Wpisz pełną hipotezę narracyjną tutaj..." style="border-color: #22c55e; background-color: #ffffff;"></textarea>
+        
+        <button class="btn-generate" onclick="generateHypothesis()">✨ Generuj szkic hipotezy</button>
+
+        <textarea id="ta-synthesis" placeholder="Wpisz pełną hipotezę narracyjną tutaj..." style="border-color: #22c55e; background-color: #ffffff; min-height: 150px;"></textarea>
     </div>
 
     <button class="print-btn" onclick="window.print()">Drukuj / Zapisz jako PDF do dokumentacji</button>
@@ -408,38 +421,59 @@
         }
     }
 
+    // Funkcja generująca hipotezę
+    function generateHypothesis() {
+        // Funkcja pomocnicza do pobierania wartości lub zwracania znacznika braku danych
+        const getVal = (id) => {
+            const val = document.getElementById(id).value.trim();
+            return val ? val : "[Brak danych]";
+        };
+
+        const pkt1 = getVal('ta-1');
+        const pkt2 = getVal('ta-2');
+        const pkt3 = getVal('ta-3');
+        const pkt5 = getVal('ta-5');
+        const pkt6 = getVal('ta-6');
+        const pkt7 = getVal('ta-7');
+        const pkt8 = getVal('ta-8');
+        const pkt9 = getVal('ta-9');
+        const pkt10 = getVal('ta-10');
+
+        // Tworzenie tekstu hipotezy
+        const hypothesisText = `Z powodu następujących wczesnych doświadczeń: ${pkt1}, pacjent wykształcił przekonanie kluczowe: "${pkt8}". Aby przetrwać i chronić się przed bólem, przyjął zasadę: "${pkt7}". Kiedy nastąpił wyzwalacz w postaci: ${pkt2}, aktywowały się myśli: "${pkt5}", co doprowadziło do emocji takich jak: ${pkt6} i zachowań kompensacyjnych: ${pkt9}. Problem jest obecnie podtrzymywany przez: ${pkt10}, jednak rokowania są korzystne dzięki zasobom takim jak: ${pkt3}.`;
+
+        const synthesisTextarea = document.getElementById('ta-synthesis');
+        synthesisTextarea.value = hypothesisText;
+
+        // Wymuszenie zdarzenia "input", aby zaktualizować wysokość pola i "lustrzane odbicie"
+        synthesisTextarea.dispatchEvent(new Event('input'));
+    }
+
+    // Inicjalizacja "lustrzanego odbicia" dla wydruku
     const textareas = document.querySelectorAll('textarea');
     
     textareas.forEach(ta => {
-        // 1. Tworzymy ukryty element <div> tuż pod każdym <textarea>
         const mirror = document.createElement('div');
         mirror.className = 'print-mirror';
         ta.parentNode.insertBefore(mirror, ta.nextSibling);
 
-        // Funkcja synchronizująca treść między <textarea> a <div>
         function updateTextareaAndMirror() {
-            // Rozciąganie pola na bieżąco podczas wpisywania (dla wygody na ekranie)
             ta.style.height = 'auto';
             ta.style.height = ta.scrollHeight + 'px';
             
-            // Przerzucanie tekstu do ukrytego diva
             if (ta.value) {
                 mirror.textContent = ta.value;
-                mirror.style.color = '#000'; // Normalny kolor tekstu na wydruku
+                mirror.style.color = '#000';
             } else {
                 mirror.textContent = ta.placeholder;
-                mirror.style.color = '#64748b'; // Szary kolor dla podpowiedzi (placeholdera)
+                mirror.style.color = '#64748b';
             }
         }
 
-        // 2. Nasłuchujemy zdarzenia wpisywania tekstu
         ta.addEventListener('input', updateTextareaAndMirror);
-        
-        // Wywołujemy od razu, by zainicjować "lustra" np. placeholderami
         updateTextareaAndMirror();
     });
 
-    // 3. Dodatkowe zabezpieczenie upewniające się, że lustra mają świeży tekst tuż przed drukiem
     window.addEventListener('beforeprint', () => {
         textareas.forEach(ta => {
             const mirror = ta.nextElementSibling;
