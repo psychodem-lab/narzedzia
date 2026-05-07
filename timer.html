@@ -3,26 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern Pomodoro</title>
+    <title>Blue Focus Timer</title>
     <style>
         :root {
-            --primary: #ff6b6b;
-            --secondary: #4ecdc4;
-            --bg: #f7f9fc;
+            --primary: #0984e3; /* Nowy kolor niebieski */
+            --secondary: #00cec9;
+            --bg: #f0f2f5;
             --text: #2d3436;
-            --card-bg: rgba(255, 255, 255, 0.9);
+            --card-bg: rgba(255, 255, 255, 0.95);
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
-            background-color: var(--bg);
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -34,36 +33,63 @@
             width: 90%;
             max-width: 400px;
             background: var(--card-bg);
-            backdrop-filter: blur(10px);
-            padding: 2rem;
+            padding: 2.5rem 2rem;
             border-radius: 30px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
             text-align: center;
-            border: 1px solid rgba(255,255,255,0.3);
         }
 
         h1 {
-            font-weight: 300;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+
+        .settings {
             margin-bottom: 1.5rem;
-            letter-spacing: 1px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .settings label {
+            font-size: 0.9rem;
+            color: #636e72;
+        }
+
+        .settings input {
+            width: 80px;
+            padding: 8px;
+            border: 2px solid #dfe6e9;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .settings input:focus {
+            border-color: var(--primary);
         }
 
         .modes {
             display: flex;
             justify-content: center;
             gap: 10px;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
 
         .mode-btn {
             border: none;
-            background: #eee;
-            padding: 8px 16px;
-            border-radius: 20px;
+            background: #f1f2f6;
+            padding: 10px 20px;
+            border-radius: 15px;
             cursor: pointer;
             transition: 0.3s;
             font-weight: 600;
-            color: #636e72;
+            color: #7f8c8d;
         }
 
         .mode-btn.active {
@@ -72,61 +98,62 @@
         }
 
         .timer-display {
-            font-size: 5rem;
-            font-weight: 700;
+            font-size: 5.5rem;
+            font-weight: 800;
             margin-bottom: 2rem;
+            color: var(--text);
             font-variant-numeric: tabular-nums;
         }
 
         .controls {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
         }
 
         .main-btn {
             border: none;
-            padding: 15px;
-            border-radius: 15px;
-            font-size: 1.2rem;
-            font-weight: bold;
+            padding: 18px;
+            border-radius: 20px;
+            font-size: 1.1rem;
+            font-weight: 700;
             cursor: pointer;
-            transition: transform 0.2s, background 0.3s;
+            transition: transform 0.1s, background 0.3s, box-shadow 0.3s;
         }
 
         #startPause {
             background: var(--primary);
             color: white;
-            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+            box-shadow: 0 8px 20px rgba(9, 132, 227, 0.3);
         }
 
         #reset {
-            background: transparent;
-            color: #636e72;
-            text-decoration: underline;
-            font-size: 0.9rem;
+            background: #dfe6e9;
+            color: #2d3436;
         }
 
         .main-btn:active {
-            transform: scale(0.95);
+            transform: scale(0.97);
         }
 
-        /* Mobile specific adjustments */
-        @media (max-width: 480px) {
-            .timer-display {
-                font-size: 4rem;
-            }
+        @media (max-width: 400px) {
+            .timer-display { font-size: 4.5rem; }
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>Focus</h1>
+        <h1>Focus Blue</h1>
         
+        <div class="settings">
+            <label for="minutesInput">Ustaw minuty:</label>
+            <input type="number" id="minutesInput" value="25" min="1" max="999">
+        </div>
+
         <div class="modes">
-            <button class="mode-btn active" onclick="setMode('work')">Praca</button>
-            <button class="mode-btn" onclick="setMode('break')">Przerwa</button>
+            <button class="mode-btn active" id="workBtn" onclick="changeMode('work')">Praca</button>
+            <button class="mode-btn" id="breakBtn" onclick="changeMode('break')">Przerwa</button>
         </div>
 
         <div class="timer-display" id="timer">25:00</div>
@@ -144,68 +171,86 @@
     <script>
         let timeLeft;
         let timerId = null;
-        let isWorkMode = true;
+        let currentMode = 'work';
 
         const timerDisplay = document.getElementById('timer');
         const startPauseBtn = document.getElementById('startPause');
         const resetBtn = document.getElementById('reset');
+        const minutesInput = document.getElementById('minutesInput');
         const alarm = document.getElementById('alarm');
-        const modeBtns = document.querySelectorAll('.mode-btn');
 
-        function setMode(mode) {
-            clearInterval(timerId);
-            timerId = null;
-            startPauseBtn.innerText = 'START';
+        function initTimer() {
+            timeLeft = parseInt(minutesInput.value) * 60;
+            updateDisplay();
+        }
+
+        function changeMode(mode) {
+            currentMode = mode;
+            stopTimer();
             
             if (mode === 'work') {
-                isWorkMode = true;
-                timeLeft = 25 * 60;
-                modeBtns[0].classList.add('active');
-                modeBtns[1].classList.remove('active');
-                document.documentElement.style.setProperty('--primary', '#ff6b6b');
+                minutesInput.value = 25;
+                document.getElementById('workBtn').classList.add('active');
+                document.getElementById('breakBtn').classList.remove('active');
+                document.documentElement.style.setProperty('--primary', '#0984e3');
             } else {
-                isWorkMode = false;
-                timeLeft = 5 * 60;
-                modeBtns[1].classList.add('active');
-                modeBtns[0].classList.remove('active');
-                document.documentElement.style.setProperty('--primary', '#4ecdc4');
+                minutesInput.value = 5;
+                document.getElementById('breakBtn').classList.add('active');
+                document.getElementById('workBtn').classList.remove('active');
+                document.documentElement.style.setProperty('--primary', '#00cec9');
             }
-            updateDisplay();
+            initTimer();
         }
 
         function updateDisplay() {
             const minutes = Math.floor(timeLeft / 60);
             const seconds = timeLeft % 60;
-            const display = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            timerDisplay.innerText = display;
-            document.title = `${display} - Pomodoro`;
+            const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            timerDisplay.innerText = timeString;
+            document.title = `${timeString} - Timer`;
+        }
+
+        function stopTimer() {
+            clearInterval(timerId);
+            timerId = null;
+            startPauseBtn.innerText = 'START';
         }
 
         function startPause() {
             if (timerId) {
-                clearInterval(timerId);
-                timerId = null;
-                startPauseBtn.innerText = 'START';
+                stopTimer();
             } else {
                 startPauseBtn.innerText = 'PAUZA';
                 timerId = setInterval(() => {
                     timeLeft--;
                     updateDisplay();
                     if (timeLeft <= 0) {
-                        clearInterval(timerId);
+                        stopTimer();
                         alarm.play();
-                        alert(isWorkMode ? 'Czas na przerwę!' : 'Czas wracać do pracy!');
-                        setMode(isWorkMode ? 'break' : 'work');
+                        alert('Czas minął!');
+                        resetToDefault();
                     }
                 }, 1000);
             }
         }
 
-        startPauseBtn.addEventListener('click', startPause);
-        resetBtn.addEventListener('click', () => setMode(isWorkMode ? 'work' : 'break'));
+        function resetToDefault() {
+            stopTimer();
+            initTimer();
+        }
 
-        // Inicjalizacja
-        setMode('work');
+        // Event Listeners
+        startPauseBtn.addEventListener('click', startPause);
+        resetBtn.addEventListener('click', resetToDefault);
+        
+        minutesInput.addEventListener('input', () => {
+            if (!timerId) {
+                initTimer();
+            }
+        });
+
+        // Start
+        initTimer();
     </script>
 </body>
 </html>
