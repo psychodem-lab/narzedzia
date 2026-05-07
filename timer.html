@@ -1,1 +1,211 @@
-a
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Pomodoro</title>
+    <style>
+        :root {
+            --primary: #ff6b6b;
+            --secondary: #4ecdc4;
+            --bg: #f7f9fc;
+            --text: #2d3436;
+            --card-bg: rgba(255, 255, 255, 0.9);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text);
+        }
+
+        .container {
+            width: 90%;
+            max-width: 400px;
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        h1 {
+            font-weight: 300;
+            margin-bottom: 1.5rem;
+            letter-spacing: 1px;
+        }
+
+        .modes {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .mode-btn {
+            border: none;
+            background: #eee;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: 600;
+            color: #636e72;
+        }
+
+        .mode-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .timer-display {
+            font-size: 5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .main-btn {
+            border: none;
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.3s;
+        }
+
+        #startPause {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        #reset {
+            background: transparent;
+            color: #636e72;
+            text-decoration: underline;
+            font-size: 0.9rem;
+        }
+
+        .main-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Mobile specific adjustments */
+        @media (max-width: 480px) {
+            .timer-display {
+                font-size: 4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Focus</h1>
+        
+        <div class="modes">
+            <button class="mode-btn active" onclick="setMode('work')">Praca</button>
+            <button class="mode-btn" onclick="setMode('break')">Przerwa</button>
+        </div>
+
+        <div class="timer-display" id="timer">25:00</div>
+
+        <div class="controls">
+            <button class="main-btn" id="startPause">START</button>
+            <button class="main-btn" id="reset">Resetuj</button>
+        </div>
+    </div>
+
+    <audio id="alarm" preload="auto">
+        <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+    </audio>
+
+    <script>
+        let timeLeft;
+        let timerId = null;
+        let isWorkMode = true;
+
+        const timerDisplay = document.getElementById('timer');
+        const startPauseBtn = document.getElementById('startPause');
+        const resetBtn = document.getElementById('reset');
+        const alarm = document.getElementById('alarm');
+        const modeBtns = document.querySelectorAll('.mode-btn');
+
+        function setMode(mode) {
+            clearInterval(timerId);
+            timerId = null;
+            startPauseBtn.innerText = 'START';
+            
+            if (mode === 'work') {
+                isWorkMode = true;
+                timeLeft = 25 * 60;
+                modeBtns[0].classList.add('active');
+                modeBtns[1].classList.remove('active');
+                document.documentElement.style.setProperty('--primary', '#ff6b6b');
+            } else {
+                isWorkMode = false;
+                timeLeft = 5 * 60;
+                modeBtns[1].classList.add('active');
+                modeBtns[0].classList.remove('active');
+                document.documentElement.style.setProperty('--primary', '#4ecdc4');
+            }
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            const display = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            timerDisplay.innerText = display;
+            document.title = `${display} - Pomodoro`;
+        }
+
+        function startPause() {
+            if (timerId) {
+                clearInterval(timerId);
+                timerId = null;
+                startPauseBtn.innerText = 'START';
+            } else {
+                startPauseBtn.innerText = 'PAUZA';
+                timerId = setInterval(() => {
+                    timeLeft--;
+                    updateDisplay();
+                    if (timeLeft <= 0) {
+                        clearInterval(timerId);
+                        alarm.play();
+                        alert(isWorkMode ? 'Czas na przerwę!' : 'Czas wracać do pracy!');
+                        setMode(isWorkMode ? 'break' : 'work');
+                    }
+                }, 1000);
+            }
+        }
+
+        startPauseBtn.addEventListener('click', startPause);
+        resetBtn.addEventListener('click', () => setMode(isWorkMode ? 'work' : 'break'));
+
+        // Inicjalizacja
+        setMode('work');
+    </script>
+</body>
+</html>
