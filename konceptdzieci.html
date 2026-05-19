@@ -51,6 +51,7 @@
             border-radius: 4px;
             font-size: 16px;
             font-weight: bold;
+            page-break-after: avoid;
         }
 
         .form-row {
@@ -76,7 +77,7 @@
             font-size: 14px;
         }
 
-        input[type="text"], input[type="number"], textarea {
+        input[type="text"], input[type="number"] {
             width: 100%;
             padding: 10px;
             border: 1px solid var(--border);
@@ -84,15 +85,36 @@
             font-family: inherit;
         }
 
-        textarea {
-            resize: vertical;
-            min-height: 80px;
+        /* Nowe elastyczne pole tekstowe zastępujące textarea */
+        .textarea-mimic {
+            width: 100%;
+            min-height: 90px;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 14px;
+            background: var(--white);
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-y: visible;
         }
 
-        input:focus, textarea:focus {
+        .textarea-mimic:focus {
             outline: none;
             border-color: var(--accent);
             box-shadow: 0 0 4px rgba(22, 160, 133, 0.3);
+        }
+
+        /* Stylizacja placeholderów dla pól contenteditable */
+        .textarea-mimic:empty:before {
+            content: attr(data-placeholder);
+            color: #95a5a6;
+            font-style: italic;
+        }
+        
+        .textarea-mimic:focus:empty:before {
+            content: "";
         }
 
         .matrix-table {
@@ -103,12 +125,25 @@
 
         .matrix-table th, .matrix-table td {
             border: 1px solid var(--border);
-            padding: 10px;
+            padding: 8px;
             text-align: left;
+            vertical-align: top;
         }
 
         .matrix-table th { background-color: #f7f9fa; font-size: 13px; color: var(--primary); }
-        .matrix-table td textarea { min-height: 100px; border: none; padding: 5px; background: transparent; }
+        
+        .matrix-table td .textarea-mimic { 
+            min-height: 100px; 
+            border: none; 
+            padding: 5px; 
+            background: transparent; 
+            border-radius: 0;
+            box-shadow: none;
+        }
+
+        .matrix-table td .textarea-mimic:focus {
+            background-color: #fcfcfc;
+        }
 
         .actions {
             margin-top: 30px;
@@ -128,11 +163,42 @@
 
         button:hover { background-color: #1abc9c; }
 
+        /* REGUŁY SPECJALNE DLA DRUKU - zapobiegają ucinaniu tekstu */
         @media print {
-            body { background: white; padding: 0; }
-            .container { box-shadow: none; padding: 0; }
-            button { display: none; }
-            textarea { border: none; border-bottom: 1px dashed #ccc; }
+            body { background: white; padding: 0; color: #000; }
+            .container { box-shadow: none; padding: 0; max-width: 100%; }
+            button, .actions { display: none !important; }
+            
+            .form-group {
+                page-break-inside: avoid; /* Zapobiega rozrywaniu pytania na dwie strony */
+            }
+
+            .textarea-mimic {
+                border: none;
+                border-bottom: 1px dashed #7f8c8d;
+                border-radius: 0;
+                padding: 5px 0;
+                min-height: auto;
+                height: auto !important;
+                overflow: visible !important; /* Wymusza pokazanie pełnej treści */
+            }
+
+            .matrix-table {
+                page-break-inside: auto;
+            }
+            
+            .matrix-table tr {
+                page-break-inside: avoid; /* Zapobiega rozrywaniu wierszy tabeli */
+            }
+
+            .matrix-table td .textarea-mimic {
+                border-bottom: none;
+                padding: 2px;
+            }
+
+            .textarea-mimic:empty:before {
+                content: ""; /* Ukrywa podpowiedzi (placeholdery) na wydruku, jeśli pole jest puste */
+            }
         }
     </style>
 </head>
@@ -157,43 +223,43 @@
         <div class="form-row">
             <div class="form-group full-width">
                 <label>Okoliczności zgłoszenia i zgłaszany problem:</label>
-                <textarea placeholder="Co było bezpośrednią przyczyną zgłoszenia się na wizytę?"></textarea>
+                <div class="textarea-mimic" contenteditable="true" data-placeholder="Co było bezpośrednią przyczyną zgłoszenia się na wizytę?"></div>
             </div>
             <div class="form-group full-width">
                 <label>Opis objawów psychopatologicznych:</label>
-                <textarea placeholder="Szczegółowy opis występujących objawów..."></textarea>
+                <div class="textarea-mimic" contenteditable="true" data-placeholder="Szczegółowy opis występujących objawów, czas ich trwania, nasilenie..."></div>
             </div>
             <div class="form-group full-width">
                 <label>Wywiad rozwojowy:</label>
-                <textarea placeholder="Przebieg wczesnego rozwoju, osiąganie kamieni milowych..."></textarea>
+                <div class="textarea-mimic" contenteditable="true" data-placeholder="Przebieg ciąży, rozwój ruchowy, mowa, trening czystości, osiąganie kamieni milowych..."></div>
             </div>
             <div class="form-group">
                 <label>Poziom edukacji i funkcjonowanie szkolne:</label>
-                <textarea placeholder="Oceny, zachowanie w szkole, trudności w nauce..."></textarea>
+                <div class="textarea-mimic" contenteditable="true" data-placeholder="Oceny, zachowanie, relacje z nauczycielami, specyficzne trudności w nauce..."></div>
             </div>
             <div class="form-group">
                 <label>Umiejętności i relacje społeczne:</label>
-                <textarea placeholder="Relacje z rówieśnikami, umiejętności nawiązywania kontaktów..."></textarea>
+                <div class="textarea-mimic" contenteditable="true" data-placeholder="Relacje z rówieśnikami, posiadanie przyjaciół, odrzucenie, wycofanie..."></div>
             </div>
             <div class="form-group">
                 <label>Zainteresowania i aktywności pozaszkolne:</label>
-                <textarea placeholder="Hobby, zajęcia dodatkowe, spędzanie czasu wolnego..."></textarea>
+                <div class="textarea-mimic" contenteditable="true" data-placeholder="Hobby, mocne strony pacjenta, jak spędza czas wolny..."></div>
             </div>
             <div class="form-group">
                 <label>Znaczące wydarzenia życiowe i przeżycia traumatyczne:</label>
-                <textarea placeholder="Utraty, zmiany, kryzysy w życiu pacjenta..."></textarea>
+                <div class="textarea-mimic" contenteditable="true" data-placeholder="Utraty, żałoba, przeprowadzki, kryzysy rówieśnicze lub rodzinne..."></div>
             </div>
             <div class="form-group">
                 <label>Historia leczenia psychiatrycznego i terapeutycznego:</label>
-                <textarea placeholder="Wcześniejsze diagnozy, terapie, hospitalizacje..."></textarea>
+                <div class="textarea-mimic" contenteditable="true" data-placeholder="Wcześniejsze diagnozy, przyjmowane leki, hospitalizacje, opinie z poradni..."></div>
             </div>
             <div class="form-group">
                 <label>Choroby somatyczne pacjenta:</label>
-                <textarea placeholder="Choroby przewlekłe, urazy, przyjmowane leki..."></textarea>
+                <div class="textarea-mimic" contenteditable="true" data-placeholder="Choroby przewlekłe, alergie, wady wzroku/słuchu, urazy głowy..."></div>
             </div>
             <div class="form-group full-width">
                 <label>Rozpoznanie nozologiczne (w tym cechy nieprawidłowo kształtującej się osobowości):</label>
-                <textarea placeholder="Diagnoza wg systemów klasyfikacyjnych..."></textarea>
+                <div class="textarea-mimic" contenteditable="true" data-placeholder="Wstępna lub ostateczna diagnoza według klasyfikacji ICD/DSM, cechy temperamentu..."></div>
             </div>
         </div>
 
@@ -201,27 +267,27 @@
         <div class="form-row">
             <div class="form-group full-width">
                 <label>Sytuacja zawodowa i społeczna rodziców:</label>
-                <textarea placeholder="Wykształcenie, praca, satysfakcja zawodowa, problemy finansowe..."></textarea>
+                <div class="textarea-mimic" contenteditable="true" data-placeholder="Wykształcenie, obecna praca, atmosfera w pracy, sytuacja materialna rodziny..."></div>
             </div>
             <div class="form-group full-width">
                 <label>Stan zdrowia fizycznego, psychicznego i nałogi (matka/ojciec):</label>
-                <textarea placeholder="Choroby, leczenie psychiatryczne, używki, uzależnienia behawioralne rodziców..."></textarea>
+                <div class="textarea-mimic" contenteditable="true" data-placeholder="Choroby przewlekłe, leczenie psychiatryczne, uzależnienia od alkoholu/leków/hazardu/ekranów..."></div>
             </div>
             <div class="form-group full-width">
                 <label>Relacje wewnątrzrodzinne i małżeńskie:</label>
-                <textarea placeholder="Jakość związku, kłótnie, ewentualne separacje/rozwody, relacje z nowymi partnerami..."></textarea>
+                <div class="textarea-mimic" contenteditable="true" data-placeholder="Jakość relacji między rodzicami, konflikty, rozwody, rekonstrukcja rodziny, atmosfera w domu..."></div>
             </div>
             <div class="form-group">
                 <label>Metody wychowawcze i relacja z pacjentem:</label>
-                <textarea placeholder="Stosunek do dziecka, system kar/nagród, reakcje na problemy..."></textarea>
+                <div class="textarea-mimic" contenteditable="true" data-placeholder="Postawy wychowawcze, spójność wymagań, system nagród i kar, reakcje na objawy dziecka..."></div>
             </div>
             <div class="form-group">
-                <label>Rodzeństwo i relacje rówieśnicze w domu:</label>
-                <textarea placeholder="Wiek rodzeństwa, problemy zdrowotne/szkolne rodzeństwa, wzajemne relacje i konflikty..."></textarea>
+                <label>Rodzeństwo i relacje w domu:</label>
+                <div class="textarea-mimic" contenteditable="true" data-placeholder="Wiek rodzeństwa, ewentualne problemy zdrowotne/szkolne u brata/siostry, rywalizacja..."></div>
             </div>
             <div class="form-group full-width">
                 <label>Rodzina pochodzenia i trudne zdarzenia:</label>
-                <textarea placeholder="Relacje rodziców z ich własnymi rodzicami (dziadkami), obciążenia dziedziczne, przestępczość, traumy rodzinne..."></textarea>
+                <div class="textarea-mimic" contenteditable="true" data-placeholder="Relacje z dziadkami, przekazy wielopokoleniowe, samobójstwa w rodzinie, obciążenia genetyczne..."></div>
             </div>
         </div>
 
@@ -230,29 +296,41 @@
             <table class="matrix-table">
                 <thead>
                     <tr>
-                        <th>Czynniki</th>
-                        <th>Biologiczne / Indywidualne</th>
-                        <th>Rodzinne</th>
-                        <th>Szkolne i Rówieśnicze</th>
-                        <th>Społeczne i Kulturowe</th>
+                        <th style="width: 15%;">Czynniki</th>
+                        <th style="width: 21%;">Biologiczne / Indywidualne</th>
+                        <th style="width: 21%;">Rodzinne</th>
+                        <th style="width: 21%;">Szkolne i Rówieśnicze</th>
+                        <th style="width: 21%;">Społeczne i Kulturowe</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td><strong>Predysponujące</strong><br><small>(Zwiększające podatność)</small></td>
-                        <td><textarea></textarea></td><td><textarea></textarea></td><td><textarea></textarea></td><td><textarea></textarea></td>
+                        <td><strong>Predysponujące</strong><br><small>(Podatność)</small></td>
+                        <td><div class="textarea-mimic" contenteditable="true"></div></td>
+                        <td><div class="textarea-mimic" contenteditable="true"></div></td>
+                        <td><div class="textarea-mimic" contenteditable="true"></div></td>
+                        <td><div class="textarea-mimic" contenteditable="true"></div></td>
                     </tr>
                     <tr>
-                        <td><strong>Wywołujące</strong><br><small>(Wyzwalacze problemu)</small></td>
-                        <td><textarea></textarea></td><td><textarea></textarea></td><td><textarea></textarea></td><td><textarea></textarea></td>
+                        <td><strong>Wywołujące</strong><br><small>(Wyzwalacze)</small></td>
+                        <td><div class="textarea-mimic" contenteditable="true"></div></td>
+                        <td><div class="textarea-mimic" contenteditable="true"></div></td>
+                        <td><div class="textarea-mimic" contenteditable="true"></div></td>
+                        <td><div class="textarea-mimic" contenteditable="true"></div></td>
                     </tr>
                     <tr>
-                        <td><strong>Podtrzymujące</strong><br><small>(Co blokuje poprawę)</small></td>
-                        <td><textarea></textarea></td><td><textarea></textarea></td><td><textarea></textarea></td><td><textarea></textarea></td>
+                        <td><strong>Podtrzymujące</strong><br><small>(Utrwalające)</small></td>
+                        <td><div class="textarea-mimic" contenteditable="true"></div></td>
+                        <td><div class="textarea-mimic" contenteditable="true"></div></td>
+                        <td><div class="textarea-mimic" contenteditable="true"></div></td>
+                        <td><div class="textarea-mimic" contenteditable="true"></div></td>
                     </tr>
                     <tr>
-                        <td><strong>Ochronne</strong><br><small>(Zasoby i słabe strony)</small></td>
-                        <td><textarea></textarea></td><td><textarea></textarea></td><td><textarea></textarea></td><td><textarea></textarea></td>
+                        <td><strong>Ochronne</strong><br><small>(Zasoby i siły)</small></td>
+                        <td><div class="textarea-mimic" contenteditable="true"></div></td>
+                        <td><div class="textarea-mimic" contenteditable="true"></div></td>
+                        <td><div class="textarea-mimic" contenteditable="true"></div></td>
+                        <td><div class="textarea-mimic" contenteditable="true"></div></td>
                     </tr>
                 </tbody>
             </table>
@@ -262,29 +340,19 @@
         <div class="form-row">
             <div class="form-group full-width">
                 <label>Opis mechanizmów powstawania zaburzenia i jego podtrzymywania:</label>
-                <textarea placeholder="Jak powyższe czynniki oddziałują na siebie nawzajem (np. funkcja objawu w systemie rodzinnym)?"></textarea>
+                <div class="textarea-mimic" contenteditable="true" data-placeholder="Jak czynniki biologiczne, psychologiczne i systemowe oddziałują na siebie? Jaka jest funkcja objawu?"></div>
             </div>
             <div class="form-group full-width">
                 <label>Plan interwencji i koordynacja działań:</label>
-                <textarea placeholder="Leczenie farmakologiczne, oddziaływania terapeutyczne (indywidualne, rodzinne), współpraca z lekarzem, szkołą, kuratorem..."></textarea>
+                <div class="textarea-mimic" contenteditable="true" data-placeholder="Cele krótko- i długoterminowe. Farmakoterapia, psychoterapia indywidualna, terapia rodzinna, psychoedukacja rodziców, zalecenia dla szkoły..."></div>
             </div>
         </div>
 
         <div class="actions">
-            <button type="button" onclick="window.print()">Drukuj / Zapisz PDF</button>
+            <button type="button" onclick="window.print()">Drukuj / Zapisz do PDF</button>
         </div>
     </form>
 </div>
-
-<script>
-    // Skrypt automatycznie dopasowujący wysokość pól tekstowych do ich zawartości
-    document.querySelectorAll("textarea").forEach(textarea => {
-        textarea.addEventListener("input", function() {
-            this.style.height = "auto";
-            this.style.height = this.scrollHeight + "px";
-        });
-    });
-</script>
 
 </body>
 </html>
