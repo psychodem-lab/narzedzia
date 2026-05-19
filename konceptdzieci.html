@@ -3,328 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Narzędzie Konceptualizacji Przypadku w Wieku Rozwojowym</title>
+    <title>Konceptualizacja Przypadku - Dzieci i Młodzież</title>
     <style>
         :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #34495e;
-            --accent-color: #2980b9;
-            --bg-color: #f5f7fa;
-            --card-bg: #ffffff;
-            --border-color: #bdc3c7;
-            --text-color: #333333;
-            --light-text: #7f8c8d;
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #16a085;
+            --bg: #ecf0f1;
+            --white: #ffffff;
+            --border: #bdc3c7;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            background-color: var(--bg);
+            color: #333;
             line-height: 1.6;
             padding: 20px;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1100px;
             margin: 0 auto;
-            background: var(--card-bg);
-            padding: 40px;
+            background: var(--white);
+            padding: 30px;
             border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
         header {
-            border-bottom: 3px solid var(--primary-color);
-            padding-bottom: 20px;
-            margin-bottom: 30px;
             text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 15px;
         }
 
-        header h1 {
-            color: var(--primary-color);
-            font-size: 24px;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-        }
+        header h1 { color: var(--primary); font-size: 24px; }
+        header p { color: #7f8c8d; font-size: 14px; margin-top: 5px; }
 
-        header h2 {
-            color: var(--accent-color);
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 15px;
-        }
-
-        .meta-info {
-            font-size: 13px;
-            color: var(--light-text);
-            background: #eef2f5;
-            padding: 15px;
-            border-radius: 5px;
-            text-align: left;
-            margin-top: 15px;
-            border-left: 4px solid var(--accent-color);
-        }
-
-        .collapsible-btn {
-            background-color: var(--primary-color);
-            color: white;
-            cursor: pointer;
-            padding: 15px 20px;
-            width: 100%;
-            border: none;
-            text-align: left;
-            outline: none;
+        .section-title {
+            background-color: var(--primary);
+            color: var(--white);
+            padding: 12px 15px;
+            margin: 25px 0 15px 0;
+            border-radius: 4px;
             font-size: 16px;
             font-weight: bold;
-            border-radius: 5px;
-            margin-top: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: background-color 0.3s;
         }
 
-        .collapsible-btn:hover {
-            background-color: var(--secondary-color);
-        }
-
-        .collapsible-btn:after {
-            content: '\002B';
-            color: white;
-            font-weight: bold;
-            float: right;
-            margin-left: 5px;
-        }
-
-        .active:after {
-            content: "\2212";
-        }
-
-        .content {
-            padding: 0 20px;
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-            background-color: #ffffff;
-            border: 1px solid var(--border-color);
-            border-top: none;
-            border-radius: 0 0 5px 5px;
-        }
-
-        .content.show {
-            max-height: max-content;
-            padding: 25px 20px;
-        }
-
-        .sub-section {
-            background: #fafbfc;
-            border: 1px solid #e1e8ed;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-        }
-
-        .sub-section h3 {
-            color: var(--secondary-color);
-            font-size: 16px;
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
             margin-bottom: 15px;
-            border-bottom: 1px solid #e1e8ed;
-            padding-bottom: 5px;
-            text-transform: uppercase;
         }
 
         .form-group {
             margin-bottom: 15px;
         }
 
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
+        .form-group.full-width {
+            grid-column: 1 / -1;
         }
 
         label {
             display: block;
             font-weight: 600;
             margin-bottom: 5px;
+            color: var(--secondary);
             font-size: 14px;
-            color: var(--secondary-color);
         }
 
-        input[type="text"], input[type="number"], select {
+        input[type="text"], input[type="number"], textarea {
             width: 100%;
             padding: 10px;
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
             border-radius: 4px;
-            font-size: 14px;
-            background-color: #fff;
-        }
-
-        textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            font-size: 14px;
-            resize: vertical;
-            min-height: 60px;
             font-family: inherit;
         }
 
-        input:focus, textarea:focus, select:focus {
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        input:focus, textarea:focus {
             outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 5px rgba(41, 128, 185, 0.3);
+            border-color: var(--accent);
+            box-shadow: 0 0 4px rgba(22, 160, 133, 0.3);
         }
 
         .matrix-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
-            margin-bottom: 15px;
+            margin-top: 10px;
         }
 
         .matrix-table th, .matrix-table td {
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
             padding: 10px;
-            vertical-align: top;
+            text-align: left;
         }
 
-        .matrix-table th {
-            background-color: #eef2f5;
-            color: var(--primary-color);
-            font-size: 13px;
-            text-transform: uppercase;
-            text-align: center;
-        }
+        .matrix-table th { background-color: #f7f9fa; font-size: 13px; color: var(--primary); }
+        .matrix-table td textarea { min-height: 100px; border: none; padding: 5px; background: transparent; }
 
-        .matrix-table td:first-child {
-            font-weight: bold;
-            background-color: #fafbfc;
-            font-size: 13px;
-            color: var(--secondary-color);
-            width: 15%;
-        }
-
-        .matrix-table textarea {
-            min-height: 100px;
-            border: none;
-            padding: 5px;
-            background: transparent;
-        }
-
-        .matrix-table textarea:focus {
-            background: #fff;
-            box-shadow: none;
-        }
-
-        .actions-bar {
+        .actions {
             margin-top: 30px;
-            display: flex;
-            justify-content: space-between;
-            gap: 15px;
+            text-align: right;
         }
 
-        .btn {
-            padding: 12px 25px;
-            font-size: 15px;
-            font-weight: bold;
+        button {
+            padding: 10px 20px;
+            background-color: var(--accent);
+            color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 4px;
             cursor: pointer;
-            transition: background-color 0.2s;
+            font-weight: bold;
+            font-size: 15px;
         }
 
-        .btn-primary {
-            background-color: var(--accent-color);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: #217dbb;
-        }
-
-        .btn-secondary {
-            background-color: #95a5a6;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background-color: #7f8c8d;
-        }
-
-        .info-box {
-            background-color: #e8f4f8;
-            border-left: 4px solid var(--accent-color);
-            padding: 15px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            border-radius: 0 4px 4px 0;
-        }
-
-        .info-box ul {
-            margin-left: 20px;
-            margin-top: 5px;
-        }
+        button:hover { background-color: #1abc9c; }
 
         @media print {
-            body {
-                background-color: #fff;
-                padding: 0;
-            }
-            .container {
-                box-shadow: none;
-                padding: 0;
-                max-width: 100%;
-            }
-            .collapsible-btn {
-                background: #eef2f5 !important;
-                color: #000 !important;
-                border: 1px solid #000;
-                margin-top: 25px;
-                page-break-after: avoid;
-            }
-            .collapsible-btn:after {
-                display: none;
-            }
-            .content {
-                max-height: none !important;
-                padding: 15px 0 !important;
-                border: none !important;
-                overflow: visible !important;
-                display: block !important;
-            }
-            .sub-section {
-                border: 1px solid #ccc !important;
-                background: #fff !important;
-                page-break-inside: avoid;
-            }
-            .actions-bar {
-                display: none;
-            }
-            textarea, input {
-                border: none !important;
-                border-bottom: 1px dashed #666 !important;
-                background: transparent !important;
-            }
-            .matrix-table {
-                page-break-inside: auto;
-            }
-            .matrix-table tr {
-                page-break-inside: avoid;
-                page-break-after: auto;
-            }
-            th {
-                background: #eee !important;
-                color: #000 !important;
-            }
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; padding: 0; }
+            button { display: none; }
+            textarea { border: none; border-bottom: 1px dashed #ccc; }
         }
     </style>
 </head>
@@ -332,427 +140,150 @@
 
 <div class="container">
     <header>
-        <h1>Narzędzie Konceptualizacji Problemu i Planowania Interwencji</h1>
-        <h2>Pacjent w Wieku Rozwojowym</h2>
-        <div class="meta-info">
-            <strong>Opracowanie merytoryczne narzędzia:</strong> Na podstawie artykułu prof. dr hab. n. med. Anity Bryńskiej <em>"Konceptualizacja problemu i planowanie interwencji w przypadku pacjenta w wieku rozwojowym"</em> (Warszawski Uniwersytet Medyczny / Centrum CBT).<br>
-            <strong>Schemat wywiadu:</strong> Zgodny z kwestionariuszem diagnostycznym: Bryńska, Szalas, Kołek-Jasińska (2019).
-        </div>
+        <h1>Konceptualizacja i Planowanie Interwencji - Dzieci i Młodzież</h1>
+        <p>Na podstawie wytycznych: A. Bryńska (Warszawski Uniwersytet Medyczny / Centrum CBT)</p>
     </header>
 
-    <div class="info-box">
-        <strong>Wskazówki teoretyczne (zgodnie z publikacją):</strong><br>
-        Diagnoza kategorialna (nozologiczno-kryterialna wg DSM/ICD) jest niewystarczająca do pełnego zrozumienia przyczyn problemów dziecka i zaplanowania pełnych interwencji. Pełna konceptualizacja kliniczna musi odpowiedzieć na pytanie: <em>Jaka jest natura i istota problemu pacjenta?</em> i zawsze obejmuje zdefiniowanie zmiennych predysponujących, wywołujących i podtrzymujących w odniesieniu do wszystkich czynników etiologicznych (psychologicznych, społecznych, środowiskowych, kulturowych i biologicznych).
-    </div>
-
-    <form id="conceptualizationForm">
+    <form id="clinicalForm">
         
-        <button type="button" class="collapsible-btn">DANE IDENTYFIKACYJNE PACJENTA</button>
-        <div class="content show">
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Imię i nazwisko pacjenta:</label>
-                    <input type="text" id="pacjent_nazwa" placeholder="Wpisz dane">
-                </div>
-                <div class="form-group">
-                    <label>Wiek:</label>
-                    <input type="number" id="pacjent_wiek" placeholder="Wiek">
-                </div>
-                <div class="form-group">
-                    <label>Poziom edukacji (która klasa):</label>
-                    <input type="text" id="pacjent_klasa" placeholder="Klasa/szkoła">
-                </div>
+        <div class="section-title">DANE IDENTYFIKACYJNE PACJENTA</div>
+        <div class="form-row">
+            <div class="form-group"><label>Imię i nazwisko pacjenta:</label><input type="text"></div>
+            <div class="form-group"><label>Wiek:</label><input type="number"></div>
+            <div class="form-group"><label>Poziom edukacji (klasa):</label><input type="text"></div>
+        </div>
+
+        <div class="section-title">ANAMNEZA OSOBISTA PACJENTA I OBJAWY</div>
+        <div class="form-row">
+            <div class="form-group full-width">
+                <label>Okoliczności zgłoszenia i zgłaszany problem:</label>
+                <textarea placeholder="Co było bezpośrednią przyczyną zgłoszenia się na wizytę?"></textarea>
+            </div>
+            <div class="form-group full-width">
+                <label>Opis objawów psychopatologicznych:</label>
+                <textarea placeholder="Szczegółowy opis występujących objawów..."></textarea>
+            </div>
+            <div class="form-group full-width">
+                <label>Wywiad rozwojowy:</label>
+                <textarea placeholder="Przebieg wczesnego rozwoju, osiąganie kamieni milowych..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Poziom edukacji i funkcjonowanie szkolne:</label>
+                <textarea placeholder="Oceny, zachowanie w szkole, trudności w nauce..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Umiejętności i relacje społeczne:</label>
+                <textarea placeholder="Relacje z rówieśnikami, umiejętności nawiązywania kontaktów..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Zainteresowania i aktywności pozaszkolne:</label>
+                <textarea placeholder="Hobby, zajęcia dodatkowe, spędzanie czasu wolnego..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Znaczące wydarzenia życiowe i przeżycia traumatyczne:</label>
+                <textarea placeholder="Utraty, zmiany, kryzysy w życiu pacjenta..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Historia leczenia psychiatrycznego i terapeutycznego:</label>
+                <textarea placeholder="Wcześniejsze diagnozy, terapie, hospitalizacje..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Choroby somatyczne pacjenta:</label>
+                <textarea placeholder="Choroby przewlekłe, urazy, przyjmowane leki..."></textarea>
+            </div>
+            <div class="form-group full-width">
+                <label>Rozpoznanie nozologiczne (w tym cechy nieprawidłowo kształtującej się osobowości):</label>
+                <textarea placeholder="Diagnoza wg systemów klasyfikacyjnych..."></textarea>
             </div>
         </div>
 
-        <button type="button" class="collapsible-btn">CZĘŚĆ I - ANAMNEZA RODZINNA: MATKA PACJENTA (biologiczna / adopcyjna)</button>
-        <div class="content">
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Imię, nazwisko i wiek matki:</label>
-                    <input type="text" id="matka_dane" placeholder="Wpisz dane">
-                </div>
+        <div class="section-title">SKRÓCONY WYWIAD RODZINNY (MATKA, OJCIEC, RELACJE)</div>
+        <div class="form-row">
+            <div class="form-group full-width">
+                <label>Sytuacja zawodowa i społeczna rodziców:</label>
+                <textarea placeholder="Wykształcenie, praca, satysfakcja zawodowa, problemy finansowe..."></textarea>
             </div>
-
-            <div class="sub-section">
-                <h3>Wykształcenie, zawód, aktywność zawodowa matki</h3>
-                <div class="form-group"><label>Jakie ma Pani wykształcenie? Jako kto Pani pracuje? Czy zawód jest zgodny z wykształceniem?</label><textarea id="m_q1"></textarea></div>
-                <div class="form-group"><label>Czy praca jest dla Pani satysfakcjonująca? Jeśli nie - to dlaczego? Czy podejmuje Pani próby zmiany pracy?</label><textarea id="m_q2"></textarea></div>
-                <div class="form-group"><label>Czy ma Pani jakieś problemy w pracy, z innymi pracownikami, przełożonymi? Jakie są godziny pracy? Czy praca jest zmianowa?</label><textarea id="m_q3"></textarea></div>
-                <div class="form-group"><label>Czy pracuje Pani dodatkowo w domu po pracy? Czy przynosi Pani pracę do domu? Jeśli tak, to jak reaguje na to rodzina, mąż/partner?</label><textarea id="m_q4"></textarea></div>
-                <div class="form-group"><label>Czym się Pani zajmuje po powrocie do domu, jak spędza Pani ten czas?</label><textarea id="m_q5"></textarea></div>
-                <div class="form-group"><label>Jeśli Pani nie pracuje zawodowo, to dlaczego? Czy poszukuje Pani pracy? Jeśli tak, to od jak dawna?</label><textarea id="m_q6"></textarea></div>
-                <div class="form-group"><label>Czy niemożność znalezienia pracy wpływa negatywnie na Pani samopoczucie, funkcjonowanie rodziny, jest problemem w relacjach z mężem/partnerem?</label><textarea id="m_q7"></textarea></div>
-                <div class="form-group"><label>Jeśli nie podejmuje Pani aktywności zawodowej, to czy jest to Pani decyzja, decyzja podjęta wspólnie z mężem/partnerem? Czy akceptuje Pani brak własnej aktywności zawodowej, czy sytuacja ta jest dla Pani zadowalająca? Jeśli nie, to czy podejmuje Pani próby zmiany tej sytuacji? Jeśli nie, to dlaczego?</label><textarea id="m_q8"></textarea></div>
+            <div class="form-group full-width">
+                <label>Stan zdrowia fizycznego, psychicznego i nałogi (matka/ojciec):</label>
+                <textarea placeholder="Choroby, leczenie psychiatryczne, używki, uzależnienia behawioralne rodziców..."></textarea>
             </div>
-
-            <div class="sub-section">
-                <h3>Zdrowie / choroby somatyczne / psychiczne u matki</h3>
-                <div class="form-group"><label>Czy choruje Pani na jakieś schorzenia somatyczne? Jakie? Od jak dawna? Czy jest Pani pod stałą opieką lekarza?</label><textarea id="m_q9"></textarea></div>
-                <div class="form-group"><label>Czy na stałe przyjmuje Pani jakieś leki? Jakie? Czy przestrzega Pani zaleceń lekarza? Jeśli nie, to dlaczego?</label><textarea id="m_q10"></textarea></div>
-                <div class="form-group"><label>Jaki wpływ na Pani życie ma to schorzenie? Jak Pani sobie z tym radzi? Jak to wpływa na funkcjonowanie rodziny, Pani relacje z mężem/partnerem?</label><textarea id="m_q11"></textarea></div>
-                <div class="form-group"><label>Czy z powodu jakichś własnych problemów zasięgała Pani kiedyś porady psychiatry, psychologa, neurologa, była hospitalizowana w oddziale psychiatrycznym? Jeśli tak, to z jakiego powodu, kiedy? Czy jest Pani pod opieką lekarza psychiatry, psychologa?</label><textarea id="m_q12"></textarea></div>
-                <div class="form-group"><label>Czy obecnie na stałe przyjmuje Pani jakieś leki? Jakie? Od jak dawna? Czy przestrzega Pani zaleceń lekarza?</label><textarea id="m_q13"></textarea></div>
-                <div class="form-group"><label>Czy w przeszłości przyjmowała Pani jakieś leki w związku z tymi problemami? Jakie i jak długo? Jaki wpływ osobiste problemy psychiczne mają na Pani życie? Jak Pani sobie z tym radzi? Jak to wpływa na funkcjonowanie rodziny, Pani relacje z mężem/partnerem?</label><textarea id="m_q14"></textarea></div>
-                <div class="form-group"><label>Czy uczestniczyła Pani/uczestniczy w jakiejś terapii? Jeśli tak, to jakiej, jak długo? Jak ocenia Pani jej efekty?</label><textarea id="m_q15"></textarea></div>
-                <div class="form-group"><label>Czy w Pani rodzinie ze strony ojca lub matki występowały/ją jakieś choroby psychiczne, kontakty z psychiatrą, psychologiem, neurologiem? Czy były jakieś przypadki hospitalizacji w oddziałach psychiatrycznych? Z jakiego powodu? Czy były przypadki samobójstw? Czy występowała/je przemoc? Jakiego rodzaju? W stosunku do kogo? Czy były/są przypadki niepełnosprawności, jakich? Czy były/są przypadki upośledzenia umysłowego, u kogo? Czy występowały/ją nałogi, u kogo, od czego?</label><textarea id="m_q16"></textarea></div>
+            <div class="form-group full-width">
+                <label>Relacje wewnątrzrodzinne i małżeńskie:</label>
+                <textarea placeholder="Jakość związku, kłótnie, ewentualne separacje/rozwody, relacje z nowymi partnerami..."></textarea>
             </div>
-
-            <div class="sub-section">
-                <h3>Nałogi / uzależnienia (papierosy, alkohol, narkotyki, uzależnienia behawioralne) u matki</h3>
-                <div class="form-group"><label>Czy pali Pani papierosy? Jeśli tak, to od jak dawna, w jakiej ilości? Czy paliła Pani papierosy w ciąży? Jeśli tak, to czy przez cały okres ciąży, w I, II trymestrze?</label><textarea id="m_q17"></textarea></div>
-                <div class="form-group"><label>Czy pije Pani alkohol? Jeśli nie, to dlaczego? Jeśli tak, to jak często? W jakiej ilości? Czy zdarza się Pani upijać? Jeśli tak, to jak często? Jak się Pani zachowuje pod wpływem alkoholu spożytego w dużej ilości? Czy piła Pani alkohol w ciąży? Jeśli tak, to czy przez cały okres ciąży, w I, II trymestrze?</label><textarea id="m_q18"></textarea></div>
-                <div class="form-group"><label>Jak picie alkoholu przez Panią wpływa na funkcjonowanie rodziny, na Pani relacje z mężem/partnerem? Czy jest powodem kłótni? Czy rozpoznano u Pani uzależnienie od alkoholu/chorobę alkoholową? Jeśli tak, to czy podejmowała Pani leczenie/jest w trakcie leczenia? Czy zachowuje Pani abstynencję? Jeśli ustalono takie rozpoznanie i nie zostało podjęte leczenie, to dlaczego?</label><textarea id="m_q19"></textarea></div>
-                <div class="form-group"><label>Czy używa Pani narkotyków, dopalaczy, innych substancji psychoaktywnych? Jeśli tak, to jakich? Od jak dawna? Jak często? Jak się Pani zachowuje pod wpływem narkotyków, dopalaczy, innych substancji psychoaktywnych? Czy używała Pani narkotyków, dopalaczy, innych substancji psychoaktywnych w ciąży? Jeśli tak, to czy przez cały okres ciąży, w I, II trymestrze?</label><textarea id="m_q20"></textarea></div>
-                <div class="form-group"><label>Jak używanie przez Panią narkotyków, dopalaczy, innych substancji psychoaktywnych wpływa na funkcjonowanie rodziny, na Pani relacje z mężem/partnerem? Czy jest powodem kłótni? Czy rozpoznano u Pani uzależnienie od narkotyków, dopalaczy, innych substancji psychoaktywnych? Jeśli tak, to czy podejmowała Pani leczenie/jest w trakcie leczenia? Czy zachowuje Pani abstynencję? Jeśli ustalono takie rozpoznanie i nie zostało podjęte leczenie, to dlaczego?</label><textarea id="m_q21"></textarea></div>
-                <div class="form-group"><label>Czy występują u Pani jakieś uzależnienia behawioralne? Od jedzenia, zakupów, przeglądania stron internetowych, telefonu, hazardu, gier on-line, innego typu? Czy ktoś w Pani otoczeniu mówi o tym, że może mieć Pani taki problem? Jak tego typu Pani zachowania wpływają na funkcjonowanie rodziny, na Pani relacje z mężem/partnerem? Czy jest to powodem kłótni? Czy podejmowała Pani leczenie/jest w trakcie leczenia z tego powodu? Jeśli ustalono takie rozpoznanie/ma Pani taki problem i nie zostało podjęte leczenie, to dlaczego?</label><textarea id="m_q22"></textarea></div>
+            <div class="form-group">
+                <label>Metody wychowawcze i relacja z pacjentem:</label>
+                <textarea placeholder="Stosunek do dziecka, system kar/nagród, reakcje na problemy..."></textarea>
             </div>
-
-            <div class="sub-section">
-                <h3>Rodzina pochodzenia matki</h3>
-                <div class="form-group"><label>Czy Pani rodzice żyją? Jeśli nie, to kiedy zmarli? Z jakiego powodu? Jeśli żyją, to w jakim są wieku? W jakim są stanie zdrowia? Czy chorują na jakieś choroby? Jakie? Czy rodzice są samodzielni? Czy wymagają opieki i trzeba im pomagać, ile czasowo zajmuje ta pomoc? Czy jest ona obciążeniem dla Pani, w tym finansowym? Czy rodzice mieszkają samodzielnie, czy z Panią?</label><textarea id="m_q23"></textarea></div>
-                <div class="form-group"><label>Jak układają się relacje z rodzicami? Czy są jakieś konflikty? Czego dotyczą? Kto jest w nie zaangażowany? Jak są rozwiązywane? Jak częsty kontakt ma Pani z rodzicami, jak wygląda? Jak układają się relacje męża/partnera z Pani rodzicami? Jeśli rodzice mieszkają z Panią, to kto ma decydujące zdanie przy podejmowaniu decyzji dotyczących rodziny, dzieci? Z czyim zdaniem rodzina liczy się najbardziej? Jaki udział mieli/mają dziadkowie w wychowaniu dziecka/dzieci? Jakie pacjent ma relacje z dziadkami?</label><textarea id="m_q24"></textarea></div>
-                <div class="form-group"><label>Czy ma Pani rodzeństwo? Jeśli tak, to ile, w jakim wieku? Czy rodzeństwo jest zdrowe? Jeśli nie, to jakie są to problemy zdrowotne? Czy rodzeństwo założyło swoje rodziny? Czy posiadają dzieci? Czy te dzieci są zdrowe? Jeśli nie, to jakie są to problemy zdrowotne? Czy u któregoś dziecka rodzeństwa stwierdzono takie same problemy jak u Pani dziecka? Jak układają się Pani relacje z rodzeństwem? Jak częsty kontakt ma Pani z rodzeństwem? Jak układają się relacje Pani męża/partnera z Pani rodzeństwem? Czy są jakieś konflikty? Czego dotyczą? Czy są rozwiązywane i w jaki sposób?</label><textarea id="m_q25"></textarea></div>
+            <div class="form-group">
+                <label>Rodzeństwo i relacje rówieśnicze w domu:</label>
+                <textarea placeholder="Wiek rodzeństwa, problemy zdrowotne/szkolne rodzeństwa, wzajemne relacje i konflikty..."></textarea>
             </div>
-
-            <div class="sub-section">
-                <h3>Zdarzenia istotne/trudne w życiu osobistym matki / w rodzinie pochodzenia lub własnej</h3>
-                <div class="form-group"><label>Czy w Pani rodzinie ze strony ojca bądź matki były jakieś niespodziewane zgony, ktoś padł ofiarą zabójstwa, gwałtu? Czy ktoś przebywał w zakładzie karnym lub toczyło się przeciwko niemu jakieś postępowanie sądowe? Czy ktoś w rodzinie pochodzenia uzyskał jakiś szczególny sukces życiowy/zawodowy/finansowy, jest dla Pani wzorem godnym naśladowania? Czy jest ktoś, kto jest antywzorem, 'czarną owcą'? Jakich innych kryzysów, ważnych wydarzeń życiowych doświadczyła Pani w przeszłości lub doświadcza Pani obecnie w swojej rodzinie pochodzenia lub w swojej rodzinie?</label><textarea id="m_q26"></textarea></div>
-            </div>
-
-            <div class="sub-section">
-                <h3>Atmosfera domu rodzinnego matki</h3>
-                <div class="form-group"><label>Jak wspomina Pani swoje dzieciństwo? Jacy byli rodzice w stosunku do Pani? Czy jakieś wydarzenia z okresu własnego dzieciństwa wydają się Pani szczególnie istotne?</label><textarea id="m_q27"></textarea></div>
-            </div>
-
-            <div class="sub-section">
-                <h3>Cechy charakterystyczne / temperament matki</h3>
-                <div class="form-group"><label>Czy mogłaby Pani się scharakteryzować? Jaką jest Pani osobą? Proszę wymienić swoje trzy najważniejsze cechy charakterystyczne? Co Panią w życiu cieszy? W jaki sposób Pani to okazuje? Co musi się zadziać, żeby Panią zdenerwować? W jaki sposób się Pani złości? Jak układają się Pani relacje społeczne? Jak często zaprasza Pani gości, spotyka się ze znajomymi? Czy uważa się Pani za osobę szczęśliwą, jeśli nie to dlaczego? Co musiałoby się zmienić, by czuła się Pani szczęśliwa?</label><textarea id="m_q28"></textarea></div>
-            </div>
-
-            <div class="sub-section">
-                <h3>Relacja matki z dzieckiem</h3>
-                <div class="form-group"><label>Jaka jest Pani w stosunku do swojego dziecka/dzieci? (wymagająca, konsekwentna, ustępująca itp.). Jak reaguje Pani na porażki dziecka (szkolne, w relacjach)? Jaki system nagród, zasad i konsekwencji stosuje Pani w stosunku do dziecka? Czy taki sam w odniesieniu do wszystkich dzieci? Jeśli nie, to dlaczego? Czy stosuje Pani kary fizyczne? Jeśli tak, to jakie, jak często, za jakie przewinienia? Czy takie same w odniesieniu do wszystkich dzieci? Jeśli nie, to dlaczego? Jak reaguje Pani na nieposłuszeństwo dziecka? Czy tak samo w odniesieniu do wszystkich dzieci? Jeśli nie, to dlaczego? Czy dziecko przychodzi do Pani i opowiada o swoich problemach? Jak Pani na to reaguje? Jak Pani spędza wolny czas z dzieckiem/dziećmi? Co robicie wspólnie? Jak często?</label><textarea id="m_q29"></textarea></div>
+            <div class="form-group full-width">
+                <label>Rodzina pochodzenia i trudne zdarzenia:</label>
+                <textarea placeholder="Relacje rodziców z ich własnymi rodzicami (dziadkami), obciążenia dziedziczne, przestępczość, traumy rodzinne..."></textarea>
             </div>
         </div>
 
-        <button type="button" class="collapsible-btn">CZĘŚĆ I - ANAMNEZA RODZINNA: OJCIEC PACJENTA (biologiczny / adopcyjny)</button>
-        <div class="content">
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Imię, nazwisko i wiek ojca:</label>
-                    <input type="text" id="ojciec_dane" placeholder="Wpisz dane">
-                </div>
-            </div>
+        <div class="section-title">SFORMUŁOWANIE KLINICZNE - MATRYCA CZYNNIKÓW ETIOLOGICZNYCH (4P)</div>
+        <div style="overflow-x:auto;">
+            <table class="matrix-table">
+                <thead>
+                    <tr>
+                        <th>Czynniki</th>
+                        <th>Biologiczne / Indywidualne</th>
+                        <th>Rodzinne</th>
+                        <th>Szkolne i Rówieśnicze</th>
+                        <th>Społeczne i Kulturowe</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Predysponujące</strong><br><small>(Zwiększające podatność)</small></td>
+                        <td><textarea></textarea></td><td><textarea></textarea></td><td><textarea></textarea></td><td><textarea></textarea></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Wywołujące</strong><br><small>(Wyzwalacze problemu)</small></td>
+                        <td><textarea></textarea></td><td><textarea></textarea></td><td><textarea></textarea></td><td><textarea></textarea></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Podtrzymujące</strong><br><small>(Co blokuje poprawę)</small></td>
+                        <td><textarea></textarea></td><td><textarea></textarea></td><td><textarea></textarea></td><td><textarea></textarea></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Ochronne</strong><br><small>(Zasoby i słabe strony)</small></td>
+                        <td><textarea></textarea></td><td><textarea></textarea></td><td><textarea></textarea></td><td><textarea></textarea></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
-            <div class="sub-section">
-                <h3>Wykształcenie, zawód, aktywność zawodowa ojca</h3>
-                <div class="form-group"><label>Jakie ma Pan wykształcenie? Jako kto Pan pracuje? Czy zawód jest zgodny z wykształceniem?</label><textarea id="o_q1"></textarea></div>
-                <div class="form-group"><label>Czy praca jest dla Pana satysfakcjonująca? Jeśli nie - to dlaczego? Czy podejmuje Pan próby zmiany pracy?</label><textarea id="o_q2"></textarea></div>
-                <div class="form-group"><label>Czy ma Pan jakieś problemy w pracy, z innymi pracownikami, przełożonymi? Jakie są godziny pracy? Czy praca jest zmianowa?</label><textarea id="o_q3"></textarea></div>
-                <div class="form-group"><label>Czy pracuje Pan dodatkowo w domu po pracy? Czy przynosi Pan pracę do domu? Jeśli tak, to jak reaguje na to rodzina, żona/partnerka?</label><textarea id="o_q4"></textarea></div>
-                <div class="form-group"><label>Czym się Pan zajmuje po powrocie do domu, jak spędza Pan ten czas?</label><textarea id="o_q5"></textarea></div>
-                <div class="form-group"><label>Jeśli Pan nie pracuje zawodowo, to dlaczego? Czy poszukuje Pan pracy? Jeśli tak, to od jak dawna?</label><textarea id="o_q6"></textarea></div>
-                <div class="form-group"><label>Czy niemożność znalezienia pracy wpływa negatywnie na Pana samopoczucie, funkcjonowanie rodziny, jest problemem w relacjach z żoną/partnerką?</label><textarea id="o_q7"></textarea></div>
-                <div class="form-group"><label>Jeśli nie podejmuje Pan aktywności zawodowej, to czy jest to Pana decyzja, decyzja podjęta wspólnie z żoną/partnerką? Czy akceptuje Pan brak własnej aktywności zawodowej, czy sytuacja ta jest dla Pana zadowalająca? Jeśli nie, to czy podejmuje Pan próby zmiany tej sytuacji? Jeśli nie, to dlaczego?</label><textarea id="o_q8"></textarea></div>
+        <div class="section-title">ZROZUMIENIE MECHANIZMÓW I PLAN INTERWENCJI</div>
+        <div class="form-row">
+            <div class="form-group full-width">
+                <label>Opis mechanizmów powstawania zaburzenia i jego podtrzymywania:</label>
+                <textarea placeholder="Jak powyższe czynniki oddziałują na siebie nawzajem (np. funkcja objawu w systemie rodzinnym)?"></textarea>
             </div>
-
-            <div class="sub-section">
-                <h3>Zdrowie / choroby somatyczne / psychiczne u ojca</h3>
-                <div class="form-group"><label>Czy choruje Pan na jakieś schorzenia somatyczne? Jakie? Od jak dawna? Czy jest Pan pod stałą opieką lekarza?</label><textarea id="o_q9"></textarea></div>
-                <div class="form-group"><label>Czy na stałe przyjmuje Pan jakieś leki? Jakie? Czy przestrzega Pan zaleceń lekarza? Jeśli nie, to dlaczego?</label><textarea id="o_q10"></textarea></div>
-                <div class="form-group"><label>Jaki wpływ na Pana życie ma to schorzenie? Jak Pan sobie z tym radzi? Jak to wpływa na funkcjonowanie rodziny, Pana relacje z żoną/partnerką?</label><textarea id="o_q11"></textarea></div>
-                <div class="form-group"><label>Czy z powodu jakichś własnych problemów zasięgał Pan kiedyś porady psychiatry, psychologa, neurologa, był hospitalizowany w oddziale psychiatrycznym? Jeśli tak, to z jakiego powodu, kiedy? Czy jest Pan pod opieką lekarza psychiatry, psychologa?</label><textarea id="o_q12"></textarea></div>
-                <div class="form-group"><label>Czy obecnie na stałe przyjmuje Pan jakieś leki? Jakie? Od jak dawna? Czy przestrzega Pan zaleceń lekarza?</label><textarea id="o_q13"></textarea></div>
-                <div class="form-group"><label>Czy w przeszłości przyjmował Pan jakieś leki w związku z tymi problemami? Jakie i jak długo? Jaki wpływ osobiste problemy psychiczne mają na Pana życie? Jak Pan sobie z tym radzi? Jak to wpływa na funkcjonowanie rodziny, Pana relacje z żoną/partnerką?</label><textarea id="o_q14"></textarea></div>
-                <div class="form-group"><label>Czy uczestniczył Pan/uczestniczy w jakiejś terapii? Jeśli tak, to jakiej, jak długo? Jak ocenia Pan jej efekty?</label><textarea id="o_q15"></textarea></div>
-                <div class="form-group"><label>Czy w Pana rodzinie ze strony ojca lub matki występowały/ją jakieś choroby psychiczne, kontakty z psychiatrą, psychologiem, neurologiem? Czy były jakieś przypadki hospitalizacji w oddziałach psychiatrycznych? Z jakiego powodu? Czy były przypadki samobójstw? Czy występowała/je przemoc? Jakiego rodzaju? W stosunku do kogo? Czy były/są przypadki niepełnosprawności, jakich? Czy były/są przypadki upośledzenia umysłowego, u kogo? Czy występowały/ją nałogi, u kogo, od czego?</label><textarea id="o_q16"></textarea></div>
-            </div>
-
-            <div class="sub-section">
-                <h3>Nałogi / uzależnienia (papierosy, alkohol, narkotyki, uzależnienia behawioralne) u ojca</h3>
-                <div class="form-group"><label>Czy pali Pan papierosy? Jeśli tak, to od jak dawna, w jakiej ilości?</label><textarea id="o_q17"></textarea></div>
-                <div class="form-group"><label>Czy pije Pan alkohol? Jeśli nie, to dlaczego? Jeśli tak, to jak często? W jakiej ilości? Czy zdarza się Panu upijać? Jeśli tak, to jak często? Jak się Pan zachowuje pod wpływem alkoholu spożytego w dużej ilości?</label><textarea id="o_q18"></textarea></div>
-                <div class="form-group"><label>Jak picie alkoholu przez Pana wpływa na funkcjonowanie rodziny, na Pana relacje z żoną/partnerką? Czy jest powodem kłótni? Czy rozpoznano u Pana uzależnienie od alkoholu/chorobę alkoholową? Jeśli tak, to czy podejmował Pan leczenie/jest w trakcie leczenia? Czy zachowuje Pan abstynencję? Jeśli ustalono takie rozpoznanie i nie zostało podjęte leczenie, to dlaczego?</label><textarea id="o_q19"></textarea></div>
-                <div class="form-group"><label>Czy używa Pan narkotyków, dopalaczy, innych substancji psychoaktywnych? Jeśli tak, to jakich? Od jak dawna? Jak często? Jak się Pan zachowuje pod wpływem narkotyków, dopalaczy, innych substancji psychoaktywnych?</label><textarea id="o_q20"></textarea></div>
-                <div class="form-group"><label>Jak używanie przez Pana narkotyków, dopalaczy, innych substancji psychoaktywnych wpływa na funkcjonowanie rodziny, relacje z żoną/partnerką? Czy jest powodem kłótni? Czy rozpoznano u Pana uzależnienie od narkotyków, dopalaczy, innych substancji psychoaktywnych? Jeśli tak, to czy podejmował Pan leczenie/jest w trakcie leczenia? Czy zachowuje Pan abstynencję? Jeśli ustalono takie rozpoznanie i nie zostało podjęte leczenie, to dlaczego?</label><textarea id="o_q21"></textarea></div>
-                <div class="form-group"><label>Czy występują u Pana jakieś uzależnienia behawioralne? Od jedzenia, zakupów, przeglądania stron internetowych, telefonu, hazardu, gier on-line, innego typu? Czy ktoś w Pana otoczeniu mówi o tym, że może mieć Pan taki problem? Jak tego typu Pana zachowania wpływają na funkcjonowanie rodziny, na Pana relacje z żoną/partnerką? Czy jest to powodem kłótni? Czy podejmował Pan leczenie/jest w trakcie leczenia z tego powodu? Jeśli ustalono takie rozpoznanie/ma Pan taki problem i nie zostało podjęte leczenie, to dlaczego?</label><textarea id="o_q22"></textarea></div>
-            </div>
-
-            <div class="sub-section">
-                <h3>Rodzina pochodzenia ojca</h3>
-                <div class="form-group"><label>Czy Pana rodzice żyją? Jeśli nie, to kiedy zmarli? Z jakiego powodu? Jeśli żyją, to w jakim są wieku? W jakim są stanie zdrowia? Czy chorują na jakieś choroby? Jakie? Czy rodzice są samodzielni? Czy wymagają opieki i trzeba im pomagać, ile czasowo zajmuje ta pomoc? Czy jest ona obciążeniem dla Pana, w tym finansowym? Czy rodzice mieszkają samodzielnie, czy z Panem?</label><textarea id="o_q23"></textarea></div>
-                <div class="form-group"><label>Jak układają się relacje z rodzicami? Czy są jakieś konflikty? Czego dotyczą? Kto jest w nie zaangażowany? Jak są rozwiązywane? Jak częsty kontakt ma Pan z rodzicami, jak wygląda? Jak układają się relacje żony/partnerki z Pana rodzicami? Jeśli rodzice mieszkają z Panem, to kto ma decydujące zdanie przy podejmowaniu decyzji dotyczących rodziny, dzieci? Z czyim zdaniem rodzina liczy się najbardziej? Jaki udział mieli/mają dziadkowie w wychowaniu dziecka/dzieci? Jakie pacjent ma relacje z dziadkami?</label><textarea id="o_q24"></textarea></div>
-                <div class="form-group"><label>Czy ma Pan rodzeństwo? Jeśli tak, to ile, w jakim wieku? Czy rodzeństwo jest zdrowe? Jeśli nie, to jakie są to problemy zdrowotne? Czy rodzeństwo założyło swoje rodziny? Czy posiadają dzieci? Czy te dzieci są zdrowe? Jeśli nie, to jakie są to problemy zdrowotne? Czy u któregoś dziecka rodzeństwa stwierdzono takie same problemy jak u Pana dziecka? Jak układają się Pana relacje z rodzeństwem? Jak częsty kontakt ma Pan z rodzeństwem? Jak układają się relacje Pana żony/partnerki z Pana rodzeństwem? Czy są jakieś konflikty? Czego dotyczą? Czy są rozwiązywane i w jaki sposób?</label><textarea id="o_q25"></textarea></div>
-            </div>
-
-            <div class="sub-section">
-                <h3>Zdarzenia istotne/trudne w życiu osobistym ojca / w rodzinie pochodzenia lub własnej</h3>
-                <div class="form-group"><label>Czy w Pana rodzinie ze strony ojca bądź matki były jakieś niespodziewane zgony, ktoś padł ofiarą zabójstwa, gwałtu? Czy ktoś przebywał w zakładzie karnym lub toczyło się przeciwko niemu jakieś postępowanie sądowe? Czy ktoś w rodzinie pochodzenia uzyskał jakiś szczególny sukces życiowy/zawodowy/finansowy, jest dla Pana wzorem godnym naśladowania? Czy jest ktoś, kto jest antywzorem, 'czarną owcą'? Jakich innych kryzysów, ważnych wydarzeń życiowych doświadczył Pan w przeszłości lub doświadcza Pan obecnie w swojej rodzinie pochodzenia lub w swojej rodzinie?</label><textarea id="o_q26"></textarea></div>
-            </div>
-
-            <div class="sub-section">
-                <h3>Atmosfera domu rodzinnego ojca</h3>
-                <div class="form-group"><label>Jak wspomina Pan swoje dzieciństwo? Jacy byli rodzice w stosunku do Pana? Czy jakieś wydarzenia z okresu Pana dzieciństwa wydają się Panu szczególnie istotne?</label><textarea id="o_q27"></textarea></div>
-            </div>
-
-            <div class="sub-section">
-                <h3>Cechy charakterystyczne / temperament ojca</h3>
-                <div class="form-group"><label>Czy mógłby Pan się scharakteryzować? Jaką jest Pan osobą? Proszę wymienić swoje trzy najważniejsze cechy charakterystyczne? Co Pana w życiu cieszy? W jaki sposób Pan to okazuje? Co musi się zadziać, żeby Pana zdenerwować? W jaki sposób się Pan złości? Jak układają się Pana relacje społeczne? Jak często zaprasza Pan gości, spotyka się ze znajomymi? Czy uważa się Pan za osobę szczęśliwą, jeśli nie to dlaczego? Co musiałoby się zmienić, by czuł się Pan szczęśliwy?</label><textarea id="o_q28"></textarea></div>
-            </div>
-
-            <div class="sub-section">
-                <h3>Relacja ojca z dzieckiem</h3>
-                <div class="form-group"><label>Jaki jest Pan w stosunku do swojego dziecka/dzieci? (wymagający, konsekwentny, ustępujący itp.). Jak reaguje Pan na porażki dziecka (szkolne, w relacjach)? Jaki system nagród, zasad i konsekwencji stosuje Pan w stosunku do dziecka? Czy taki sam w odniesieniu do wszystkich dzieci? Jeśli nie, to dlaczego? Czy stosuje Pan kary fizyczne? Jeśli tak, to jakie, jak często, za jakie przewinienia? Czy takie same w odniesieniu do wszystkich dzieci? Jeśli nie, to dlaczego? Jak reaguje Pan na nieposłuszeństwo dziecka? Czy tak samo w odniesieniu do wszystkich dzieci? Jeśli nie, to dlaczego? Czy dziecko przychodzi do Pana i opowiada o swoich problemach? Jak Pan na to reaguje? Jak Pan spędza wolny czas z dzieckiem/dziećmi? Co robicie wspólnie? Jak często?</label><textarea id="o_q29"></textarea></div>
+            <div class="form-group full-width">
+                <label>Plan interwencji i koordynacja działań:</label>
+                <textarea placeholder="Leczenie farmakologiczne, oddziaływania terapeutyczne (indywidualne, rodzinne), współpraca z lekarzem, szkołą, kuratorem..."></textarea>
             </div>
         </div>
 
-        <button type="button" class="collapsible-btn">SYTUACJA SPECJALNA: JEDEN RODZIC LUB RODZINA ZREKONSTRUOWANA</button>
-        <div class="content">
-            <div class="info-box">Wypełnić wyłącznie w przypadku, gdy pacjent wychowuje się z jednym rodzicem lub w rodzinie zrekonstruowanej.</div>
-            <div class="form-group">
-                <label>Jak doszło do zakończenia związku rodziców biologicznych (rozstanie, separacja, rozwód, zgon)?</label>
-                <textarea id="spec_q1"></textarea>
-            </div>
-            <div class="form-group">
-                <label>Jak dziecko przeżyło zakończenie związku rodziców biologicznych, kiedy do tego doszło, w jakich okolicznościach?</label>
-                <textarea id="spec_q2"></textarea>
-            </div>
-            <div class="form-group">
-                <label>Czy dziecko ma kontakt z biologicznym rodzicem, który nie mieszka z dzieckiem? Jak często? Jak wyglądają te relacje? Czy dziecko chce się spotykać z rodzicem, opowiada o tych spotkaniach? Jak układają się jego relacje z nową rodziną rodzica? Czy biologiczny rodzic ma pełnię praw rodzicielskich?</label>
-                <textarea id="spec_q3"></textarea>
-            </div>
-            <div class="form-group">
-                <label>Jak wyglądają relacje rodzica wychowującego dziecko z rodzicem, który nie mieszka z dzieckiem? Czy są jakieś konflikty, czego dotyczą?</label>
-                <textarea id="spec_q4"></textarea>
-            </div>
-            <div class="form-group">
-                <label>Jeśli rodzic wychowujący dziecko jest w nowym związku: dane dotyczące partnera/partnerki rodzica (wykształcenie, zawód, aktywność zawodowa, zdrowie/choroby somatyczne/psychiczne, nałogi/uzależnienia - papierosy, alkohol, narkotyki, uzależnienia behawioralne, cechy charakterystyczne/temperament).</label>
-                <textarea id="spec_q5"></textarea>
-            </div>
-            <div class="form-group">
-                <label>Jak układają się wzajemne relacje dziecka z nowym partnerem/partnerką rodzica? W jakiej roli wychowawczej funkcjonuje nowy partner/partnerka rodzica w stosunku do dziecka?</label>
-                <textarea id="spec_q6"></textarea>
-            </div>
+        <div class="actions">
+            <button type="button" onclick="window.print()">Drukuj / Zapisz PDF</button>
         </div>
-
-        <button type="button" class="collapsible-btn">RELACJA / MAŁŻEŃSTWO RODZICÓW / OPIEKUNÓW</button>
-        <div class="content">
-            <div class="sub-section">
-                <h3>Związek – status, historia, teraźniejszość, jakość relacji, sfera seksualna</h3>
-                <div class="form-group">
-                    <label>Czy pozostajecie Państwo w związku formalnym/nieformalnym, jesteście małżeństwem, od jak dawna? Jeśli nie jesteście małżeństwem, to dlaczego? W jakich okolicznościach się poznaliście? Co Was nawzajem w sobie urzekło?</label>
-                    <textarea id="rel_q1"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Czy jesteście Państwo ze sobą szczęśliwi? Jeśli nie, to dlaczego? Jak układa się wzajemna relacja, jakie są w niej problemy? Jeśli są problemy, to czy rozmawiacie Państwo o nich? Szukacie wspólnych rozwiązań?</label>
-                    <textarea id="rel_q2"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Jeśli są między Państwem jakieś nieporozumienia, to czego one najczęściej dotyczą? Czyje zdanie jest brane głównie pod uwagę, czy ktoś ustępuje?</label>
-                    <textarea id="rel_q3"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Jak często się Państwo kłócicie, jakie są powody kłótni, jak długo trwają? Jak to wygląda (krzyki, agresja werbalna, agresja fizyczna itp.)? Czy dziecko/dzieci jest/są ich świadkiem/świadkami?</label>
-                    <textarea id="rel_q4"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Czy obrażacie się na siebie nawzajem lub ktoś się obraża? Czy są tzw. ciche dni? W jaki sposób się Państwo godzicie? Czy przepraszacie się nawzajem? Kto przeprasza pierwszy? Czy przyjmujecie przeprosiny?</label>
-                    <textarea id="rel_q5"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Czy w trakcie trwania związku dochodziło do kryzysów, rozstań, separacji, rozwodu? Jeśli tak, to z jakich powodów? Jak dochodziło do powrotów?</label>
-                    <textarea id="rel_q6"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Jak się układa życie seksualne, czy jest satysfakcjonujące dla obu stron? Jeśli są jakieś problemy, to jakie? Czy rozmawiacie Państwo? Czy były podejmowane próby ich rozwiązywania, jeśli tak, to jakie?</label>
-                    <textarea id="rel_q7"></textarea>
-                </div>
-            </div>
-        </div>
-
-        <button type="button" class="collapsible-btn">RODZINA (Rodzeństwo pacjenta, relacje między rodzeństwem)</button>
-        <div class="content">
-            <div class="form-group">
-                <label>Z kogo składa się rodzina? Czy pacjent ma rodzeństwo? Ile? Jaka jest kolejność urodzeń? W jakim wieku jest rodzeństwo?</label>
-                <textarea id="rodz_q1"></textarea>
-            </div>
-            <div class="form-group">
-                <label>Czy rodzeństwo prawidłowo się rozwija? Ma jakieś problemy zdrowotne (Jakie? Czy pozostaje pod opieką lekarza? Przyjmuje jakieś leki?), szkolne (Jakie?, Jaki rodzaj pomocy jest udzielany?), w relacjach społecznych (Jakiego rodzaju?), sprawia problemy wychowawcze (Jakie? Jak rodzice sobie z nimi radzą?)?</label>
-                <textarea id="rodz_q2"></textarea>
-            </div>
-            <div class="form-group">
-                <label>Jak układają się relacje między rodzeństwem? Co lubią robić razem? Czy spędzają razem czas, w jaki sposób? Czy się kłócą, co jest najczęstszą przyczyną kłótni, czy jest o siebie zazdrosne nawzajem? Jak reagują na to rodzice?</label>
-                <textarea id="rodz_q3"></textarea>
-            </div>
-            <div class="form-group">
-                <label>Czy któreś z rodziców posiada dziecko/dzieci z innego związku? Czy utrzymuje z nim kontakt, jak często? Czy to dziecko/te dzieci odwiedza/ją rodzica w domu, w którym mieszka pacjent? Czy pacjent ma z nimi kontakt? Jak układają się relacje między pacjentem a rodzeństwem przyrodnim?</label>
-                <textarea id="rodz_q4"></textarea>
-            </div>
-        </div>
-
-        <button type="button" class="collapsible-btn">MODEL KONCEPTUALIZACJI KLINICZNEJ (SYNTEZA DANYCH)</button>
-        <div class="content">
-            
-            <div class="sub-section">
-                <h3>1. Sformułowanie Diagnostyczne (Diagnoza kategorialna)</h3>
-                <div class="form-group">
-                    <label>Rozpoznanie nozologiczno-kryterialne (wg ICD/DSM), opis objawów psychopatologicznych, okoliczności zgłoszenia oraz cechy nieprawidłowo kształtującej się osobowości:</label>
-                    <textarea id="konc_diag" style="min-height: 120px;" placeholder="Wprowadź sformułowanie diagnostyczne..."></textarea>
-                </div>
-            </div>
-
-            <div class="sub-section">
-                <h3>2. Sformułowanie Kliniczne (Matryca Analizy Czynników Etiologicznych 4P)</h3>
-                <p style="font-size: 13px; color: var(--light-text); margin-bottom: 10px;">
-                    Dokonaj wieloaspektowej analizy czynników podtrzymujących, wywołujących, predysponujących oraz ochronnych w odniesieniu do wszystkich obszarów życia pacjenta (zgodnie z założeniami modelu teoretycznego).
-                </p>
-                
-                <div style="overflow-x: auto;">
-                    <table class="matrix-table">
-                        <thead>
-                            <tr>
-                                <th>Klasyfikacja Czynników</th>
-                                <th>Obszar Biologiczny i Indywidualny Pacjenta</th>
-                                <th>Obszar Rodzinny</th>
-                                <th>Obszar Szkolny</th>
-                                <th>Obszar Rówieśniczy</th>
-                                <th>Obszar Społeczny, Środowiskowy i Kulturowy</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Czynniki Predysponujące<br><small>(Predisposing factors)</small></td>
-                                <td><textarea id="m_pred_bio" placeholder="Np. genetyka, temperament, wczesny rozwój..."></textarea></td>
-                                <td><textarea id="m_pred_rodz" placeholder="Np. styl wychowania, obciążenia rodziców..."></textarea></td>
-                                <td><textarea id="m_pred_szk" placeholder="Np. trudności w uczeniu się, specyfika szkoły..."></textarea></td>
-                                <td><textarea id="m_pred_row" placeholder="Np. deficyty umiejętności społecznych..."></textarea></td>
-                                <td><textarea id="m_pred_spol" placeholder="Np. warunki ekonomiczne, kultura..."></textarea></td>
-                            </tr>
-                            <tr>
-                                <td>Czynniki Wywołujące<br><small>(Triggering / Precipitating)</small></td>
-                                <td><textarea id="m_wyw_bio" placeholder="Np. choroba somatyczna, zmiany hormonalne..."></textarea></td>
-                                <td><textarea id="m_wyw_rodz" placeholder="Np. rozwód, strata, kryzys małżeński..."></textarea></td>
-                                <td><textarea id="m_wyw_szk" placeholder="Np. zmiana szkoły, nagłe niepowodzenie..."></textarea></td>
-                                <td><textarea id="m_wyw_row" placeholder="Np. odrzucenie przez grupę, bullying..."></textarea></td>
-                                <td><textarea id="m_wyw_spol" placeholder="Np. nagła zmiana miejsca zamieszkania..."></textarea></td>
-                            </tr>
-                            <tr>
-                                <td>Czynniki Podtrzymujące<br><small>(Maintaining factors)</small></td>
-                                <td><textarea id="m_pod_bio" placeholder="Np. utrwalone nawyki biologiczne..."></textarea></td>
-                                <td><textarea id="m_pod_rodz" placeholder="Np. funkcja objawu w systemie rodzinnym..."></textarea></td>
-                                <td><textarea id="m_pod_szk" placeholder="Np. wtórne korzyści, unikanie szkolne..."></textarea></td>
-                                <td><textarea id="m_pod_row" placeholder="Np. izolacja, brak pozytywnych wzmocnień..."></textarea></td>
-                                <td><textarea id="m_pod_spol" placeholder="Np. brak wsparcia instytucjonalnego..."></textarea></td>
-                            </tr>
-                            <tr>
-                                <td>Czynniki Ochronne<br><small>(Protective factors)</small></td>
-                                <td><textarea id="m_och_bio" placeholder="Np. wysoki intelekt, silne zainteresowania..."></textarea></td>
-                                <td><textarea id="m_och_rodz" placeholder="Np. bezpieczna więź, motywacja rodziców..."></textarea></td>
-                                <td><textarea id="m_och_szk" placeholder="Np. wspierający wychowawca, psycholog szkolny..."></textarea></td>
-                                <td><textarea id="m_och_row" placeholder="Np. posiadanie jednego bliskiego przyjaciela..."></textarea></td>
-                                <td><textarea id="m_och_spol" placeholder="Np. dostępność terapii, zajęcia pozalekcyjne..."></textarea></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="sub-section">
-                <h3>3. Opis Mechanizmów i Analiza Funkcjonalna</h3>
-                <div class="form-group">
-                    <label>Opis mechanizmów powstawania zaburzenia i jego podtrzymywania (w tym dokładne określenie funkcji objawów, np. w systemie rodzinnym):</label>
-                    <textarea id="konc_mech" style="min-height: 100px;"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Opis zasobów i słabych stron pacjenta, rodziny oraz otoczenia społecznego:</label>
-                    <textarea id="konc_zasoby" style="min-height: 100px;"></textarea>
-                </div>
-            </div>
-
-        </div>
-
-        <button type="button" class="collapsible-btn">PLANOWANIE INTERWENCJI I WSPÓŁPRACA SPECJALISTYCZNA</button>
-        <div class="content">
-            <div class="form-group">
-                <label>Sformułowanie dotyczące interwencji (z uwzględnieniem ewentualnego leczenia farmakologicznego i sposobów jej przeprowadzenia przy wykorzystaniu zidentyfikowanych zasobów):</label>
-                <textarea id="int_plan" style="min-height: 120px;" placeholder="Wpisz cele i metody interwencji terapeutycznej..."></textarea>
-            </div>
-
-            <div class="sub-section">
-                <h3>Interdyscyplinarna współpraca specjalistów (Multidisciplinary Team)</h3>
-                <p style="font-size: 13px; color: var(--light-text); margin-bottom: 10px;">
-                    Złożona etiologia zaburzeń u dzieci wymaga koordynacji działań. Określ zakres zadań i komunikacji dla zaangażowanych podmiotów:
-                </p>
-                <div class="form-group">
-                    <label>Lekarz (np. psychiatra, pediatra):</label>
-                    <textarea id="team_lekarz" placeholder="Zakres współpracy..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Psycholog / Psychoterapeuta indywidualny:</label>
-                    <textarea id="team_indiv" placeholder="Zakres współpracy..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Psychoterapeuta rodzinny / Systemowy:</label>
-                    <textarea id="team_rodz" placeholder="Zakres współpracy..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Terapeuta środowiskowy / Kurator:</label>
-                    <textarea id="team_srod" placeholder="Zakres współpracy..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Nauczyciele / Wychowawcy / Szkoła:</label>
-                    <textarea id="team_szkola" placeholder="Zakres działań na terenie placówki edukacyjnej..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Sposób koordynowania działań:</label>
-                    <textarea id="team_koordynacja" placeholder="Kto koordynuje proces leczenia? Jak często i w jakiej formie odbywa się wymiana informacji pomiędzy specjalistami?"></textarea>
-                </div>
-            </div>
-        </div>
-
-        <div class="actions-bar">
-            <button type="button" class="btn btn-secondary" onclick="clearForm()">Wyczyść formularz</button>
-            <button type="button" class="btn btn-primary" onclick="window.print()">Drukuj / Zapisz do PDF</button>
-        </div>
-
     </form>
 </div>
 
 <script>
-    // Obsługa zwijania i rozwijania sekcji formularza
-    document.addEventListener("DOMContentLoaded", function() {
-        const collapsibles = document.querySelectorAll(".collapsible-btn");
-        
-        collapsibles.forEach(btn => {
-            btn.addEventListener("click", function() {
-                this.classList.toggle("active");
-                const content = this.nextElementSibling;
-                content.classList.toggle("show");
-            });
-        });
-
-        // Automatyczne dopasowywanie wysokości pól tekstowych (Auto-resize textarea)
-        const textareas = document.querySelectorAll("textarea");
-        textareas.forEach(textarea => {
-            textarea.addEventListener("input", function() {
-                this.style.height = "auto";
-                this.style.height = this.scrollHeight + "px";
-            });
+    // Skrypt automatycznie dopasowujący wysokość pól tekstowych do ich zawartości
+    document.querySelectorAll("textarea").forEach(textarea => {
+        textarea.addEventListener("input", function() {
+            this.style.height = "auto";
+            this.style.height = this.scrollHeight + "px";
         });
     });
-
-    // Funkcja resetująca formularz z potwierdzeniem
-    function clearForm() {
-        if(confirm("Czy na pewno chcesz wyczyścić wszystkie wprowadzone dane konceptualizacji? Zmiany są nieodwracalne.")) {
-            document.getElementById("conceptualizationForm").reset();
-            const textareas = document.querySelectorAll("textarea");
-            textareas.forEach(textarea => {
-                textarea.style.height = "auto";
-            });
-            alert("Formularz został wyczyszczony.");
-        }
-    }
 </script>
 
 </body>
