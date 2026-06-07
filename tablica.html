@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zaawansowana Tablica Terapeutyczna - Naprawione Zaznaczenie</title>
+    <title>Zaawansowana Tablica Terapeutyczna - Pola Tekstowe</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -117,12 +117,35 @@
             background-color: #5a6268;
         }
 
+        /* Wrapper na canvas, aby pole tekstowe pozycjonowało się względem niego */
+        #canvasWrapper {
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            background-color: #ffffff;
+        }
+
         /* Tablica */
         canvas {
-            background-color: #ffffff;
+            display: block;
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             cursor: crosshair;
+        }
+
+        /* Styl dla dynamicznego pola tekstowego */
+        .dynamic-textarea {
+            position: absolute;
+            background: transparent;
+            border: 1px dashed #007bff;
+            outline: none;
+            padding: 4px;
+            box-sizing: border-box;
+            resize: both; /* Pozwala na ręczną zmianę rozmiaru okienka */
+            overflow: hidden;
+            z-index: 10;
+            font-family: Arial, sans-serif;
+            line-height: 1.2;
+            white-space: pre-wrap;
         }
     </style>
 </head>
@@ -165,11 +188,14 @@
             <button id="downloadJpg">Pobierz (JPG)</button>
         </div>
 
-        <canvas id="board" width="800" height="600"></canvas>
+        <div id="canvasWrapper">
+            <canvas id="board" width="800" height="600"></canvas>
+        </div>
     </div>
 
     <script>
         const canvas = document.getElementById('board');
+        const canvasWrapper = document.getElementById('canvasWrapper');
         const ctx = canvas.getContext('2d');
         const toolSelect = document.getElementById('toolSelect');
         const colorPicker = document.getElementById('colorPicker');
@@ -199,6 +225,9 @@
         let isDrawing = false;
         let startX, startY;
         let snapshot; 
+        
+        // Aktywne pole tekstowe
+        let currentTextarea = null;
 
         // Inicjalizacja tła
         ctx.fillStyle = "white";
@@ -212,6 +241,7 @@
 
         function undo() {
             if (isTransforming) commitTransform();
+            if (currentTextarea) commitText(); // Jeśli pole tekstowe jest otwarte, najpierw je zamknij
             if (undoStack.length > 1) {
                 undoStack.pop(); 
                 ctx.putImageData(undoStack[undoStack.length - 1], 0, 0); 
@@ -220,9 +250,9 @@
         }
         undoBtn.addEventListener('click', undo);
 
-        // Automatyczne zatwierdzenie zmian przy zmianie narzędzia w menu
         toolSelect.addEventListener('change', () => {
             if (isTransforming) commitTransform();
+            if (currentTextarea) commitText();
         });
 
         // Wtopienie przekształcanego obiektu w główne płótno (BEZ RAMKI)
@@ -246,28 +276,21 @@
             ctx.translate(selX + selW / 2, selY + selH / 2);
             ctx.rotate(selAngle);
             
-            // Rysowanie wyciętego obrazu
             ctx.drawImage(offscreenCanvas, -selW / 2, -selH / 2, selW, selH);
             
-            // Przerywana niebieska ramka (tylko jako nakładka wizualna!)
             ctx.setLineDash([5, 5]);
             ctx.strokeStyle = "#007bff";
             ctx.lineWidth = 1;
             ctx.strokeRect(-selW / 2, -selH / 2, selW, selH);
             
-            // Uchwyty sterujące
             ctx.setLineDash([]);
             ctx.fillStyle = "#007bff";
-            
-            // Kwadracik zmiany rozmiaru (prawy dolny róg)
             ctx.fillRect(selW / 2 - 5, selH / 2 - 5, 10, 10);
             
-            // Kropka obracania (u góry)
             ctx.beginPath();
             ctx.arc(0, -selH / 2 - 20, 6, 0, Math.PI * 2);
             ctx.fill();
             
-            // Linia łącząca kropkę obrotu z ramką
             ctx.beginPath();
             ctx.moveTo(0, -selH / 2);
             ctx.lineTo(0, -selH / 2 - 20);
@@ -276,8 +299,72 @@
             ctx.restore();
         }
 
+        // --- NOWE FUNKCJE DLA POLA TEKSTOWEGO ---
+
+        // Zatwierdzenie tekstu i narysowanie go na canvasie
+        function commitText() {
+            if (!currentTextarea) return;
+            
+            const text = currentTextarea.value;
+            if (text.trim() !== '') {
+                // Konfiguracja fontu
+                const fontSize = brushSize.value * 4;
+                ctx.font = `${fontSize}px Arial`;
+                ctx.fillStyle = currentTextarea.style.color;
+                ctx.textBaseline = 'top'; // Ważne: renderujemy od góry, nie od linii bazowej
+                
+                // Pobranie pozycji i maksymalnej szerokości z elementu textarea
+                const padding = 4; // Zgodnie ze stylami css pola
+                const x = parseInt(currentTextarea.style.left) + padding;
+                const y = parseInt(currentTextarea.style.top) + padding;
+                const maxWidth = currentTextarea.offsetWidth - (padding * 2);
+                const lineHeight = fontSize * 1.2;
+                
+                drawWrappedText(ctx, text, x, y, maxWidth, lineHeight);
+                saveState();
+            }
+            
+            // Usunięcie pola z DOM
+            canvasWrapper.removeChild(currentTextarea);
+            currentTextarea = null;
+        }
+
+        // Funkcja renderująca zawijający się tekst na elemencie Canvas
+        function drawWrappedText(context, text, x, y, maxWidth, lineHeight) {
+            const paragraphs = text.split('\n'); // Uwzględnia Entery użytkownika
+            let currentY = y;
+            
+            for (let p = 0; p < paragraphs.length; p++) {
+                const words = paragraphs[p].split(' ');
+                let line = '';
+
+                for (let n = 0; n < words.length; n++) {
+                    const testLine = line + words[n] + ' ';
+                    const metrics = context.measureText(testLine);
+                    const testWidth = metrics.width;
+                    
+                    // Jeśli linia przekracza szerokość (i nie jest to pierwsze słowo), przenieś wiersz
+                    if (testWidth > maxWidth && n > 0) {
+                        context.fillText(line, x, currentY);
+                        line = words[n] + ' ';
+                        currentY += lineHeight;
+                    } else {
+                        line = testLine;
+                    }
+                }
+                context.fillText(line, x, currentY);
+                currentY += lineHeight;
+            }
+        }
+
         // Mousedown
         canvas.addEventListener('mousedown', (e) => {
+            // Jeśli otwarte jest pole tekstowe, kliknięcie obok zatwierdza je
+            if (currentTextarea) {
+                commitText();
+                return; // Zatrzymujemy inne akcje
+            }
+
             if (isTransforming) {
                 let cx = selX + selW / 2;
                 let cy = selY + selH / 2;
@@ -318,14 +405,35 @@
             ctx.lineJoin = 'round';
             ctx.setLineDash([]);
 
+            // Obsługa narzędzia "Tekst"
             if (toolSelect.value === 'text') {
-                const userText = prompt("Wpisz tekst:");
-                if (userText) {
-                    ctx.font = `${brushSize.value * 4}px Arial`;
-                    ctx.fillText(userText, startX, startY);
-                    saveState();
-                }
-                isDrawing = false;
+                isDrawing = false; // Nie rysujemy standardowo
+                
+                // Tworzenie dynamicznego pola textarea
+                const fontSize = brushSize.value * 4;
+                const textarea = document.createElement('textarea');
+                textarea.className = 'dynamic-textarea';
+                textarea.style.left = `${startX}px`;
+                textarea.style.top = `${startY}px`;
+                textarea.style.color = colorPicker.value;
+                textarea.style.fontSize = `${fontSize}px`;
+                textarea.style.minWidth = '150px';
+                textarea.style.minHeight = `${fontSize * 2}px`;
+                
+                // Kiedy zgubi focus (np. user kliknie Tab lub coś innego)
+                textarea.addEventListener('blur', () => {
+                    // Opóźnienie na wypadek gdyby blur był wywołany kliknięciem w płótno (które obsłuży mousedown)
+                    setTimeout(() => {
+                        if (currentTextarea === textarea) {
+                            commitText();
+                        }
+                    }, 100);
+                });
+
+                canvasWrapper.appendChild(textarea);
+                textarea.focus();
+                currentTextarea = textarea;
+
             } else if (toolSelect.value !== 'select') {
                 ctx.beginPath();
             }
@@ -402,25 +510,19 @@
                     selH = h;
                     selAngle = 0;
 
-                    // --- KLUCZOWA POPRAWKA ---
-                    // Przywracamy czysty stan tablicy (sprzed narysowania niebieskiej linii) 
-                    // ZANIM zrobimy zrzut ekranu do pamięci podręcznej.
                     ctx.putImageData(snapshot, 0, 0);
 
-                    // Przenosimy czysty fragment do pamięci podręcznej (Offscreen)
                     offscreenCanvas.width = selW;
                     offscreenCanvas.height = selH;
                     oCtx.drawImage(canvas, selX, selY, selW, selH, 0, 0, selW, selH);
 
-                    // Wycinamy oryginalny fragment z głównej tablicy (czyszczenie na biało)
                     ctx.fillStyle = "white";
                     ctx.fillRect(selX, selY, selW, selH);
 
-                    // Aktualizujemy tło sesji (bez obiektu i bez ramki)
                     snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
                     
                     isTransforming = true;
-                    drawTransforming(); // Dopiero teraz rysujemy tymczasową ramkę kontrolną
+                    drawTransforming(); 
                 }
             } else if (toolSelect.value !== 'text') {
                 saveState(); 
@@ -429,11 +531,12 @@
 
         // Obsługa Klawiatury (Skróty)
         document.addEventListener('keydown', (e) => {
+            // Ignoruj skróty, jeśli wpisujemy tekst w polu tekstowym
+            if (document.activeElement.tagName === 'TEXTAREA') return;
+
             if (e.ctrlKey && e.key.toLowerCase() === 'z') {
                 undo();
             }
-            
-            // Kopiuj (Ctrl + C)
             else if (e.ctrlKey && e.key.toLowerCase() === 'c') {
                 if (isTransforming) {
                     internalClipboard = oCtx.getImageData(0, 0, offscreenCanvas.width, offscreenCanvas.height);
@@ -441,8 +544,6 @@
                     clipboardH = offscreenCanvas.height;
                 }
             }
-            
-            // Wytnij (Ctrl + X)
             else if (e.ctrlKey && e.key.toLowerCase() === 'x') {
                 if (isTransforming) {
                     internalClipboard = oCtx.getImageData(0, 0, offscreenCanvas.width, offscreenCanvas.height);
@@ -454,8 +555,6 @@
                     saveState();
                 }
             }
-            
-            // Wklej (Ctrl + V)
             else if (e.ctrlKey && e.key.toLowerCase() === 'v') {
                 if (internalClipboard) {
                     if (isTransforming) commitTransform(); 
@@ -475,8 +574,6 @@
                     drawTransforming();
                 }
             }
-            
-            // Usuń (Delete)
             else if (e.key === 'Delete' || e.key === 'Del') {
                 if (isTransforming) {
                     isTransforming = false;
@@ -489,6 +586,7 @@
 
         clearBtn.addEventListener('click', () => {
             if (isTransforming) isTransforming = false;
+            if (currentTextarea) commitText();
             ctx.fillStyle = "white";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             saveState();
@@ -496,6 +594,7 @@
 
         downloadJpg.addEventListener('click', () => {
             if (isTransforming) commitTransform();
+            if (currentTextarea) commitText();
             const link = document.createElement('a');
             link.download = 'tablica-terapeutyczna.jpg';
             link.href = canvas.toDataURL('image/jpeg', 1.0);
