@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tablica Terapeutyczna - Wersja Rozszerzona</title>
+    <title>Tablica Terapeutyczna - Wersja z Kopiowaniem i Cofaniem</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -15,7 +15,7 @@
             justify-content: center;
         }
 
-        /* Panel Boczny - Lista użytkowników */
+        /* Panel Boczny */
         #sidebar {
             width: 250px;
             background: white;
@@ -46,7 +46,7 @@
         .status-dot {
             width: 10px;
             height: 10px;
-            background-color: #28a745; /* Zielony - aktywny */
+            background-color: #28a745;
             border-radius: 50%;
         }
 
@@ -104,11 +104,17 @@
         button:hover {
             background-color: #0056b3;
         }
-        #clearBtn {
+        .danger-btn {
             background-color: #dc3545;
         }
-        #clearBtn:hover {
+        .danger-btn:hover {
             background-color: #c82333;
+        }
+        .action-btn {
+            background-color: #6c757d;
+        }
+        .action-btn:hover {
+            background-color: #5a6268;
         }
 
         /* Tablica */
@@ -141,6 +147,7 @@
                     <option value="rect">Prostokąt</option>
                     <option value="circle">Koło</option>
                     <option value="text">Tekst</option>
+                    <option value="select">Zaznacz obszar</option>
                 </select>
             </div>
             <div class="tool-group">
@@ -148,10 +155,13 @@
                 <input type="color" id="colorPicker" value="#000000">
             </div>
             <div class="tool-group">
-                <label for="brushSize">Grubość / Rozmiar tekstu:</label>
+                <label for="brushSize">Rozmiar:</label>
                 <input type="range" id="brushSize" min="1" max="50" value="3">
             </div>
-            <button id="clearBtn">Wyczyść tablicę</button>
+            <div class="tool-group">
+                <button id="undoBtn" class="action-btn" title="Możesz też użyć Ctrl+Z">Cofnij</button>
+            </div>
+            <button id="clearBtn" class="danger-btn">Wyczyść tablicę</button>
             <button id="downloadJpg">Pobierz (JPG)</button>
         </div>
 
@@ -166,85 +176,181 @@
         const brushSize = document.getElementById('brushSize');
         const clearBtn = document.getElementById('clearBtn');
         const downloadJpg = document.getElementById('downloadJpg');
+        const undoBtn = document.getElementById('undoBtn');
 
-        // Inicjalizacja białego tła
+        // Historia operacji dla funkcji "Cofnij"
+        let undoStack = [];
+        
+        // Zmienne do kopiowania i wklejania
+        let selectionBox = null;
+        let internalClipboard = null;
+        let pasteOffset = 20; // Przesunięcie przy wklejaniu
+
+        // Inicjalizacja tła i zapisanie pierwszego, czystego stanu
         ctx.fillStyle = "white";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+        saveState();
 
         let isDrawing = false;
         let startX, startY;
-        let snapshot; // Zmienna do zapisywania stanu płótna dla podglądu kształtów
+        let snapshot; 
 
-        // Funkcja rozpoczynająca rysowanie
+        // Funkcja zapisująca stan płótna do historii
+        function saveState() {
+            // Ograniczamy historię do ostatnich 20 kroków, żeby nie zapchać pamięci
+            if (undoStack.length > 20) undoStack.shift(); 
+            undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+        }
+
+        // Funkcja cofania
+        function undo() {
+            if (undoStack.length > 1) {
+                undoStack.pop(); // Usuń aktualny stan
+                const previousState = undoStack[undoStack.length - 1]; // Pobierz poprzedni
+                ctx.putImageData(previousState, 0, 0); // Przywróć poprzedni
+                selectionBox = null; // Usuń ewentualne zaznaczenie po cofnięciu
+            }
+        }
+
+        undoBtn.addEventListener('click', undo);
+
+        // Rozpoczęcie interakcji z myszką
         canvas.addEventListener('mousedown', (e) => {
             isDrawing = true;
             startX = e.offsetX;
             startY = e.offsetY;
 
-            // Zapisujemy aktualny stan tablicy, aby móc podglądać rysowany kształt
+            // Przed rysowaniem bierzemy zrzut (przydatne do podglądu i kopiowania)
             snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            selectionBox = null; // Resetujemy stare zaznaczenie
 
-            // Ustawienia stylów na podstawie wyboru użytkownika
             ctx.strokeStyle = colorPicker.value;
             ctx.fillStyle = colorPicker.value;
             ctx.lineWidth = brushSize.value;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
+            ctx.setLineDash([]); // Resetujemy styl przerywany
 
-            // Narzędzie TEKST - działa od razu po kliknięciu
             if (toolSelect.value === 'text') {
-                const userText = prompt("Wpisz tekst, który chcesz umieścić na tablicy:");
+                const userText = prompt("Wpisz tekst:");
                 if (userText) {
-                    ctx.font = `${brushSize.value * 4}px Arial`; // Skalowanie rozmiaru czcionki suwakiem
+                    ctx.font = `${brushSize.value * 4}px Arial`;
                     ctx.fillText(userText, startX, startY);
+                    saveState();
                 }
-                isDrawing = false; // Zapobiega błędom po wpisaniu tekstu
-            } else {
+                isDrawing = false;
+            } else if (toolSelect.value !== 'select') {
                 ctx.beginPath();
             }
         });
 
-        // Funkcja trakcie rysowania (ruch myszką)
+        // W trakcie ruchu
         canvas.addEventListener('mousemove', (e) => {
             if (!isDrawing) return;
             
             const currentTool = toolSelect.value;
 
-            // Jeśli rysujemy kształt, przywracamy zapisany stan płótna (czyszcząc podgląd z poprzedniej klatki ruchu myszki)
             if (currentTool !== 'pen') {
-                ctx.putImageData(snapshot, 0, 0);
-                ctx.beginPath();
+                ctx.putImageData(snapshot, 0, 0); // Przywracamy tło podczas ciągnięcia myszki
             }
 
             if (currentTool === 'pen') {
-                // Swobodne rysowanie pędzlem
                 ctx.lineTo(e.offsetX, e.offsetY);
                 ctx.stroke();
             } else if (currentTool === 'rect') {
-                // Rysowanie prostokąta
-                const width = e.offsetX - startX;
-                const height = e.offsetY - startY;
-                ctx.strokeRect(startX, startY, width, height);
+                ctx.strokeRect(startX, startY, e.offsetX - startX, e.offsetY - startY);
             } else if (currentTool === 'circle') {
-                // Rysowanie koła (promień obliczany z odległości między startem a aktualną pozycją)
                 const radius = Math.sqrt(Math.pow(e.offsetX - startX, 2) + Math.pow(e.offsetY - startY, 2));
+                ctx.beginPath();
                 ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
                 ctx.stroke();
+            } else if (currentTool === 'select') {
+                // Rysujemy przerywaną ramkę zaznaczenia
+                ctx.setLineDash([5, 5]);
+                ctx.strokeStyle = "blue";
+                ctx.lineWidth = 1;
+                ctx.strokeRect(startX, startY, e.offsetX - startX, e.offsetY - startY);
             }
         });
 
-        // Zakończenie rysowania
-        canvas.addEventListener('mouseup', () => isDrawing = false);
-        canvas.addEventListener('mouseout', () => isDrawing = false);
+        // Zakończenie ruchu myszką
+        canvas.addEventListener('mouseup', (e) => {
+            if (!isDrawing) return;
+            isDrawing = false;
+
+            if (toolSelect.value === 'select') {
+                // Zapisujemy współrzędne zaznaczenia (uwzględniając rysowanie od tyłu)
+                selectionBox = {
+                    x: Math.min(startX, e.offsetX),
+                    y: Math.min(startY, e.offsetY),
+                    w: Math.abs(e.offsetX - startX),
+                    h: Math.abs(e.offsetY - startY)
+                };
+            } else if (toolSelect.value !== 'text') {
+                saveState(); // Każde inne narzędzie zapisuje swój stan do historii
+            }
+        });
+
+        canvas.addEventListener('mouseout', () => {
+            if (isDrawing && toolSelect.value === 'pen') {
+                saveState();
+            }
+            isDrawing = false;
+        });
+
+        // Obsługa skrótów klawiaturowych (Ctrl+Z, Ctrl+C, Ctrl+V)
+        document.addEventListener('keydown', (e) => {
+            // Ctrl + Z (Cofnij)
+            if (e.ctrlKey && e.key.toLowerCase() === 'z') {
+                undo();
+            }
+            // Ctrl + C (Kopiuj)
+            else if (e.ctrlKey && e.key.toLowerCase() === 'c') {
+                if (selectionBox && selectionBox.w > 0 && selectionBox.h > 0) {
+                    // Przywracamy czysty snapshot (bez niebieskiej ramki), żeby skopiować sam rysunek
+                    ctx.putImageData(snapshot, 0, 0);
+                    internalClipboard = ctx.getImageData(selectionBox.x, selectionBox.y, selectionBox.w, selectionBox.h);
+                    
+                    // Opcjonalnie: Rysujemy ramkę z powrotem, aby użytkownik wiedział, co ma zaznaczone
+                    ctx.setLineDash([5, 5]);
+                    ctx.strokeStyle = "blue";
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(selectionBox.x, selectionBox.y, selectionBox.w, selectionBox.h);
+                    
+                    pasteOffset = 20; // Resetujemy przesunięcie po nowym skopiowaniu
+                    alert("Skopiowano obszar!"); // Krótki feedback dla użytkownika
+                }
+            }
+            // Ctrl + V (Wklej)
+            else if (e.ctrlKey && e.key.toLowerCase() === 'v') {
+                if (internalClipboard) {
+                    // Jeśli mamy widoczną przerywaną ramkę zaznaczenia, czyścimy ją wczytując ostatni stan z historii
+                    if (undoStack.length > 0) {
+                        ctx.putImageData(undoStack[undoStack.length - 1], 0, 0);
+                    }
+                    
+                    // Wklejamy schowek z przesunięciem względem oryginału
+                    ctx.putImageData(internalClipboard, selectionBox.x + pasteOffset, selectionBox.y + pasteOffset);
+                    saveState(); // Zapisujemy wklejenie do historii
+                    
+                    pasteOffset += 20; // Kolejne wklejenie przesunie się jeszcze bardziej
+                }
+            }
+        });
 
         // Czyszczenie tablicy
         clearBtn.addEventListener('click', () => {
             ctx.fillStyle = "white";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+            saveState();
         });
 
-        // Pobieranie jako JPG
+        // Pobieranie JPG
         downloadJpg.addEventListener('click', () => {
+            // Czyścimy widoczne ramki zaznaczenia przed pobraniem
+            if (undoStack.length > 0) {
+                ctx.putImageData(undoStack[undoStack.length - 1], 0, 0);
+            }
             const link = document.createElement('a');
             link.download = 'tablica-terapeutyczna.jpg';
             link.href = canvas.toDataURL('image/jpeg', 1.0);
