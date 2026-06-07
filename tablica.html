@@ -3,21 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tablica Terapeutyczna</title>
+    <title>Tablica Terapeutyczna - Wersja Rozszerzona</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        /* Panel Boczny - Lista użytkowników */
+        #sidebar {
+            width: 250px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        #sidebar h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        #userList {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        #userList li {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background-color: #28a745; /* Zielony - aktywny */
+            border-radius: 50%;
+        }
+
+        /* Główny obszar roboczy */
+        #workspace {
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin: 0;
-            padding: 20px;
         }
         h2 {
             color: #333;
-            margin-bottom: 10px;
+            margin-top: 0;
+            margin-bottom: 15px;
         }
+
+        /* Pasek narzędzi */
         #toolbar {
             background: white;
             padding: 15px;
@@ -27,6 +72,25 @@
             display: flex;
             gap: 15px;
             align-items: center;
+            flex-wrap: wrap;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .tool-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            border-right: 1px solid #ddd;
+            padding-right: 15px;
+        }
+        .tool-group:last-child {
+            border-right: none;
+        }
+        select, input[type="color"], input[type="range"] {
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            cursor: pointer;
         }
         button {
             padding: 8px 16px;
@@ -46,74 +110,127 @@
         #clearBtn:hover {
             background-color: #c82333;
         }
+
+        /* Tablica */
         canvas {
             background-color: #ffffff;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             cursor: crosshair;
         }
-        .tool-group {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
     </style>
 </head>
 <body>
 
-    <h2>Wirtualna Tablica</h2>
-    
-    <div id="toolbar">
-        <div class="tool-group">
-            <label for="colorPicker">Kolor:</label>
-            <input type="color" id="colorPicker" value="#000000">
-        </div>
-        <div class="tool-group">
-            <label for="brushSize">Grubość:</label>
-            <input type="range" id="brushSize" min="1" max="20" value="3">
-        </div>
-        <button id="clearBtn">Wyczyść tablicę</button>
-        <button id="downloadJpg">Pobierz (JPG)</button>
+    <div id="sidebar">
+        <h3>Obecni w sesji</h3>
+        <ul id="userList">
+            <li><div class="status-dot"></div> Terapeuta (Ty)</li>
+            <li><div class="status-dot"></div> Pacjent - Token #A1B2</li> 
+        </ul>
     </div>
 
-    <canvas id="board" width="900" height="600"></canvas>
+    <div id="workspace">
+        <h2>Wirtualna Tablica</h2>
+        
+        <div id="toolbar">
+            <div class="tool-group">
+                <label for="toolSelect">Narzędzie:</label>
+                <select id="toolSelect">
+                    <option value="pen">Pędzel</option>
+                    <option value="rect">Prostokąt</option>
+                    <option value="circle">Koło</option>
+                    <option value="text">Tekst</option>
+                </select>
+            </div>
+            <div class="tool-group">
+                <label for="colorPicker">Kolor:</label>
+                <input type="color" id="colorPicker" value="#000000">
+            </div>
+            <div class="tool-group">
+                <label for="brushSize">Grubość / Rozmiar tekstu:</label>
+                <input type="range" id="brushSize" min="1" max="50" value="3">
+            </div>
+            <button id="clearBtn">Wyczyść tablicę</button>
+            <button id="downloadJpg">Pobierz (JPG)</button>
+        </div>
+
+        <canvas id="board" width="800" height="600"></canvas>
+    </div>
 
     <script>
         const canvas = document.getElementById('board');
         const ctx = canvas.getContext('2d');
+        const toolSelect = document.getElementById('toolSelect');
         const colorPicker = document.getElementById('colorPicker');
         const brushSize = document.getElementById('brushSize');
         const clearBtn = document.getElementById('clearBtn');
         const downloadJpg = document.getElementById('downloadJpg');
 
-        // Ustawienie białego tła (ważne przy zapisie do JPG)
+        // Inicjalizacja białego tła
         ctx.fillStyle = "white";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         let isDrawing = false;
-        let lastX = 0;
-        let lastY = 0;
+        let startX, startY;
+        let snapshot; // Zmienna do zapisywania stanu płótna dla podglądu kształtów
 
-        // Rozpoczęcie rysowania
+        // Funkcja rozpoczynająca rysowanie
         canvas.addEventListener('mousedown', (e) => {
             isDrawing = true;
-            [lastX, lastY] = [e.offsetX, e.offsetY];
-        });
+            startX = e.offsetX;
+            startY = e.offsetY;
 
-        // Rysowanie
-        canvas.addEventListener('mousemove', (e) => {
-            if (!isDrawing) return;
-            
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(e.offsetX, e.offsetY);
+            // Zapisujemy aktualny stan tablicy, aby móc podglądać rysowany kształt
+            snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+            // Ustawienia stylów na podstawie wyboru użytkownika
             ctx.strokeStyle = colorPicker.value;
+            ctx.fillStyle = colorPicker.value;
             ctx.lineWidth = brushSize.value;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
-            ctx.stroke();
+
+            // Narzędzie TEKST - działa od razu po kliknięciu
+            if (toolSelect.value === 'text') {
+                const userText = prompt("Wpisz tekst, który chcesz umieścić na tablicy:");
+                if (userText) {
+                    ctx.font = `${brushSize.value * 4}px Arial`; // Skalowanie rozmiaru czcionki suwakiem
+                    ctx.fillText(userText, startX, startY);
+                }
+                isDrawing = false; // Zapobiega błędom po wpisaniu tekstu
+            } else {
+                ctx.beginPath();
+            }
+        });
+
+        // Funkcja trakcie rysowania (ruch myszką)
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDrawing) return;
             
-            [lastX, lastY] = [e.offsetX, e.offsetY];
+            const currentTool = toolSelect.value;
+
+            // Jeśli rysujemy kształt, przywracamy zapisany stan płótna (czyszcząc podgląd z poprzedniej klatki ruchu myszki)
+            if (currentTool !== 'pen') {
+                ctx.putImageData(snapshot, 0, 0);
+                ctx.beginPath();
+            }
+
+            if (currentTool === 'pen') {
+                // Swobodne rysowanie pędzlem
+                ctx.lineTo(e.offsetX, e.offsetY);
+                ctx.stroke();
+            } else if (currentTool === 'rect') {
+                // Rysowanie prostokąta
+                const width = e.offsetX - startX;
+                const height = e.offsetY - startY;
+                ctx.strokeRect(startX, startY, width, height);
+            } else if (currentTool === 'circle') {
+                // Rysowanie koła (promień obliczany z odległości między startem a aktualną pozycją)
+                const radius = Math.sqrt(Math.pow(e.offsetX - startX, 2) + Math.pow(e.offsetY - startY, 2));
+                ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
+                ctx.stroke();
+            }
         });
 
         // Zakończenie rysowania
