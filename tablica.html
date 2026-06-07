@@ -15,7 +15,7 @@
             justify-content: center;
         }
 
-        /* Panel Boczny (Zwiększony do 280px dla lepszej czytelności kontrolek) */
+        /* Panel Boczny */
         #sidebar {
             width: 280px;
             background: white;
@@ -106,7 +106,7 @@
             background-color: #5a6268;
         }
         
-        /* Specjalny przycisk ustawień */
+        /* Przycisk ustawień */
         .settings-toggle-btn {
             background-color: #495057;
             margin-top: 10px;
@@ -137,7 +137,7 @@
             margin-bottom: 15px;
         }
 
-        /* Kontener dopasowany do Canvasu dla pozycjonowania tekstu */
+        /* Kontener dla Canvasu */
         #canvasWrapper {
             position: relative;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -150,22 +150,22 @@
             cursor: crosshair;
         }
 
-        /* Ulepszone, w pełni widoczne pole tekstowe */
+        /* Nowe, stabilne pole tekstowe HTML */
         .dynamic-textarea {
             position: absolute;
-            background: rgba(255, 255, 255, 0.95);
+            background: #ffffff;
             border: 1px solid #007bff;
             border-radius: 4px;
             outline: none;
             padding: 6px;
             box-sizing: border-box;
-            resize: both;
-            overflow: hidden;
+            resize: none; /* Rozmiar definiuje użytkownik podczas rysowania */
+            overflow: y-hidden;
             z-index: 100;
             font-family: Arial, sans-serif;
             line-height: 1.3;
             white-space: pre-wrap;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
     </style>
 </head>
@@ -185,7 +185,7 @@
                 <option value="pen">Pędzel</option>
                 <option value="rect">Prostokąt</option>
                 <option value="circle">Koło</option>
-                <option value="text">Pole tekstowe</option>
+                <option value="text">Pole tekstowe (Wpisz tekst)</option>
                 <option value="select">Zaznacz obszar</option>
             </select>
         </div>
@@ -200,8 +200,8 @@
                 <input type="color" id="colorPicker" value="#000000">
             </div>
             <div class="sidebar-group">
-                <label for="brushSize">Grubość linii / tekstu:</label>
-                <input type="range" id="brushSize" min="1" max="50" value="3">
+                <label for="brushSize">Grubość linii / Wielkość czcionki:</label>
+                <input type="range" id="brushSize" min="1" max="50" value="5">
             </div>
             <button id="clearBtn" class="danger-btn">Wyczyść tablicę</button>
             <button id="downloadJpg" style="background-color: #28a745;">Pobierz jako JPG</button>
@@ -374,7 +374,7 @@
 
         // Mousedown
         canvas.addEventListener('mousedown', (e) => {
-            // KLUCZOWA POPRAWKA: Jeśli pole tekstowe jest aktywne, kliknięcie zapisuje je i natychmiast pozwala na kolejną akcję
+            // Zapisz poprzednie pole tekstowe jeśli istniało i użytkownik kliknął obok
             if (currentTextarea) {
                 commitText();
             }
@@ -419,33 +419,7 @@
             ctx.lineJoin = 'round';
             ctx.setLineDash([]);
 
-            if (toolSelect.value === 'text') {
-                isDrawing = false; 
-                
-                const fontSize = Math.max(12, brushSize.value * 3); // Dobra proporcja wielkości tekstu
-                const textarea = document.createElement('textarea');
-                textarea.className = 'dynamic-textarea';
-                textarea.style.left = `${startX}px`;
-                textarea.style.top = `${startY}px`;
-                textarea.style.color = colorPicker.value;
-                textarea.style.fontSize = `${fontSize}px`;
-                textarea.style.width = '180px';
-                textarea.style.height = `${fontSize * 2.5}px`;
-                
-                // Automatyczny zapis po kliknięciu poza obszarem aplikacji (np. menu boczne)
-                textarea.addEventListener('blur', () => {
-                    setTimeout(() => {
-                        if (currentTextarea === textarea) {
-                            commitText();
-                        }
-                    }, 150);
-                });
-
-                canvasWrapper.appendChild(textarea);
-                textarea.focus();
-                currentTextarea = textarea;
-
-            } else if (toolSelect.value !== 'select') {
+            if (toolSelect.value !== 'select' && toolSelect.value !== 'text') {
                 ctx.beginPath();
             }
         });
@@ -492,9 +466,10 @@
                 ctx.beginPath();
                 ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
                 ctx.stroke();
-            } else if (currentTool === 'select') {
-                ctx.setLineDash([5, 5]);
-                ctx.strokeStyle = "#007bff";
+            } else if (currentTool === 'select' || currentTool === 'text') {
+                // Rysowanie podglądu ramki dla zaznaczenia ORAZ pola tekstowego
+                ctx.setLineDash([4, 4]);
+                ctx.strokeStyle = currentTool === 'select' ? "#007bff" : colorPicker.value;
                 ctx.lineWidth = 1;
                 ctx.strokeRect(startX, startY, e.offsetX - startX, e.offsetY - startY);
             }
@@ -510,7 +485,39 @@
             if (!isDrawing) return;
             isDrawing = false;
 
-            if (toolSelect.value === 'select') {
+            const currentTool = toolSelect.value;
+
+            // Obsługa tworzenia Pola Tekstowego metodą przeciągania (Drag & Drop)
+            if (currentTool === 'text') {
+                ctx.putImageData(snapshot, 0, 0); // Czyścimy tymczasową ramkę rysunkową
+                
+                let x = Math.min(startX, e.offsetX);
+                let y = Math.min(startY, e.offsetY);
+                let w = Math.abs(e.offsetX - startX);
+                let h = Math.abs(e.offsetY - startY);
+                
+                // Jeśli użytkownik tylko kliknął bez przeciągania, nadaj domyślny rozmiar
+                if (w < 15 || h < 15) {
+                    w = 200;
+                    h = 80;
+                }
+
+                const fontSize = Math.max(12, brushSize.value * 3); // Skalowanie czcionki suwakiem
+                const textarea = document.createElement('textarea');
+                textarea.className = 'dynamic-textarea';
+                textarea.style.left = `${x}px`;
+                textarea.style.top = `${y}px`;
+                textarea.style.width = `${w}px`;
+                textarea.style.height = `${h}px`;
+                textarea.style.color = colorPicker.value;
+                textarea.style.fontSize = `${fontSize}px`;
+                textarea.placeholder = "Zacznij pisać tutaj...";
+
+                canvasWrapper.appendChild(textarea);
+                textarea.focus();
+                currentTextarea = textarea;
+
+            } else if (currentTool === 'select') {
                 let w = Math.abs(e.offsetX - startX);
                 let h = Math.abs(e.offsetY - startY);
                 
@@ -535,14 +542,13 @@
                     isTransforming = true;
                     drawTransforming(); 
                 }
-            } else if (toolSelect.value !== 'text') {
+            } else {
                 saveState(); 
             }
         });
 
         // Skróty Klawiszowe
         document.addEventListener('keydown', (e) => {
-            // Wyłączamy skróty globalne, jeśli aktualnie piszemy wewnątrz pola tekstowego
             if (document.activeElement.tagName === 'TEXTAREA') return;
 
             if (e.ctrlKey && e.key.toLowerCase() === 'z') {
@@ -596,7 +602,10 @@
 
         clearBtn.addEventListener('click', () => {
             if (isTransforming) isTransforming = false;
-            if (currentTextarea) commitText();
+            if (currentTextarea) {
+                if (currentTextarea.parentNode === canvasWrapper) canvasWrapper.removeChild(currentTextarea);
+                currentTextarea = null;
+            }
             ctx.fillStyle = "white";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             saveState();
