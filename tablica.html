@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tablica Terapeutyczna - Wersja Pełna</title>
+    <title>Zaawansowana Tablica Terapeutyczna</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -178,56 +178,149 @@
         const downloadJpg = document.getElementById('downloadJpg');
         const undoBtn = document.getElementById('undoBtn');
 
+        // Pomocnicze płótno w pamięci podręcznej (Offscreen Canvas) do trzymania wyciętego obrazu
+        const offscreenCanvas = document.createElement('canvas');
+        const oCtx = offscreenCanvas.getContext('2d');
+
         // Historia operacji (Cofnij)
         let undoStack = [];
         
-        // Zmienne do obsługi zaznaczania i schowka
-        let selectionBox = null;
+        // Struktury danych do obsługi Schowka (Ctrl+C / Ctrl+V)
         let internalClipboard = null;
-        let pasteOffset = 20; 
+        let clipboardW = 0, clipboardH = 0;
 
-        // Inicjalizacja tablicy
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        saveState();
+        // Stan aktywnego przekształcania obiektu
+        let isTransforming = false;
+        let activeTransformMode = null; // 'move', 'resize', 'rotate'
+        let selX = 0, selY = 0, selW = 0, selH = 0, selAngle = 0;
+        let dragOffsetX = 0, dragOffsetY = 0;
 
+        // Podstawowe rysowanie
         let isDrawing = false;
         let startX, startY;
         let snapshot; 
 
-        // Zapisywanie stanu do historii
+        // Inicjalizacja tła
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        saveState();
+
         function saveState() {
             if (undoStack.length > 20) undoStack.shift(); 
             undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
         }
 
-        // Funkcja Cofnij
         function undo() {
+            if (isTransforming) commitTransform();
             if (undoStack.length > 1) {
                 undoStack.pop(); 
-                const previousState = undoStack[undoStack.length - 1]; 
-                ctx.putImageData(previousState, 0, 0); 
-                selectionBox = null; 
+                ctx.putImageData(undoStack[undoStack.length - 1], 0, 0); 
+                isTransforming = false;
             }
         }
-
         undoBtn.addEventListener('click', undo);
 
-        // Mousedown - Początek rysowania/zaznaczania
+        // Automatyczne zatwierdzenie zmian przy zmianie narzędzia w menu
+        toolSelect.addEventListener('change', () => {
+            if (isTransforming) commitTransform();
+        });
+
+        // Wtopienie przekształcanego obiektu w główne płótno
+        function commitTransform() {
+            if (!isTransforming) return;
+            ctx.putImageData(snapshot, 0, 0);
+            ctx.save();
+            ctx.translate(selX + selW / 2, selY + selH / 2);
+            ctx.rotate(selAngle);
+            ctx.drawImage(offscreenCanvas, -selW / 2, -selH / 2, selW, selH);
+            ctx.restore();
+            saveState();
+            isTransforming = false;
+            activeTransformMode = null;
+        }
+
+        // Renderowanie ramki transformacji (uchwyty, obrót, box)
+        function drawTransforming() {
+            ctx.putImageData(snapshot, 0, 0);
+            ctx.save();
+            ctx.translate(selX + selW / 2, selY + selH / 2);
+            ctx.rotate(selAngle);
+            
+            // Rysowanie wyciętego obrazu ze skalowaniem
+            ctx.drawImage(offscreenCanvas, -selW / 2, -selH / 2, selW, selH);
+            
+            // Przerywana ramka
+            ctx.setLineDash([5, 5]);
+            ctx.strokeStyle = "#007bff";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(-selW / 2, -selH / 2, selW, selH);
+            
+            // Uchwyty (pełne linie)
+            ctx.setLineDash([]);
+            ctx.fillStyle = "#007bff";
+            
+            // Kwadracik zmiany rozmiaru (prawy dolny róg)
+            ctx.fillRect(selW / 2 - 5, selH / 2 - 5, 10, 10);
+            
+            // Kropka obracania (u góry)
+            ctx.beginPath();
+            ctx.arc(0, -selH / 2 - 20, 6, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Linia łącząca kropkę obrotu z ramką
+            ctx.beginPath();
+            ctx.moveTo(0, -selH / 2);
+            ctx.lineTo(0, -selH / 2 - 20);
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+
+        // Mousedown
         canvas.addEventListener('mousedown', (e) => {
+            // Reakcja w trybie transformacji
+            if (isTransforming) {
+                let cx = selX + selW / 2;
+                let cy = selY + selH / 2;
+                let dx = e.offsetX - cx;
+                let dy = e.offsetY - cy;
+                
+                // Odwrócenie rotacji myszki, aby poprawnie zbadać pozycję wewnątrz lokalnego układu współrzędnych ramki
+                let rx = dx * Math.cos(-selAngle) - dy * Math.sin(-selAngle);
+                let ry = dx * Math.sin(-selAngle) + dy * Math.cos(-selAngle);
+
+                let distRotate = Math.sqrt(rx * rx + (ry + selH / 2 + 20) * (ry + selH / 2 + 20));
+                let distResize = Math.sqrt((rx - selW / 2) * (rx - selW / 2) + (ry - selH / 2) * (ry - selH / 2));
+
+                if (distRotate < 15) {
+                    activeTransformMode = 'rotate';
+                    return;
+                } else if (distResize < 15) {
+                    activeTransformMode = 'resize';
+                    return;
+                } else if (rx >= -selW / 2 && rx <= selW / 2 && ry >= -selH / 2 && ry <= selH / 2) {
+                    activeTransformMode = 'move';
+                    dragOffsetX = e.offsetX - selX;
+                    dragOffsetY = e.offsetY - selY;
+                    return;
+                } else {
+                    // Kliknięcie obok ramki -> Zapisz i zamknij transformację
+                    commitTransform();
+                }
+            }
+
+            // Normalne rysowanie / Rozpoczęcie nowego zaznaczania
             isDrawing = true;
             startX = e.offsetX;
             startY = e.offsetY;
-
             snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            selectionBox = null; 
 
             ctx.strokeStyle = colorPicker.value;
             ctx.fillStyle = colorPicker.value;
             ctx.lineWidth = brushSize.value;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
-            ctx.setLineDash([]); 
+            ctx.setLineDash([]);
 
             if (toolSelect.value === 'text') {
                 const userText = prompt("Wpisz tekst:");
@@ -242,10 +335,34 @@
             }
         });
 
-        // Mousemove - Ruch myszką
+        // Mousemove
         canvas.addEventListener('mousemove', (e) => {
+            // Obsługa aktywnej manipulacji myszką na ramce zaznaczenia
+            if (isTransforming && activeTransformMode) {
+                if (activeTransformMode === 'move') {
+                    selX = e.offsetX - dragOffsetX;
+                    selY = e.offsetY - dragOffsetY;
+                } else if (activeTransformMode === 'rotate') {
+                    let cx = selX + selW / 2;
+                    let cy = selY + selH / 2;
+                    selAngle = Math.atan2(e.offsetY - cy, e.offsetX - cx) + Math.PI / 2;
+                } else if (activeTransformMode === 'resize') {
+                    let cx = selX + selW / 2;
+                    let cy = selY + selH / 2;
+                    let dx = e.offsetX - cx;
+                    let dy = e.offsetY - cy;
+                    let rx = dx * Math.cos(-selAngle) - dy * Math.sin(-selAngle);
+                    let ry = dx * Math.sin(-selAngle) + dy * Math.cos(-selAngle);
+                    
+                    // Skanowanie symetryczne od środka ramki
+                    selW = Math.max(20, Math.abs(rx) * 2);
+                    selH = Math.max(20, Math.abs(ry) * 2);
+                }
+                drawTransforming();
+                return;
+            }
+
             if (!isDrawing) return;
-            
             const currentTool = toolSelect.value;
 
             if (currentTool !== 'pen') {
@@ -264,123 +381,126 @@
                 ctx.stroke();
             } else if (currentTool === 'select') {
                 ctx.setLineDash([5, 5]);
-                ctx.strokeStyle = "blue";
+                ctx.strokeStyle = "#007bff";
                 ctx.lineWidth = 1;
                 ctx.strokeRect(startX, startY, e.offsetX - startX, e.offsetY - startY);
             }
         });
 
-        // Mouseup - Koniec rysowania/zaznaczania
+        // Mouseup
         canvas.addEventListener('mouseup', (e) => {
+            if (isTransforming) {
+                activeTransformMode = null;
+                return;
+            }
+
             if (!isDrawing) return;
             isDrawing = false;
 
+            // Zakończenie rysowania nowego zaznaczenia -> Aktywacja Trybu Transformacji
             if (toolSelect.value === 'select') {
-                selectionBox = {
-                    x: Math.min(startX, e.offsetX),
-                    y: Math.min(startY, e.offsetY),
-                    w: Math.abs(e.offsetX - startX),
-                    h: Math.abs(e.offsetY - startY)
-                };
+                let w = Math.abs(e.offsetX - startX);
+                let h = Math.abs(e.offsetY - startY);
+                
+                if (w > 5 && h > 5) {
+                    selX = Math.min(startX, e.offsetX);
+                    selY = Math.min(startY, e.offsetY);
+                    selW = w;
+                    selH = h;
+                    selAngle = 0;
+
+                    // Przenosimy wycięty fragment do pamięci podręcznej (Offscreen)
+                    offscreenCanvas.width = selW;
+                    offscreenCanvas.height = selH;
+                    oCtx.drawImage(canvas, selX, selY, selW, selH, 0, 0, selW, selH);
+
+                    // Wycinamy oryginalny fragment z głównej tablicy (czyszczenie na biało)
+                    ctx.fillStyle = "white";
+                    ctx.fillRect(selX, selY, selW, selH);
+
+                    // Aktualizujemy tło sesji (bez obiektu)
+                    snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    
+                    isTransforming = true;
+                    drawTransforming();
+                }
             } else if (toolSelect.value !== 'text') {
                 saveState(); 
             }
         });
 
-        canvas.addEventListener('mouseout', () => {
-            if (isDrawing && toolSelect.value === 'pen') {
-                saveState();
-            }
-            isDrawing = false;
-        });
-
-        // Globalna obsługa klawiatury (Ctrl+Z, Ctrl+C, Ctrl+V, Ctrl+X, Delete)
+        // Obsługa Klawiatury (Skróty)
         document.addEventListener('keydown', (e) => {
-            // Skrót: Ctrl + Z (Cofnij)
             if (e.ctrlKey && e.key.toLowerCase() === 'z') {
                 undo();
             }
             
-            // Skrót: Ctrl + C (Kopiuj)
+            // Kopiuj (Ctrl + C)
             else if (e.ctrlKey && e.key.toLowerCase() === 'c') {
-                if (selectionBox && selectionBox.w > 0 && selectionBox.h > 0) {
-                    ctx.putImageData(snapshot, 0, 0); // Ukryj ramkę zaznaczenia przed kopią
-                    internalClipboard = ctx.getImageData(selectionBox.x, selectionBox.y, selectionBox.w, selectionBox.h);
-                    
-                    // Przywróć wizualną ramkę zaznaczenia
-                    ctx.setLineDash([5, 5]);
-                    ctx.strokeStyle = "blue";
-                    ctx.lineWidth = 1;
-                    ctx.strokeRect(selectionBox.x, selectionBox.y, selectionBox.w, selectionBox.h);
-                    
-                    pasteOffset = 20; 
-                    alert("Skopiowano obszar!");
+                if (isTransforming) {
+                    internalClipboard = oCtx.getImageData(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+                    clipboardW = offscreenCanvas.width;
+                    clipboardH = offscreenCanvas.height;
+                    alert("Skopiowano obiekt!");
                 }
             }
             
-            // Skrót: Ctrl + X (Wytnij)
+            // Wytnij (Ctrl + X)
             else if (e.ctrlKey && e.key.toLowerCase() === 'x') {
-                if (selectionBox && selectionBox.w > 0 && selectionBox.h > 0) {
-                    ctx.putImageData(snapshot, 0, 0); // Ukryj ramkę
-                    // Zapisz wycinek do schowka
-                    internalClipboard = ctx.getImageData(selectionBox.x, selectionBox.y, selectionBox.w, selectionBox.h);
+                if (isTransforming) {
+                    internalClipboard = oCtx.getImageData(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+                    clipboardW = offscreenCanvas.width;
+                    clipboardH = offscreenCanvas.height;
                     
-                    // Zamaluj wycięty obszar na biało
-                    ctx.fillStyle = "white";
-                    ctx.fillRect(selectionBox.x, selectionBox.y, selectionBox.w, selectionBox.h);
-                    
-                    saveState(); // Zapisz zmieniony stan (z białą dziurą) do historii
-                    selectionBox = null; // Resetuj zaznaczenie
-                    pasteOffset = 20;
-                    alert("Wycięto obszar!");
+                    // Wywalamy obiekt bez zapisywania pozycji na płótnie
+                    isTransforming = false;
+                    ctx.putImageData(snapshot, 0, 0);
+                    saveState();
+                    alert("Wycięto obiekt!");
                 }
             }
             
-            // Skrót: Ctrl + V (Wklej)
+            // Wklej (Ctrl + V)
             else if (e.ctrlKey && e.key.toLowerCase() === 'v') {
                 if (internalClipboard) {
-                    if (undoStack.length > 0) {
-                        ctx.putImageData(undoStack[undoStack.length - 1], 0, 0);
-                    }
+                    if (isTransforming) commitTransform(); // Zapisz poprzedni jeśli był otwarty
                     
-                    // Definiuj bazową pozycję wklejania (od starego zaznaczenia lub domyślnie od góry)
-                    const targetX = selectionBox ? selectionBox.x : 10;
-                    const targetY = selectionBox ? selectionBox.y : 10;
-                    
-                    ctx.putImageData(internalClipboard, targetX + pasteOffset, targetY + pasteOffset);
-                    saveState(); 
-                    
-                    pasteOffset += 20; 
+                    selX = 50;
+                    selY = 50;
+                    selW = clipboardW;
+                    selH = clipboardH;
+                    selAngle = 0;
+
+                    offscreenCanvas.width = selW;
+                    offscreenCanvas.height = selH;
+                    oCtx.putImageData(internalClipboard, 0, 0);
+
+                    snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    isTransforming = true;
+                    drawTransforming();
                 }
             }
             
-            // Klawisz: Delete (Usuń obszar)
+            // Usuń (Delete)
             else if (e.key === 'Delete' || e.key === 'Del') {
-                if (selectionBox && selectionBox.w > 0 && selectionBox.h > 0) {
-                    ctx.putImageData(snapshot, 0, 0); // Usuń ramkę wizualną
-                    
-                    // Zamaluj zaznaczony fragment na biało
-                    ctx.fillStyle = "white";
-                    ctx.fillRect(selectionBox.x, selectionBox.y, selectionBox.w, selectionBox.h);
-                    
-                    saveState(); // Dodaj operację usunięcia do historii 'Cofnij'
-                    selectionBox = null; // Skasuj ramkę wyboru
+                if (isTransforming) {
+                    isTransforming = false;
+                    activeTransformMode = null;
+                    ctx.putImageData(snapshot, 0, 0); // Zostaw puste białe miejsce w tle
+                    saveState();
                 }
             }
         });
 
-        // Czyszczenie całej tablicy
         clearBtn.addEventListener('click', () => {
+            if (isTransforming) isTransforming = false;
             ctx.fillStyle = "white";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             saveState();
         });
 
-        // Pobieranie jako plik graficzny
         downloadJpg.addEventListener('click', () => {
-            if (undoStack.length > 0) {
-                ctx.putImageData(undoStack[undoStack.length - 1], 0, 0);
-            }
+            if (isTransforming) commitTransform();
             const link = document.createElement('a');
             link.download = 'tablica-terapeutyczna.jpg';
             link.href = canvas.toDataURL('image/jpeg', 1.0);
