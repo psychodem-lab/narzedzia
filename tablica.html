@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tablica Terapeutyczna - Wersja z Kopiowaniem i Cofaniem</title>
+    <title>Tablica Terapeutyczna - Wersja Pełna</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -159,7 +159,7 @@
                 <input type="range" id="brushSize" min="1" max="50" value="3">
             </div>
             <div class="tool-group">
-                <button id="undoBtn" class="action-btn" title="Możesz też użyć Ctrl+Z">Cofnij</button>
+                <button id="undoBtn" class="action-btn" title="Skrót: Ctrl+Z">Cofnij</button>
             </div>
             <button id="clearBtn" class="danger-btn">Wyczyść tablicę</button>
             <button id="downloadJpg">Pobierz (JPG)</button>
@@ -178,15 +178,15 @@
         const downloadJpg = document.getElementById('downloadJpg');
         const undoBtn = document.getElementById('undoBtn');
 
-        // Historia operacji dla funkcji "Cofnij"
+        // Historia operacji (Cofnij)
         let undoStack = [];
         
-        // Zmienne do kopiowania i wklejania
+        // Zmienne do obsługi zaznaczania i schowka
         let selectionBox = null;
         let internalClipboard = null;
-        let pasteOffset = 20; // Przesunięcie przy wklejaniu
+        let pasteOffset = 20; 
 
-        // Inicjalizacja tła i zapisanie pierwszego, czystego stanu
+        // Inicjalizacja tablicy
         ctx.fillStyle = "white";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         saveState();
@@ -195,41 +195,39 @@
         let startX, startY;
         let snapshot; 
 
-        // Funkcja zapisująca stan płótna do historii
+        // Zapisywanie stanu do historii
         function saveState() {
-            // Ograniczamy historię do ostatnich 20 kroków, żeby nie zapchać pamięci
             if (undoStack.length > 20) undoStack.shift(); 
             undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
         }
 
-        // Funkcja cofania
+        // Funkcja Cofnij
         function undo() {
             if (undoStack.length > 1) {
-                undoStack.pop(); // Usuń aktualny stan
-                const previousState = undoStack[undoStack.length - 1]; // Pobierz poprzedni
-                ctx.putImageData(previousState, 0, 0); // Przywróć poprzedni
-                selectionBox = null; // Usuń ewentualne zaznaczenie po cofnięciu
+                undoStack.pop(); 
+                const previousState = undoStack[undoStack.length - 1]; 
+                ctx.putImageData(previousState, 0, 0); 
+                selectionBox = null; 
             }
         }
 
         undoBtn.addEventListener('click', undo);
 
-        // Rozpoczęcie interakcji z myszką
+        // Mousedown - Początek rysowania/zaznaczania
         canvas.addEventListener('mousedown', (e) => {
             isDrawing = true;
             startX = e.offsetX;
             startY = e.offsetY;
 
-            // Przed rysowaniem bierzemy zrzut (przydatne do podglądu i kopiowania)
             snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            selectionBox = null; // Resetujemy stare zaznaczenie
+            selectionBox = null; 
 
             ctx.strokeStyle = colorPicker.value;
             ctx.fillStyle = colorPicker.value;
             ctx.lineWidth = brushSize.value;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
-            ctx.setLineDash([]); // Resetujemy styl przerywany
+            ctx.setLineDash([]); 
 
             if (toolSelect.value === 'text') {
                 const userText = prompt("Wpisz tekst:");
@@ -244,14 +242,14 @@
             }
         });
 
-        // W trakcie ruchu
+        // Mousemove - Ruch myszką
         canvas.addEventListener('mousemove', (e) => {
             if (!isDrawing) return;
             
             const currentTool = toolSelect.value;
 
             if (currentTool !== 'pen') {
-                ctx.putImageData(snapshot, 0, 0); // Przywracamy tło podczas ciągnięcia myszki
+                ctx.putImageData(snapshot, 0, 0); 
             }
 
             if (currentTool === 'pen') {
@@ -265,7 +263,6 @@
                 ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
                 ctx.stroke();
             } else if (currentTool === 'select') {
-                // Rysujemy przerywaną ramkę zaznaczenia
                 ctx.setLineDash([5, 5]);
                 ctx.strokeStyle = "blue";
                 ctx.lineWidth = 1;
@@ -273,13 +270,12 @@
             }
         });
 
-        // Zakończenie ruchu myszką
+        // Mouseup - Koniec rysowania/zaznaczania
         canvas.addEventListener('mouseup', (e) => {
             if (!isDrawing) return;
             isDrawing = false;
 
             if (toolSelect.value === 'select') {
-                // Zapisujemy współrzędne zaznaczenia (uwzględniając rysowanie od tyłu)
                 selectionBox = {
                     x: Math.min(startX, e.offsetX),
                     y: Math.min(startY, e.offsetY),
@@ -287,7 +283,7 @@
                     h: Math.abs(e.offsetY - startY)
                 };
             } else if (toolSelect.value !== 'text') {
-                saveState(); // Każde inne narzędzie zapisuje swój stan do historii
+                saveState(); 
             }
         });
 
@@ -298,56 +294,90 @@
             isDrawing = false;
         });
 
-        // Obsługa skrótów klawiaturowych (Ctrl+Z, Ctrl+C, Ctrl+V)
+        // Globalna obsługa klawiatury (Ctrl+Z, Ctrl+C, Ctrl+V, Ctrl+X, Delete)
         document.addEventListener('keydown', (e) => {
-            // Ctrl + Z (Cofnij)
+            // Skrót: Ctrl + Z (Cofnij)
             if (e.ctrlKey && e.key.toLowerCase() === 'z') {
                 undo();
             }
-            // Ctrl + C (Kopiuj)
+            
+            // Skrót: Ctrl + C (Kopiuj)
             else if (e.ctrlKey && e.key.toLowerCase() === 'c') {
                 if (selectionBox && selectionBox.w > 0 && selectionBox.h > 0) {
-                    // Przywracamy czysty snapshot (bez niebieskiej ramki), żeby skopiować sam rysunek
-                    ctx.putImageData(snapshot, 0, 0);
+                    ctx.putImageData(snapshot, 0, 0); // Ukryj ramkę zaznaczenia przed kopią
                     internalClipboard = ctx.getImageData(selectionBox.x, selectionBox.y, selectionBox.w, selectionBox.h);
                     
-                    // Opcjonalnie: Rysujemy ramkę z powrotem, aby użytkownik wiedział, co ma zaznaczone
+                    // Przywróć wizualną ramkę zaznaczenia
                     ctx.setLineDash([5, 5]);
                     ctx.strokeStyle = "blue";
                     ctx.lineWidth = 1;
                     ctx.strokeRect(selectionBox.x, selectionBox.y, selectionBox.w, selectionBox.h);
                     
-                    pasteOffset = 20; // Resetujemy przesunięcie po nowym skopiowaniu
-                    alert("Skopiowano obszar!"); // Krótki feedback dla użytkownika
+                    pasteOffset = 20; 
+                    alert("Skopiowano obszar!");
                 }
             }
-            // Ctrl + V (Wklej)
+            
+            // Skrót: Ctrl + X (Wytnij)
+            else if (e.ctrlKey && e.key.toLowerCase() === 'x') {
+                if (selectionBox && selectionBox.w > 0 && selectionBox.h > 0) {
+                    ctx.putImageData(snapshot, 0, 0); // Ukryj ramkę
+                    // Zapisz wycinek do schowka
+                    internalClipboard = ctx.getImageData(selectionBox.x, selectionBox.y, selectionBox.w, selectionBox.h);
+                    
+                    // Zamaluj wycięty obszar na biało
+                    ctx.fillStyle = "white";
+                    ctx.fillRect(selectionBox.x, selectionBox.y, selectionBox.w, selectionBox.h);
+                    
+                    saveState(); // Zapisz zmieniony stan (z białą dziurą) do historii
+                    selectionBox = null; // Resetuj zaznaczenie
+                    pasteOffset = 20;
+                    alert("Wycięto obszar!");
+                }
+            }
+            
+            // Skrót: Ctrl + V (Wklej)
             else if (e.ctrlKey && e.key.toLowerCase() === 'v') {
                 if (internalClipboard) {
-                    // Jeśli mamy widoczną przerywaną ramkę zaznaczenia, czyścimy ją wczytując ostatni stan z historii
                     if (undoStack.length > 0) {
                         ctx.putImageData(undoStack[undoStack.length - 1], 0, 0);
                     }
                     
-                    // Wklejamy schowek z przesunięciem względem oryginału
-                    ctx.putImageData(internalClipboard, selectionBox.x + pasteOffset, selectionBox.y + pasteOffset);
-                    saveState(); // Zapisujemy wklejenie do historii
+                    // Definiuj bazową pozycję wklejania (od starego zaznaczenia lub domyślnie od góry)
+                    const targetX = selectionBox ? selectionBox.x : 10;
+                    const targetY = selectionBox ? selectionBox.y : 10;
                     
-                    pasteOffset += 20; // Kolejne wklejenie przesunie się jeszcze bardziej
+                    ctx.putImageData(internalClipboard, targetX + pasteOffset, targetY + pasteOffset);
+                    saveState(); 
+                    
+                    pasteOffset += 20; 
+                }
+            }
+            
+            // Klawisz: Delete (Usuń obszar)
+            else if (e.key === 'Delete' || e.key === 'Del') {
+                if (selectionBox && selectionBox.w > 0 && selectionBox.h > 0) {
+                    ctx.putImageData(snapshot, 0, 0); // Usuń ramkę wizualną
+                    
+                    // Zamaluj zaznaczony fragment na biało
+                    ctx.fillStyle = "white";
+                    ctx.fillRect(selectionBox.x, selectionBox.y, selectionBox.w, selectionBox.h);
+                    
+                    saveState(); // Dodaj operację usunięcia do historii 'Cofnij'
+                    selectionBox = null; // Skasuj ramkę wyboru
                 }
             }
         });
 
-        // Czyszczenie tablicy
+        // Czyszczenie całej tablicy
         clearBtn.addEventListener('click', () => {
             ctx.fillStyle = "white";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             saveState();
         });
 
-        // Pobieranie JPG
+        // Pobieranie jako plik graficzny
         downloadJpg.addEventListener('click', () => {
-            // Czyścimy widoczne ramki zaznaczenia przed pobraniem
             if (undoStack.length > 0) {
                 ctx.putImageData(undoStack[undoStack.length - 1], 0, 0);
             }
