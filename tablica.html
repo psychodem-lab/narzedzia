@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zaawansowana Tablica Terapeutyczna</title>
+    <title>Zaawansowana Tablica Terapeutyczna - Naprawione Zaznaczenie</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -178,7 +178,7 @@
         const downloadJpg = document.getElementById('downloadJpg');
         const undoBtn = document.getElementById('undoBtn');
 
-        // Pomocnicze płótno w pamięci podręcznej (Offscreen Canvas) do trzymania wyciętego obrazu
+        // Pomocnicze płótno w pamięci podręcznej (Offscreen Canvas)
         const offscreenCanvas = document.createElement('canvas');
         const oCtx = offscreenCanvas.getContext('2d');
 
@@ -225,7 +225,7 @@
             if (isTransforming) commitTransform();
         });
 
-        // Wtopienie przekształcanego obiektu w główne płótno
+        // Wtopienie przekształcanego obiektu w główne płótno (BEZ RAMKI)
         function commitTransform() {
             if (!isTransforming) return;
             ctx.putImageData(snapshot, 0, 0);
@@ -239,23 +239,23 @@
             activeTransformMode = null;
         }
 
-        // Renderowanie ramki transformacji (uchwyty, obrót, box)
+        // Renderowanie tymczasowej ramki transformacji na ekranie
         function drawTransforming() {
             ctx.putImageData(snapshot, 0, 0);
             ctx.save();
             ctx.translate(selX + selW / 2, selY + selH / 2);
             ctx.rotate(selAngle);
             
-            // Rysowanie wyciętego obrazu ze skalowaniem
+            // Rysowanie wyciętego obrazu
             ctx.drawImage(offscreenCanvas, -selW / 2, -selH / 2, selW, selH);
             
-            // Przerywana ramka
+            // Przerywana niebieska ramka (tylko jako nakładka wizualna!)
             ctx.setLineDash([5, 5]);
             ctx.strokeStyle = "#007bff";
             ctx.lineWidth = 1;
             ctx.strokeRect(-selW / 2, -selH / 2, selW, selH);
             
-            // Uchwyty (pełne linie)
+            // Uchwyty sterujące
             ctx.setLineDash([]);
             ctx.fillStyle = "#007bff";
             
@@ -278,14 +278,12 @@
 
         // Mousedown
         canvas.addEventListener('mousedown', (e) => {
-            // Reakcja w trybie transformacji
             if (isTransforming) {
                 let cx = selX + selW / 2;
                 let cy = selY + selH / 2;
                 let dx = e.offsetX - cx;
                 let dy = e.offsetY - cy;
                 
-                // Odwrócenie rotacji myszki, aby poprawnie zbadać pozycję wewnątrz lokalnego układu współrzędnych ramki
                 let rx = dx * Math.cos(-selAngle) - dy * Math.sin(-selAngle);
                 let ry = dx * Math.sin(-selAngle) + dy * Math.cos(-selAngle);
 
@@ -304,12 +302,10 @@
                     dragOffsetY = e.offsetY - selY;
                     return;
                 } else {
-                    // Kliknięcie obok ramki -> Zapisz i zamknij transformację
                     commitTransform();
                 }
             }
 
-            // Normalne rysowanie / Rozpoczęcie nowego zaznaczania
             isDrawing = true;
             startX = e.offsetX;
             startY = e.offsetY;
@@ -337,7 +333,6 @@
 
         // Mousemove
         canvas.addEventListener('mousemove', (e) => {
-            // Obsługa aktywnej manipulacji myszką na ramce zaznaczenia
             if (isTransforming && activeTransformMode) {
                 if (activeTransformMode === 'move') {
                     selX = e.offsetX - dragOffsetX;
@@ -354,7 +349,6 @@
                     let rx = dx * Math.cos(-selAngle) - dy * Math.sin(-selAngle);
                     let ry = dx * Math.sin(-selAngle) + dy * Math.cos(-selAngle);
                     
-                    // Skanowanie symetryczne od środka ramki
                     selW = Math.max(20, Math.abs(rx) * 2);
                     selH = Math.max(20, Math.abs(ry) * 2);
                 }
@@ -397,7 +391,6 @@
             if (!isDrawing) return;
             isDrawing = false;
 
-            // Zakończenie rysowania nowego zaznaczenia -> Aktywacja Trybu Transformacji
             if (toolSelect.value === 'select') {
                 let w = Math.abs(e.offsetX - startX);
                 let h = Math.abs(e.offsetY - startY);
@@ -409,7 +402,12 @@
                     selH = h;
                     selAngle = 0;
 
-                    // Przenosimy wycięty fragment do pamięci podręcznej (Offscreen)
+                    // --- KLUCZOWA POPRAWKA ---
+                    // Przywracamy czysty stan tablicy (sprzed narysowania niebieskiej linii) 
+                    // ZANIM zrobimy zrzut ekranu do pamięci podręcznej.
+                    ctx.putImageData(snapshot, 0, 0);
+
+                    // Przenosimy czysty fragment do pamięci podręcznej (Offscreen)
                     offscreenCanvas.width = selW;
                     offscreenCanvas.height = selH;
                     oCtx.drawImage(canvas, selX, selY, selW, selH, 0, 0, selW, selH);
@@ -418,11 +416,11 @@
                     ctx.fillStyle = "white";
                     ctx.fillRect(selX, selY, selW, selH);
 
-                    // Aktualizujemy tło sesji (bez obiektu)
+                    // Aktualizujemy tło sesji (bez obiektu i bez ramki)
                     snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
                     
                     isTransforming = true;
-                    drawTransforming();
+                    drawTransforming(); // Dopiero teraz rysujemy tymczasową ramkę kontrolną
                 }
             } else if (toolSelect.value !== 'text') {
                 saveState(); 
@@ -441,7 +439,6 @@
                     internalClipboard = oCtx.getImageData(0, 0, offscreenCanvas.width, offscreenCanvas.height);
                     clipboardW = offscreenCanvas.width;
                     clipboardH = offscreenCanvas.height;
-                    alert("Skopiowano obiekt!");
                 }
             }
             
@@ -452,18 +449,16 @@
                     clipboardW = offscreenCanvas.width;
                     clipboardH = offscreenCanvas.height;
                     
-                    // Wywalamy obiekt bez zapisywania pozycji na płótnie
                     isTransforming = false;
                     ctx.putImageData(snapshot, 0, 0);
                     saveState();
-                    alert("Wycięto obiekt!");
                 }
             }
             
             // Wklej (Ctrl + V)
             else if (e.ctrlKey && e.key.toLowerCase() === 'v') {
                 if (internalClipboard) {
-                    if (isTransforming) commitTransform(); // Zapisz poprzedni jeśli był otwarty
+                    if (isTransforming) commitTransform(); 
                     
                     selX = 50;
                     selY = 50;
@@ -486,7 +481,7 @@
                 if (isTransforming) {
                     isTransforming = false;
                     activeTransformMode = null;
-                    ctx.putImageData(snapshot, 0, 0); // Zostaw puste białe miejsce w tle
+                    ctx.putImageData(snapshot, 0, 0); 
                     saveState();
                 }
             }
