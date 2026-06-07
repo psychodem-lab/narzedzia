@@ -1,1 +1,138 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablica Terapeutyczna</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        #toolbar {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #clearBtn {
+            background-color: #dc3545;
+        }
+        #clearBtn:hover {
+            background-color: #c82333;
+        }
+        canvas {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            cursor: crosshair;
+        }
+        .tool-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+    </style>
+</head>
+<body>
 
+    <h2>Wirtualna Tablica</h2>
+    
+    <div id="toolbar">
+        <div class="tool-group">
+            <label for="colorPicker">Kolor:</label>
+            <input type="color" id="colorPicker" value="#000000">
+        </div>
+        <div class="tool-group">
+            <label for="brushSize">Grubość:</label>
+            <input type="range" id="brushSize" min="1" max="20" value="3">
+        </div>
+        <button id="clearBtn">Wyczyść tablicę</button>
+        <button id="downloadJpg">Pobierz (JPG)</button>
+    </div>
+
+    <canvas id="board" width="900" height="600"></canvas>
+
+    <script>
+        const canvas = document.getElementById('board');
+        const ctx = canvas.getContext('2d');
+        const colorPicker = document.getElementById('colorPicker');
+        const brushSize = document.getElementById('brushSize');
+        const clearBtn = document.getElementById('clearBtn');
+        const downloadJpg = document.getElementById('downloadJpg');
+
+        // Ustawienie białego tła (ważne przy zapisie do JPG)
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        // Rozpoczęcie rysowania
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+        });
+
+        // Rysowanie
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDrawing) return;
+            
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.strokeStyle = colorPicker.value;
+            ctx.lineWidth = brushSize.value;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+            
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+        });
+
+        // Zakończenie rysowania
+        canvas.addEventListener('mouseup', () => isDrawing = false);
+        canvas.addEventListener('mouseout', () => isDrawing = false);
+
+        // Czyszczenie tablicy
+        clearBtn.addEventListener('click', () => {
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        });
+
+        // Pobieranie jako JPG
+        downloadJpg.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = 'tablica-terapeutyczna.jpg';
+            link.href = canvas.toDataURL('image/jpeg', 1.0);
+            link.click();
+        });
+    </script>
+</body>
+</html>
