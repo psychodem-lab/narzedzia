@@ -30,6 +30,7 @@
 
     <div class="container mx-auto py-6 px-4 max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-6">
         
+        <!-- Formularz wprowadzania danych -->
         <aside class="lg:col-span-5 space-y-4 no-print h-fit">
             <div class="bg-white p-5 rounded-xl shadow-md border border-slate-200">
                 <h2 class="text-xs font-black text-slate-500 uppercase mb-4 tracking-widest">Uzupełnij dzienniczek</h2>
@@ -52,10 +53,6 @@
                         <p class="text-[10px] text-slate-500 mb-2 italic">Wynik lub reakcja otoczenia po wystąpieniu zachowania B, która wpływa na to, czy zachowanie będzie się powtarzać.</p>
                         <textarea id="input-c" rows="3" class="w-full p-2 text-sm border rounded bg-slate-50 focus:ring-2 ring-red-200 outline-none transition-all" placeholder="np. Chwilowa ulga od trudnego zadania (wzmocnienie negatywne) oraz odczucie przyjemności z nowych treści (wzmocnienie pozytywne)." oninput="updateView()"></textarea>
                     </div>
-                      <div>
-                        <label class="block text-xs font-bold uppercase text-red-600 mb-1">Dla ciekawskich: </label>
-                        <p class="text-[10px] text-slate-500 mb-2 italic">Rozróżnienie między wzmocnieniem a karą sprowadza się do dwóch prostych reguł:Wzmocnienie zawsze zwiększa prawdopodobieństwo powtórzenia zachowania.Kara zawsze zmniejsza to prawdopodobieństwo.Słowo Pozytywne oznacza dodanie bodźca (+), a Negatywne oznacza odebranie bodźca (-).Dodanie bodźca (Pozytywne / +)Odebranie bodźca (Negatywne / -)Zwiększenie częstotliwości zachowania(Wzmocnienie)Wzmocnienie Pozytywne• Opis: Dodanie przyjemnego bodźca po wystąpieniu zachowania.• Skutek: Zachowanie częściej się powtarza.• Przykład: Pies siada na komendę i dostaje smakołyk.Wzmocnienie Negatywne• Opis: Usunięcie lub uniknięcie nieprzyjemnego bodźca po wystąpieniu zachowania.• Skutek: Zachowanie częściej się powtarza.• Przykład: Założenie pasów bezpieczeństwa, aby wyciszyć denerwujący dźwięk w samochodzie.Zmniejszenie częstotliwości zachowania(Kara)Kara Pozytywna• Opis: Dodanie nieprzyjemnego bodźca po wystąpieniu zachowania.• Skutek: Zachowanie rzadziej się powtarza.• Przykład: Otrzymanie mandatu za przekroczenie prędkości.Kara Negatywna• Opis: Odebranie przyjemnego bodźca po wystąpieniu zachowania.• Skutek: Zachowanie rzadziej się powtarza.• Przykład: Zabranie dziecku konsoli do gier za złe zachowanie.</p>
-                       </div>
                 </div>
 
                 <button onclick="clearForm()" class="w-full mt-6 text-xs text-slate-500 font-bold uppercase hover:text-red-600 border border-slate-300 rounded py-2 bg-white transition-all">
@@ -64,6 +61,7 @@
             </div>
         </aside>
 
+        <!-- Podgląd Karty ABC -->
         <main class="lg:col-span-7 print-w-full">
             <div class="bg-white p-4 sm:p-6 rounded-xl shadow-lg border border-slate-200 print-shadow-none h-full flex flex-col">
                 <h2 class="text-center text-lg font-black text-slate-800 uppercase tracking-widest mb-6 border-b pb-3">Analiza Behawioralna ABC</h2>
@@ -104,6 +102,86 @@
                 <p class="text-center text-[10px] text-slate-400 mt-8 no-print uppercase tracking-wider">Wypełnij pola po lewej stronie, aby wygenerować model</p>
             </div>
         </main>
+
+        <!-- Harmonijka: Dla ciekawskich -->
+        <details class="lg:col-span-12 group bg-white rounded-xl shadow-md border border-slate-200 no-print overflow-hidden">
+            <summary class="p-4 bg-slate-50 hover:bg-slate-100 cursor-pointer flex justify-between items-center font-bold text-slate-800 select-none transition-colors border-b group-open:border-slate-200 border-transparent">
+                <div class="flex items-center gap-2">
+                    <span class="bg-indigo-100 text-indigo-800 text-xs px-2.5 py-1 rounded-full font-extrabold uppercase">Dla ciekawskich</span>
+                    <span class="text-sm font-semibold text-slate-700">Wzmocnienie vs Kara – jak je odróżnić?</span>
+                </div>
+                <svg class="w-5 h-5 text-slate-500 transform group-open:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </summary>
+            
+            <div class="p-5 space-y-5 text-sm text-slate-700">
+                <!-- Zasady główne -->
+                <div class="bg-indigo-50/60 p-4 rounded-lg border border-indigo-100 space-y-2">
+                    <p class="font-semibold text-indigo-950">Rozróżnienie między wzmocnieniem a karą sprowadza się do dwóch prostych reguł:</p>
+                    <ol class="list-decimal list-inside space-y-1 text-slate-700">
+                        <li><strong class="text-slate-900">Wzmocnienie</strong> zawsze <strong>zwiększa</strong> prawdopodobieństwo powtórzenia zachowania.</li>
+                        <li><strong class="text-slate-900">Kara</strong> zawsze <strong>zmniejsza</strong> to prawdopodobieństwo.</li>
+                    </ol>
+                    <p class="text-xs text-slate-600 pt-1 border-t border-indigo-100/80 mt-2">
+                        • Słowo <strong>Pozytywne</strong> oznacza <strong>dodanie bodźca (+)</strong>, a <strong>Negatywne</strong> oznacza <strong>odebranie bodźca (-)</strong>.
+                    </p>
+                </div>
+
+                <!-- Tabela porównawcza -->
+                <div class="overflow-x-auto rounded-lg border border-slate-200">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 border-b border-slate-200 text-slate-700 uppercase font-bold tracking-wider">
+                                <th class="p-3 border-r border-slate-200 w-1/4">Klasyfikacja</th>
+                                <th class="p-3 border-r border-slate-200 w-3/8">Dodanie bodźca (Pozytywne / +)</th>
+                                <th class="p-3 w-3/8">Odebranie bodźca (Negatywne / -)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            <!-- Wzmocnienie -->
+                            <tr class="hover:bg-slate-50/50">
+                                <td class="p-3 font-bold text-slate-800 bg-slate-50/80 border-r border-slate-200 align-top">
+                                    Zwiększenie częstotliwości zachowania
+                                    <div class="text-[11px] font-normal text-slate-500 mt-1">(Wzmocnienie)</div>
+                                </td>
+                                <td class="p-3 border-r border-slate-200 align-top space-y-1.5">
+                                    <div class="font-bold text-emerald-700 text-sm">Wzmocnienie Pozytywne</div>
+                                    <div><strong>• Opis:</strong> Dodanie przyjemnego bodźca po wystąpieniu zachowania.</div>
+                                    <div><strong>• Skutek:</strong> Zachowanie częściej się powtarza.</div>
+                                    <div><strong>• Przykład:</strong> Pies siada na komendę i dostaje smakołyk.</div>
+                                </td>
+                                <td class="p-3 align-top space-y-1.5">
+                                    <div class="font-bold text-blue-700 text-sm">Wzmocnienie Negatywne</div>
+                                    <div><strong>• Opis:</strong> Usunięcie lub uniknięcie nieprzyjemnego bodźca po wystąpieniu zachowania.</div>
+                                    <div><strong>• Skutek:</strong> Zachowanie częściej się powtarza.</div>
+                                    <div><strong>• Przykład:</strong> Założenie pasów bezpieczeństwa, aby wyciszyć denerwujący dźwięk w samochodzie.</div>
+                                </td>
+                            </tr>
+                            <!-- Kara -->
+                            <tr class="hover:bg-slate-50/50">
+                                <td class="p-3 font-bold text-slate-800 bg-slate-50/80 border-r border-slate-200 align-top">
+                                    Zmniejszenie częstotliwości zachowania
+                                    <div class="text-[11px] font-normal text-slate-500 mt-1">(Kara)</div>
+                                </td>
+                                <td class="p-3 border-r border-slate-200 align-top space-y-1.5">
+                                    <div class="font-bold text-amber-700 text-sm">Kara Pozytywna</div>
+                                    <div><strong>• Opis:</strong> Dodanie nieprzyjemnego bodźca po wystąpieniu zachowania.</div>
+                                    <div><strong>• Skutek:</strong> Zachowanie rzadziej się powtarza.</div>
+                                    <div><strong>• Przykład:</strong> Otrzymanie mandatu za przekroczenie prędkości.</div>
+                                </td>
+                                <td class="p-3 align-top space-y-1.5">
+                                    <div class="font-bold text-red-700 text-sm">Kara Negatywna</div>
+                                    <div><strong>• Opis:</strong> Odebranie przyjemnego bodźca po wystąpieniu zachowania.</div>
+                                    <div><strong>• Skutek:</strong> Zachowanie rzadziej się powtarza.</div>
+                                    <div><strong>• Przykład:</strong> Zabranie dziecku konsoli do gier za złe zachowanie.</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </details>
 
     </div>
 
