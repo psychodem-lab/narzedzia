@@ -38,19 +38,19 @@
                     <div>
                         <label class="block text-xs font-bold uppercase text-blue-600 mb-1">A - Aktywator (Sytuacja przed)</label>
                         <p class="text-[10px] text-slate-500 mb-2 italic">Sytuacja, bodziec lub zdarzenie, które występuje bezpośrednio przed zachowaniem i je wywołuje.</p>
-                        <textarea id="input-a" rows="3" class="w-full p-2 text-sm border rounded bg-slate-50 focus:ring-2 ring-blue-200 outline-none transition-all" placeholder="np. Nauczyciel zadaje trudne pytanie, na które uczeń nie zna odpowiedzi..." oninput="updateView()"></textarea>
+                        <textarea id="input-a" rows="3" class="w-full p-2 text-sm border rounded bg-slate-50 focus:ring-2 ring-blue-200 outline-none transition-all" placeholder="np. Usłyszenie dźwięku powiadomienia w telefonie podczas nauki." oninput="updateView()"></textarea>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold uppercase text-emerald-600 mb-1">B - Zachowanie (Reakcja)</label>
+                        <label class="block text-xs font-bold uppercase text-emerald-600 mb-1">B - Obserwowalne Zachowanie </label>
                         <p class="text-[10px] text-slate-500 mb-2 italic">Konkretna, obserwowalna reakcja lub działanie człowieka w odpowiedzi na bodziec A.</p>
-                        <textarea id="input-b" rows="3" class="w-full p-2 text-sm border rounded bg-slate-50 focus:ring-2 ring-emerald-200 outline-none transition-all" placeholder="np. Uczeń rzuca długopisem o ławkę i odwraca się tyłem..." oninput="updateView()"></textarea>
+                        <textarea id="input-b" rows="3" class="w-full p-2 text-sm border rounded bg-slate-50 focus:ring-2 ring-emerald-200 outline-none transition-all" placeholder="np. Odłożenie pracy, sięgnięcie po telefon i przeglądanie mediów społecznościowych przez 15 minut." oninput="updateView()"></textarea>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold uppercase text-red-600 mb-1">C - Konsekwencja (Wynik)</label>
+                        <label class="block text-xs font-bold uppercase text-red-600 mb-1">C - Konsekwencje </label>
                         <p class="text-[10px] text-slate-500 mb-2 italic">Wynik lub reakcja otoczenia po wystąpieniu zachowania B, która wpływa na to, czy zachowanie będzie się powtarzać.</p>
-                        <textarea id="input-c" rows="3" class="w-full p-2 text-sm border rounded bg-slate-50 focus:ring-2 ring-red-200 outline-none transition-all" placeholder="np. Nauczyciel wyprasza ucznia z klasy (uczeń unika wykonania trudnego zadania)..." oninput="updateView()"></textarea>
+                        <textarea id="input-c" rows="3" class="w-full p-2 text-sm border rounded bg-slate-50 focus:ring-2 ring-red-200 outline-none transition-all" placeholder="np. Chwilowa ulga od trudnego zadania (wzmocnienie negatywne) oraz odczucie przyjemności z nowych treści (wzmocnienie pozytywne)." oninput="updateView()"></textarea>
                     </div>
                 </div>
 
@@ -91,7 +91,7 @@
                     <!-- C -->
                     <div class="relative bg-red-50 border-l-4 border-red-500 p-5 rounded-r-lg print-break-inside-avoid shadow-sm">
                         <div class="absolute -left-4 top-1/2 -translate-y-1/2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-md z-10">C</div>
-                        <h3 class="font-bold text-red-800 text-xs uppercase mb-1 ml-6 tracking-wide">Konsekwencja (Consequence)</h3>
+                        <h3 class="font-bold text-red-800 text-xs uppercase mb-1 ml-6 tracking-wide">Konsekwencje (Consequence)</h3>
                         <p id="output-c" class="text-slate-800 whitespace-pre-wrap ml-6 text-sm min-h-[1.5rem]">Brak wpisu...</p>
                     </div>
 
