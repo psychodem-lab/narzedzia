@@ -98,7 +98,7 @@
                 <div class="location-search">
                     <span class="icon">📍</span>
                     <input type="text" id="city-input" value="Warszawa" placeholder="Miasto...">
-                    <button onclick="searchCity()">Szukaj</button>
+                    <button onclick="searchCity()">🔍</button>
                 </div>
                 <div class="top-bar-right">
                     <span id="sunrise-time">☀️ --:--</span>
@@ -161,14 +161,13 @@
         }
         updateDate();
 
-        // --- 2. WIKIPEDIA (HISTORIA I IMIENINY Z JEDNEJ STRONY) ---
+        // --- 2. WIKIPEDIA (POPRAWIONE POBIERANIE HISTORII I WIĘCEJ IMIENIN) ---
         async function fetchWikipediaData() {
             const monthsGenitive = ["stycznia", "lutego", "marca", "kwietnia", "maja", "czerwca", "lipca", "sierpnia", "września", "października", "listopada", "grudnia"];
             const now = new Date();
             const day = now.getDate();
             const monthName = monthsGenitive[now.getMonth()];
             
-            // Format np. "15_sierpnia"
             const pageTitle = `${day}_${monthName}`;
             const url = `https://pl.wikipedia.org/w/api.php?action=parse&page=${pageTitle}&format=json&origin=*&prop=text`;
             
@@ -182,53 +181,47 @@
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(htmlStr, 'text/html');
 
-                // A. Pobieranie Historii
+                // A. Pobieranie Historii (szukamy po nagłówkach sekcji w treści)
                 const historyContainer = document.getElementById('history-container');
                 historyContainer.innerHTML = ''; 
                 
-                const eventsHeadingSpan = doc.getElementById('Wydarzenia');
-                if (eventsHeadingSpan) {
-                    let parentElem = eventsHeadingSpan.parentElement;
-                    let curr = parentElem.nextElementSibling;
-                    let eventsFound = [];
-                    
-                    // Szukaj list (ul) z wydarzeniami aż do nagłówka kolejnej głównej sekcji
-                    while (curr && curr.tagName !== 'H2') {
-                        if (curr.tagName === 'UL') {
-                            const lis = curr.querySelectorAll('li');
-                            lis.forEach(li => {
-                                let text = li.textContent.trim();
-                                // Interesują nas wpisy zaczynające się od roku np. "1920 – ..."
-                                if (/^\d{1,4}\s*[–-]\s*/.test(text)) {
-                                    eventsFound.push(text);
-                                }
-                            });
+                let eventsFound = [];
+                // Przeszukujemy wszystkie elementy listy w poszukiwaniu lat
+                const lists = doc.querySelectorAll('.mw-parser-output > ul');
+                lists.forEach(ul => {
+                    ul.querySelectorAll('li').forEach(li => {
+                        let text = li.textContent.trim();
+                        // Weryfikacja czy wpis zaczyna się od lat np. "1944 – " lub "18- "
+                        if (/^\d{3,4}\s*[–-]\s*/.test(text)) {
+                            eventsFound.push(text);
                         }
-                        curr = curr.nextElementSibling;
-                    }
-                    
-                    if (eventsFound.length > 0) {
-                        eventsFound.slice(0, 3).forEach(eventText => {
-                            let formatted = eventText.replace(/^(\d{1,4})\s*([–-])\s*/, '<strong>$1</strong> $2 ');
-                            historyContainer.innerHTML += `<div class="history-item">${formatted}</div>`;
-                        });
-                    } else {
-                        historyContainer.innerHTML = '<div class="history-item">Brak wydarzeń.</div>';
-                    }
+                    });
+                });
+
+                if (eventsFound.length > 0) {
+                    // Bierzemy np. 3 pierwsze wydarzenia
+                    eventsFound.slice(0, 3).forEach(eventText => {
+                        let formatted = eventText.replace(/^(\d{3,4})\s*([–-])\s*/, '<strong>$1</strong> $2 ');
+                        historyContainer.innerHTML += `<div class="history-item">${formatted}</div>`;
+                    });
+                } else {
+                    historyContainer.innerHTML = '<div class="history-item">Brak wydarzeń w bazie.</div>';
                 }
 
-                // B. Pobieranie Imienin
-                // Szukamy tekstu "Imieniny obchodzą:" w surowym tekście artykułu
+                // B. Pobieranie Imienin (zwiększona liczba osób do 5)
                 const pageText = doc.body.textContent;
                 const imieninyMatch = pageText.match(/Imieniny obchodzą:?\s*(.*?)(?=\.|\n)/i);
                 
                 if (imieninyMatch && imieninyMatch[1]) {
-                    // Usuwamy spójnik "i", dzielimy po przecinkach i bierzemy max 2
-                    let rawNames = imieninyMatch[1].replace(/\s+i\s+/g, ', ').split(',');
-                    let names = rawNames.map(n => n.trim()).filter(n => n.length > 0).slice(0, 2);
+                    // Dzielimy po przecinkach oraz spójnikach " i "
+                    let cleanedText = imieninyMatch[1].replace(/\s+i\s+/g, ', ');
+                    let rawNames = cleanedText.split(',');
+                    // Zwiększono limit z 2 do 5 osób
+                    let names = rawNames.map(n => n.trim()).filter(n => n.length > 0 && n.length < 20).slice(0, 5);
+                    
                     document.getElementById('names-list').innerText = names.join(', ');
                 } else {
-                    document.getElementById('names-list').innerText = "Brak danych imieninowych na Wikipedii.";
+                    document.getElementById('names-list').innerText = "Brak danych imieninowych.";
                 }
 
             } catch (error) {
