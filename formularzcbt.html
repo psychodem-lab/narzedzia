@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zapis Przebiegu Terapii Poznawczo-Behawioralnej</title>
+    <title>Kompleksowy Zapis Terapii i Diagnozy CBT</title>
     <style>
         :root {
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --bg-color: #f3f4f6;
+            --primary: #0f766e;
+            --primary-hover: #115e59;
+            --bg-color: #f0fdfa;
             --card-bg: #ffffff;
             --text-main: #1f2937;
-            --text-muted: #6b7280;
-            --border-color: #e5e7eb;
-            --focus-ring: #bfdbfe;
+            --text-muted: #4b5563;
+            --border-color: #d1d5db;
+            --focus-ring: #99f6e4;
+            --section-bg: #f8fafc;
         }
 
         body {
@@ -27,7 +28,7 @@
 
         .header-bar {
             background-color: var(--card-bg);
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 2px solid var(--primary);
             position: sticky;
             top: 0;
             z-index: 100;
@@ -35,11 +36,11 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
         }
 
         .header-bar h1 {
-            font-size: 1.25rem;
+            font-size: 1.5rem;
             margin: 0;
             color: var(--primary);
         }
@@ -53,11 +54,11 @@
             background-color: var(--primary);
             color: white;
             border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
-            font-weight: 500;
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.2s;
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -65,12 +66,13 @@
 
         button:hover {
             background-color: var(--primary-hover);
+            transform: translateY(-1px);
         }
 
         .btn-outline {
             background-color: transparent;
             color: var(--primary);
-            border: 1px solid var(--primary);
+            border: 2px solid var(--primary);
         }
 
         .btn-outline:hover {
@@ -79,30 +81,48 @@
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1000px;
             margin: 2rem auto;
             padding: 0 1rem;
         }
 
         .section-card {
             background-color: var(--card-bg);
+            border-radius: 0.75rem;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .subsection {
+            background-color: var(--section-bg);
+            padding: 1.5rem;
             border-radius: 0.5rem;
-            padding: 2rem;
             margin-bottom: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
         }
 
         h2 {
-            border-bottom: 2px solid var(--border-color);
+            border-bottom: 3px solid var(--primary);
             padding-bottom: 0.5rem;
             margin-top: 0;
-            color: var(--text-main);
+            color: var(--primary-hover);
+            font-size: 1.5rem;
         }
 
         h3 {
             margin-top: 1.5rem;
-            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
             color: var(--text-main);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.25rem;
+        }
+
+        h4 {
+            margin: 1rem 0 0.5rem 0;
+            color: var(--text-muted);
         }
 
         .form-group {
@@ -111,7 +131,7 @@
 
         .form-row {
             display: flex;
-            gap: 1rem;
+            gap: 1.5rem;
             flex-wrap: wrap;
         }
 
@@ -122,9 +142,10 @@
 
         label {
             display: block;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
             color: var(--text-main);
+            font-size: 0.95rem;
         }
 
         .help-text {
@@ -132,6 +153,7 @@
             color: var(--text-muted);
             margin-bottom: 0.5rem;
             display: block;
+            font-style: italic;
         }
 
         input[type="text"],
@@ -140,17 +162,18 @@
         select,
         textarea {
             width: 100%;
-            padding: 0.625rem;
+            padding: 0.65rem;
             border: 1px solid var(--border-color);
-            border-radius: 0.375rem;
+            border-radius: 0.5rem;
             font-family: inherit;
             font-size: 0.95rem;
             box-sizing: border-box;
-            transition: border-color 0.2s, box-shadow 0.2s;
+            transition: all 0.2s;
+            background-color: #fff;
         }
 
         textarea {
-            min-height: 100px;
+            min-height: 80px;
             resize: vertical;
         }
 
@@ -162,16 +185,16 @@
 
         .checkbox-group {
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             gap: 0.5rem;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.5rem;
         }
 
         .checkbox-group input[type="checkbox"] {
-            margin-top: 0.3rem;
-            width: 1.1rem;
-            height: 1.1rem;
+            width: 1.2rem;
+            height: 1.2rem;
             cursor: pointer;
+            accent-color: var(--primary);
         }
 
         .checkbox-group label {
@@ -183,11 +206,12 @@
         .abc-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            background-color: var(--bg-color);
-            padding: 1rem;
+            gap: 1.5rem;
+            background-color: var(--section-bg);
+            padding: 1.5rem;
             border-radius: 0.5rem;
-            margin-bottom: 1rem;
+            border: 1px dashed var(--border-color);
+            margin-bottom: 1.5rem;
         }
 
         .abc-grid .full-width {
@@ -197,19 +221,27 @@
         #fileInput {
             display: none;
         }
+        
+        .alert-box {
+            background-color: #fee2e2;
+            border-left: 4px solid #ef4444;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
     </style>
 </head>
 <body>
 
     <div class="header-bar">
-        <h1>Formularz CBT</h1>
+        <h1>Kompleksowy Zapis Diagnozy i Terapii CBT</h1>
         <div class="actions">
             <input type="file" id="fileInput" accept=".json" onchange="loadData(event)">
             <button class="btn-outline" onclick="document.getElementById('fileInput').click()">
-                📂 Wgraj dane (JSON)
+                📂 Wgraj JSON
             </button>
             <button onclick="saveData()">
-                💾 Zapisz do JSON
+                💾 Zapisz Sesję (JSON)
             </button>
         </div>
     </div>
@@ -217,7 +249,7 @@
     <div class="container" id="formContainer">
 
         <div class="section-card">
-            <h2>Informacje Ogólne</h2>
+            <h2>Metryczka Pacjenta</h2>
             <div class="form-row">
                 <div class="form-group">
                     <label for="terapeuta">Terapeuta</label>
@@ -232,393 +264,551 @@
                     <input type="number" id="wiek">
                 </div>
             </div>
-            <div class="form-row">
+            <div class="form-group">
+                <label for="info_ogolne">Informacje ogólne (Dane z wywiadu)</label>
+                <span class="help-text">Wykształcenie, sytuacja zawodowa, rodzinna, materialna, prawna, historia leczenia.</span>
+                <textarea id="info_ogolne"></textarea>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2>Wizyta Diagnostyczna - Badanie Stanu Psychicznego</h2>
+            <span class="help-text">Zapis badania stanu psychicznego stwierdzanego podczas wywiadu (wg ICD/DSM). W miejscach gdzie objaw zwraca uwagę, dodaj komentarz/przykład.</span>
+            
+            <div class="subsection">
+                <h3>1. Wygląd, zachowanie i psychomotoryka</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mse_budowa">Budowa ciała</label>
+                        <select id="mse_budowa">
+                            <option value="">Wybierz...</option>
+                            <option value="proporcjonalna">Proporcjonalna</option>
+                            <option value="ponizej_normy">Poniżej normy / wyniszczenie</option>
+                            <option value="nadwaga">Nadwaga</option>
+                            <option value="otylosc">Otyłość</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="mse_naped">Ogólny napęd ruchowy</label>
+                        <select id="mse_naped">
+                            <option value="">Wybierz...</option>
+                            <option value="wyrownany">Wyrównany</option>
+                            <option value="obnizony">Obniżony</option>
+                            <option value="podwyzszony">Podwyższony</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="mse_wyraz_twarzy">Wyraz twarzy</label>
+                        <select id="mse_wyraz_twarzy">
+                            <option value="">Wybierz...</option>
+                            <option value="adekwatny">Adekwatny do omawianych treści</option>
+                            <option value="przyglebiony">Przygnębiony</option>
+                            <option value="radosny">Radosny</option>
+                            <option value="w_niepokoju">W niepokoju</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="mse_ubior_adekwatny" checked>
+                            <label for="mse_ubior_adekwatny">Ubiór i higiena adekwatne</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="mse_zachowanie_adekwatne" checked>
+                            <label for="mse_zachowanie_adekwatne">Zachowanie adekwatne</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="mse_kontakt_wzrokowy" checked>
+                            <label for="mse_kontakt_wzrokowy">Kontakt wzrokowy utrzymywany</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="mse_stosunek">Stosunek do badającego</label>
+                        <select id="mse_stosunek">
+                            <option value="">Wybierz...</option>
+                            <option value="zainteresowany">Zainteresowany, współpracujący</option>
+                            <option value="czujny">Czujny</option>
+                            <option value="negatywny">Negatywnie nastawiony, wrogi</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="form-group">
-                    <label for="czas_od">Czas terapii od</label>
-                    <input type="date" id="czas_od">
+                    <label for="mse_ruchy">Obserwowane ruchy i zachowania (niepokój, manieryzmy, tiki)</label>
+                    <textarea id="mse_ruchy" placeholder="Np. objawy wzbudzenia wegetatywnego, tiki, drżenie..."></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="mse_natreba_czas">
+                            <label for="mse_natreba_czas">Czynności natrętne zajmują > 30 min dziennie?</label>
+                        </div>
+                        <input type="text" id="mse_natrectwa_opis" placeholder="Jeśli tak, jakie?">
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="mse_unikanie">
+                            <label for="mse_unikanie">Nasilone UNIKANIE (obserwowane/z wywiadu)</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert-box">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="mse_samouszkodzenia">
+                        <label for="mse_samouszkodzenia"><strong>Obecne samouszkodzenia</strong></label>
+                    </div>
+                    <input type="text" id="mse_samouszkodzenia_opis" placeholder="Częstotliwość w ostatnim miesiącu i kiedy po raz ostatni?" style="margin-top: 0.5rem;">
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>2. Mowa, Nastrój, Sen i Regulacja Biologiczna</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mse_mowa">Tempo wypowiedzi / Mowa</label>
+                        <select id="mse_mowa">
+                            <option value="">Wybierz...</option>
+                            <option value="norma">W normie</option>
+                            <option value="przyspieszone">Przyspieszone / słowotok</option>
+                            <option value="zwolnione">Zwolnione / ubóstwo wypowiedzi</option>
+                            <option value="inne">Inne (mutyzm, neologizmy, afazja)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="mse_nastroj_badajacy">Nastrój (ocena badającego)</label>
+                        <select id="mse_nastroj_badajacy">
+                            <option value="">Wybierz...</option>
+                            <option value="wzmozony">Wzmożony</option>
+                            <option value="obnizony">Obniżony</option>
+                            <option value="dysforyczny">Dysforyczny / drażliwy</option>
+                            <option value="wyrownany">Wyrównany</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="mse_nastroj_pacjent">Nastrój (ocena pacjenta)</label>
+                        <select id="mse_nastroj_pacjent">
+                            <option value="">Wybierz...</option>
+                            <option value="wzmozony">Wzmożony</option>
+                            <option value="obnizony">Obniżony</option>
+                            <option value="dysforyczny">Dysforyczny / drażliwy</option>
+                        </select>
+                        <div class="checkbox-group" style="margin-top: 0.5rem;">
+                            <input type="checkbox" id="mse_nastroj_wahania">
+                            <label for="mse_nastroj_wahania">Dobowe wahania nastroju</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mse_sen">Sen</label>
+                        <select id="mse_sen">
+                            <option value="">Wybierz...</option>
+                            <option value="norma">W normie</option>
+                            <option value="skrocony">Skrócony</option>
+                            <option value="wydluzony">Wydłużony</option>
+                            <option value="przerywany_zasniecie">Przerywany / trudności w zaśnięciu</option>
+                            <option value="przerywany_koszmary">Przerywany z powodu koszmarów</option>
+                            <option value="wczesne_budzenie">Wczesne budzenie</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="mse_apetyt">Apetyt</label>
+                        <select id="mse_apetyt">
+                            <option value="">Wybierz...</option>
+                            <option value="norma">W normie</option>
+                            <option value="obnizony">Obniżony</option>
+                            <option value="wzmozony">Wzmożony</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="mse_libido">Libido</label>
+                        <select id="mse_libido">
+                            <option value="">Wybierz...</option>
+                            <option value="norma">W subiektywnej normie</option>
+                            <option value="obnizone">Obniżone</option>
+                            <option value="wzmozone">Wzmożone</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>3. Funkcje Poznawcze, Emocje i Treści Myślenia</h3>
+                
+                <div class="alert-box">
+                    <label for="mse_mysli_samobojcze"><strong>Myśli i plany samobójcze (Ocena ryzyka i podjęte interwencje)</strong></label>
+                    <textarea id="mse_mysli_samobojcze" placeholder="Szczegółowy opis oceny bezpieczeństwa..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="mse_lek">Doświadczany Lęk</label>
+                    <textarea id="mse_lek" placeholder="Antycypacyjny, napady paniki, lęk fobiczny, ciągłe napięcie..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="mse_chwiejnosc">
+                            <label for="mse_chwiejnosc">Chwiejność afektywna / Paratymia</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="mse_zobojetnienie">
+                            <label for="mse_zobojetnienie">Zobojętnienie uczuciowe ("bladość")</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="mse_regulacja_emocji">Zaburzenia regulacji emocji</label>
+                        <select id="mse_regulacja_emocji">
+                            <option value="">Brak / W normie</option>
+                            <option value="uogolnione">Uogólnione (np. jak w BPD)</option>
+                            <option value="specyficzne">Specyficzne</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="mse_zaburzenia_myslenia">Zaburzenia myślenia (Treść i forma)</label>
+                    <span class="help-text">Zaabsorbowanie, ruminacje, natrętne myśli, idee nadwartościowe, urojenia. Tok: natłok, rozkojarzenie, otamowania. Zaburzenia spostrzegania: iluzje, omamy, depersonalizacja, flashbacki.</span>
+                    <textarea id="mse_zaburzenia_myslenia"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mse_intelekt">Intelekt</label>
+                        <select id="mse_intelekt">
+                            <option value="">Wybierz...</option>
+                            <option value="norma">Orientacyjnie w normie</option>
+                            <option value="ponizej">Poniżej normy</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="mse_wglad">Wgląd pacjenta</label>
+                        <select id="mse_wglad">
+                            <option value="">Wybierz...</option>
+                            <option value="pelny">Pełny</option>
+                            <option value="czesciowy">Częściowy</option>
+                            <option value="brak">Brak wglądu</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="subsection">
+                <h3>4. Podsumowanie Diagnostyczne</h3>
+                
+                <div class="form-group">
+                    <label for="cgi_score">CGI - Ogólne Wrażenie Kliniczne (Nasilenie zaburzenia)</label>
+                    <select id="cgi_score">
+                        <option value="">Wybierz...</option>
+                        <option value="0">Brak zaburzenia</option>
+                        <option value="1">Na granicy diagnozy</option>
+                        <option value="2">Łagodne nasilenie</option>
+                        <option value="3">Umiarkowane nasilenie</option>
+                        <option value="4">Znaczne nasilenie</option>
+                        <option value="5">Poważne nasilenie</option>
+                        <option value="6">Skrajnie ciężkie nasilenie</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="diagnoza_icd10">Diagnoza wstępna (ICD-10 / DSM) - Kod i nazwa</label>
+                    <input type="text" id="diagnoza_icd10" list="icd10_list" placeholder="Wpisz lub wybierz z listy...">
+                    <datalist id="icd10_list">
+                        <option value="F32 - Epizod depresyjny">
+                        <option value="F33 - Zaburzenia depresyjne nawracające">
+                        <option value="F31 - Zaburzenie afektywne dwubiegunowe">
+                        <option value="F40.0 - Agorafobia">
+                        <option value="F40.1 - Fobie społeczne">
+                        <option value="F41.0 - Zaburzenie lękowe z napadami lęku (Panika)">
+                        <option value="F41.1 - Zaburzenie lękowe uogólnione (GAD)">
+                        <option value="F42 - Zaburzenia obsesyjno-kompulsyjne (OCD)">
+                        <option value="F43.1 - PTSD">
+                        <option value="F50 - Zaburzenia odżywiania">
+                        <option value="F60.3 - Osobowość chwiejna emocjonalnie (Borderline)">
+                        <option value="F90 - Zaburzenia hiperkinetyczne (ADHD)">
+                    </datalist>
+                </div>
+
+                <div class="form-group">
+                    <label for="diagnoza_dominujaca">Zaburzenie dominujące w obrazie klinicznym</label>
+                    <input type="text" id="diagnoza_dominujaca">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="diagnoza_wspolistniejace">Zaburzenia współwystępujące</label>
+                        <input type="text" id="diagnoza_wspolistniejace">
+                    </div>
+                    <div class="form-group">
+                        <label for="diagnoza_osobowosc">Zaburzenia osobowości</label>
+                        <input type="text" id="diagnoza_osobowosc">
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label for="czas_do">Czas terapii do</label>
-                    <input type="date" id="czas_do">
+                    <label for="choroby_somatyczne">Choroby somatyczne</label>
+                    <input type="text" id="choroby_somatyczne">
+                </div>
+
+                <h4>Ogólne funkcjonowanie pacjenta w sferach:</h4>
+                <div class="form-group">
+                    <label for="funkcjonowanie_rodzina">Rodzinnej (relacje z bliskimi)</label>
+                    <textarea id="funkcjonowanie_rodzina" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="funkcjonowanie_praca">Zawodowej / Szkolnej</label>
+                    <textarea id="funkcjonowanie_praca" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="funkcjonowanie_spoleczne">Społecznej</label>
+                    <textarea id="funkcjonowanie_spoleczne" rows="2"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2>Wyodrębnienie Problemów i Konceptualizacja</h2>
+            
+            <div class="subsection">
+                <h3>Lista problemów i celów terapii</h3>
+                <span class="help-text">Typowe aktualne problemy i trudne sytuacje (podaj nasilenie dyskomfortu 0-10 lub 0-100%). Czy wyjaśnia je diagnoza? Co będzie miarą zmiany?</span>
+                <div class="form-group">
+                    <input type="text" id="problem_1" placeholder="1. Problem / Cel">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="problem_2" placeholder="2. Problem / Cel">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="problem_3" placeholder="3. Problem / Cel">
+                </div>
+                <div class="form-group">
+                    <label for="problem_dominujacy">PROBLEM DOMINUJĄCY (Wybrany do konceptualizacji)</label>
+                    <textarea id="problem_dominujacy"></textarea>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Konceptualizacja - Model ABC (Poziom 1)</h3>
+                <span class="help-text">Automatyczne myśli, emocje i zachowania na konkretnym przykładzie z minionego tygodnia.</span>
+                
+                <div class="abc-grid">
+                    <div class="form-group full-width">
+                        <label for="abc_sytuacja">Sytuacja ilustrująca problem</label>
+                        <textarea id="abc_sytuacja" rows="2"></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="abc_wyzwalacz">Czynnik wyzwalający</label>
+                        <textarea id="abc_wyzwalacz" rows="2"></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="abc_mysli">Automatyczne myśli</label>
+                        <textarea id="abc_mysli" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="abc_emocje">Emocje (i ich nasilenie)</label>
+                        <textarea id="abc_emocje" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="abc_fizjologia">Objawy fizjologiczne</label>
+                        <textarea id="abc_fizjologia" rows="2"></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="abc_zachowanie">Zachowanie i strategie behawioralne (w tym zabezpieczające)</label>
+                        <textarea id="abc_zachowanie" rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Konceptualizacja - Profil Rozwojowy i Mechanizmy (Poziom 2)</h3>
+                
+                <div class="form-group">
+                    <label for="przeszlosc_zwiazki">Przeszłość, historia uczenia, związki (rodzina, autorytety)</label>
+                    <textarea id="przeszlosc_zwiazki"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="wydarzenia_traumatyczne">Istotne wydarzenia i przeżycia traumatyczne (ich związek z problemem)</label>
+                    <textarea id="wydarzenia_traumatyczne"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="czynniki_wyzwalajace">Czynniki wyzwalające obecne zaburzenie</label>
+                    <textarea id="czynniki_wyzwalajace"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="przekonania_kluczowe">Przekonania kluczowe / Schematy poznawcze</label>
+                        <textarea id="przekonania_kluczowe" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="przekonania_warunkowe">Zasady, założenia (Przekonania warunkowe)</label>
+                        <textarea id="przekonania_warunkowe" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="procesy_transdiagnostyczne">Zidentyfikowane procesy transdiagnostyczne podtrzymujące problem</label>
+                    <span class="help-text">Np. Unikanie poznawcze, Ruminacje/zamartwianie, Perfekcjonizm, Monitorowanie zagrożenia.</span>
+                    <textarea id="procesy_transdiagnostyczne" rows="2"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="czynniki_negatywne">Czynniki negatywnie wpływające na terapię</label>
+                        <textarea id="czynniki_negatywne" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="zasoby">Zasoby i rezyliencja (pozytywne czynniki)</label>
+                        <textarea id="zasoby" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="podsumowanie_konceptualizacji">Podsumowanie konceptualizacji (Model najlepiej opisujący problem)</label>
+                    <textarea id="podsumowanie_konceptualizacji" rows="3"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2>Plan Terapii i Kontrakt</h2>
+            
+            <div class="form-group">
+                <label for="protokol">Wybór protokołu (lub podejście oparte na konceptualizacji)</label>
+                <input type="text" id="protokol" list="protokoly_list" placeholder="Wybierz protokół badawczy...">
+                <datalist id="protokoly_list">
+                    <option value="Panika - Clark">
+                    <option value="Panika/Agorafobia - Barlow, Craske">
+                    <option value="Transdiagnostyczny - Barlow">
+                    <option value="GAD - Wells (Metapoznawcza)">
+                    <option value="GAD - Borkovec">
+                    <option value="Depresja - Classic Beck">
+                    <option value="Depresja - Aktywizacja behawioralna">
+                    <option value="Borderline - DBT">
+                    <option value="Borderline - Terapia Schematów">
+                    <option value="PTSD - Przedłużona Ekspozycja (Foa)">
+                    <option value="PTSD - Poznawcza (Ehlers, Clark)">
+                    <option value="Zab. Odżywiania - Fairburn">
+                    <option value="OCD - Salkovskis">
+                    <option value="Fobia Społeczna - Clark, Wells">
+                    <option value="Autorski - oparty na konceptualizacji">
+                </datalist>
+            </div>
+
+            <div class="form-group">
+                <label for="narzedzia_oceny">Narzędzia oceny stanu psychicznego (monitorowanie zmian)</label>
+                <span class="help-text">Zalecane: BDI, STAI, SUDS, Skala Fobii Społecznej, Y-BOCS, PCL itp.</span>
+                <textarea id="narzedzia_oceny" rows="2"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="kontrakt_czas">Kontrakt - Wstępne ustalenia (Czas i ramy)</label>
+                <select id="kontrakt_czas">
+                    <option value="">Wybierz...</option>
+                    <option value="10-12">Około 10-12 spotkań i ocena</option>
+                    <option value="2-3">Około 2-3 spotkań (diagnostyczne) i ocena</option>
+                    <option value="6m">Około 6 miesięcy i ocena</option>
+                    <option value="12m">Około 12 miesięcy i ocena</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="kontrakt_uwagi">Uwagi do kontraktu (ograniczenia organizacyjne, finansowe, tryb online/gabinet)</label>
+                <textarea id="kontrakt_uwagi" rows="2"></textarea>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2>Realizacja Planu Terapii</h2>
+            <div class="form-group">
+                <label for="realizacja_planu">Opis kolejnych sesji, interwencji i trudności</label>
+                <span class="help-text">Plan sesji, co zrobiono, metody, wnioski, zadania osobiste pacjenta, praca nad mechanizmami podtrzymującymi.</span>
+                <textarea id="realizacja_planu" style="min-height: 250px;"></textarea>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2>Podsumowanie Zakończonej Terapii</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="status_terapii">Status terapii</label>
+                    <select id="status_terapii">
+                        <option value="">Wybierz...</option>
+                        <option value="zakonczona">Zakończona</option>
+                        <option value="w_trakcie">W trakcie</option>
+                        <option value="przerwana">Przerwana</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="liczba_sesji">Liczba odbytych sesji</label>
                     <input type="number" id="liczba_sesji">
                 </div>
             </div>
-            <div class="form-group">
-                <label for="status_terapii">Status terapii</label>
-                <select id="status_terapii">
-                    <option value="">Wybierz...</option>
-                    <option value="zakonczona">Zakończona</option>
-                    <option value="w_trakcie">W trakcie</option>
-                    <option value="przerwana">Przerwana</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="uwagi_ogolne">Uwagi (np. pytania do superwizji, informacje o nagraniach)</label>
-                <textarea id="uwagi_ogolne"></textarea>
+
+            <div class="subsection">
+                <h3>Osiągnięte Cele i Zmiany</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cele_wg_pacjenta">Osiągnięcia wg pacjenta</label>
+                        <textarea id="cele_wg_pacjenta" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="cele_wg_terapeuty">Osiągnięcia wg terapeuty (odniesienie do konceptualizacji)</label>
+                        <textarea id="cele_wg_terapeuty" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="zmiany_wyniki">Zmiany w wynikach narzędzi psychometrycznych</label>
+                    <textarea id="zmiany_wyniki" rows="2"></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="zmiany_poznawcze">Zmiany w funkcjonowaniu poznawczym</label>
+                        <textarea id="zmiany_poznawcze" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="zmiany_zachowania">Zmiany w zachowaniu i emocjach</label>
+                        <textarea id="zmiany_zachowania" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="zapobieganie_nawrotom">Strategie zapobiegania nawrotom i zalecenia</label>
+                    <textarea id="zapobieganie_nawrotom" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="relacja_ocena">Ocena Relacji Terapeutycznej</label>
+                    <textarea id="relacja_ocena" rows="2"></textarea>
+                </div>
             </div>
         </div>
 
-        <div class="section-card">
-            <h2>Autorefleksja przed superwizją</h2>
-            
-            <div class="checkbox-group">
-                <input type="checkbox" id="chk_problem_pacjent">
-                <label for="chk_problem_pacjent">Co jest problemem w pracy z tym pacjentem - na jakie pytania chciał/a/bym uzyskać odpowiedź?</label>
-            </div>
-            <div class="form-group">
-                <textarea id="odp_problem_pacjent"></textarea>
-            </div>
-
-            <div class="checkbox-group">
-                <input type="checkbox" id="chk_materialy">
-                <label for="chk_materialy">Jeśli został sformułowany problem pacjenta, czy przejrzałam/em materiały dotyczące terapii poznawczo-behawioralnej w tym problemie?</label>
-            </div>
-
-            <div class="checkbox-group">
-                <input type="checkbox" id="chk_bezpieczenstwo">
-                <label for="chk_bezpieczenstwo">Czy pacjent jest bezpieczny - czy mam dane dotyczące ryzyka samobójstwa, zachowań ryzykownych?</label>
-            </div>
-            <div class="form-group">
-                <textarea id="odp_bezpieczenstwo"></textarea>
-            </div>
-
-            <div class="checkbox-group">
-                <input type="checkbox" id="chk_model">
-                <label for="chk_model">Czy znam model teoretyczny najlepiej opisujący problem pacjenta?</label>
-            </div>
-
-            <div class="checkbox-group">
-                <input type="checkbox" id="chk_mechanizmy">
-                <label for="chk_mechanizmy">Czy w konceptualizacji uwzględniłam/em mechanizmy podtrzymujące problem pacjenta?</label>
-            </div>
-
-            <div class="form-group">
-                <label for="najlepsza_interwencja">Na którą z moich interwencji pacjent zareagował najlepiej? Czy mam pomysł dlaczego?</label>
-                <textarea id="najlepsza_interwencja"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="najgorsza_interwencja">Na którą z moich interwencji pacjent zareagował najgorzej? Czy mam pomysł dlaczego?</label>
-                <textarea id="najgorsza_interwencja"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="relacja_terapeutyczna">Jak oceniam relację terapeutyczną i z jakimi zjawiskami w tej relacji mam trudność?</label>
-                <textarea id="relacja_terapeutyczna"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="wlasne_abc">Jak wygląda moje własne ABC na myśl o (superwizji) terapii tego pacjenta?</label>
-                <textarea id="wlasne_abc"></textarea>
-            </div>
-        </div>
-
-        <div class="section-card">
-            <h2>1. Pierwszy Etap Terapii</h2>
-            <h3>1.1 Ogólna diagnoza kliniczna</h3>
+        <div class="section-card" style="border: 1px solid var(--primary); background-color: #f0fdf4;">
+            <h2 style="color: #166534; border-bottom-color: #166534;">Autorefleksja przed Superwizją (Dla Terapeuty)</h2>
             
             <div class="form-group">
-                <label for="powod_przyjscia">Zgłaszane problemy, powód przyjścia</label>
-                <span class="help-text">Jak pacjent rozumie własny problem, który skłonił go do podjęcia terapii.</span>
-                <textarea id="powod_przyjscia"></textarea>
+                <label for="pytania_superwizja">Co jest problemem w pracy z tym pacjentem - na jakie pytania szukam odpowiedzi?</label>
+                <textarea id="pytania_superwizja"></textarea>
             </div>
-
-            <div class="form-group">
-                <label for="info_ogolne">Informacje ogólne</label>
-                <span class="help-text">Dane z wywiadu: wykształcenie, sytuacja zawodowa, rodzinna, materialna, prawna, historia leczenia.</span>
-                <textarea id="info_ogolne"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="badanie_stanu">Badanie stanu psychicznego, diagnoza nozologiczna</label>
-                <textarea id="badanie_stanu"></textarea>
-            </div>
-
-            <h4>Diagnoza wstępna (według ICD lub DSM)</h4>
-            <div class="form-group">
-                <label for="diagnoza_dominujaca">Zaburzenie dominujące</label>
-                <input type="text" id="diagnoza_dominujaca">
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="diagnoza_wspolistniejace">Zaburzenia współwystępujące</label>
-                    <input type="text" id="diagnoza_wspolistniejace">
-                </div>
-                <div class="form-group">
-                    <label for="diagnoza_osobowosc">Zaburzenia osobowości</label>
-                    <input type="text" id="diagnoza_osobowosc">
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="choroby_somatyczne">Choroby somatyczne</label>
-                <input type="text" id="choroby_somatyczne">
-            </div>
-
-            <h4>Ogólne funkcjonowanie w sferze:</h4>
-            <div class="form-group">
-                <label for="funkcjonowanie_rodzina">Rodzinnej (relacje z bliskimi)</label>
-                <textarea id="funkcjonowanie_rodzina" rows="2"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="funkcjonowanie_praca">Zawodowej / szkolnej</label>
-                <textarea id="funkcjonowanie_praca" rows="2"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="funkcjonowanie_spoleczne">Społecznej</label>
-                <textarea id="funkcjonowanie_spoleczne" rows="2"></textarea>
-            </div>
-        </div>
-
-        <div class="section-card">
-            <h3>1.2 Wyodrębnienie problemów do terapii</h3>
-            
-            <div class="form-group">
-                <label for="lista_problemow">Typowe aktualne problemy i trudne sytuacje (lista problemów)</label>
-                <span class="help-text">Przy każdym warto podać nasilenie np. dyskomfort 0-10 lub 0-100%.</span>
-                <textarea id="lista_problemow"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="problem_dominujacy">PROBLEM DOMINUJĄCY WYBRANY DO KONCEPTUALIZACJI</label>
-                <textarea id="problem_dominujacy"></textarea>
-            </div>
-        </div>
-
-        <div class="section-card">
-            <h3>1.3 Konceptualizacja - Pierwszy Poziom (Model ABC)</h3>
-            <span class="help-text">Automatyczne myśli, emocje i zachowania na konkretnym przykładzie.</span>
-            
-            <div class="abc-grid">
-                <div class="form-group full-width">
-                    <label for="abc_sytuacja">Sytuacja ilustrująca problem</label>
-                    <textarea id="abc_sytuacja" rows="2"></textarea>
-                </div>
-                <div class="form-group full-width">
-                    <label for="abc_wyzwalacz">Czynnik wyzwalający</label>
-                    <textarea id="abc_wyzwalacz" rows="2"></textarea>
-                </div>
-                <div class="form-group full-width">
-                    <label for="abc_mysli">Automatyczne myśli</label>
-                    <textarea id="abc_mysli" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="abc_emocje">Emocje (i ich nasilenie)</label>
-                    <textarea id="abc_emocje" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="abc_fizjologia">Objawy fizjologiczne</label>
-                    <textarea id="abc_fizjologia" rows="3"></textarea>
-                </div>
-                <div class="form-group full-width">
-                    <label for="abc_zachowanie">Zachowanie</label>
-                    <textarea id="abc_zachowanie" rows="3"></textarea>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="typowe_mysli">Typowe automatyczne myśli w podobnych sytuacjach</label>
-                <textarea id="typowe_mysli" rows="2"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="typowe_emocje">Typowe emocje w podobnych sytuacjach</label>
-                <textarea id="typowe_emocje" rows="2"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="typowe_reakcje_fizjo">Typowe reakcje fizjologiczne</label>
-                <textarea id="typowe_reakcje_fizjo" rows="2"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="strategie_behawioralne">Podstawowe strategie behawioralne (w tym zachowania zabezpieczające)</label>
-                <textarea id="strategie_behawioralne"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="konsekwencje_zachowan">Konsekwencje zachowań (wzmocnienia pozytywne i negatywne)</label>
-                <textarea id="konsekwencje_zachowan"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="analiza_funkcjonalna">Analiza funkcjonalna A-B-C sytuacji problemowej (analiza łańcuchowa)</label>
-                <textarea id="analiza_funkcjonalna"></textarea>
-            </div>
-        </div>
-
-        <div class="section-card">
-            <h3>Konceptualizacja - Drugi Poziom</h3>
-            
-            <div class="form-group">
-                <label for="przekonania_kluczowe">Przekonania kluczowe (schematy poznawcze)</label>
-                <textarea id="przekonania_kluczowe" rows="2"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="przekonania_warunkowe">Przekonania warunkowe, pośredniczące (zasady)</label>
-                <textarea id="przekonania_warunkowe" rows="2"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="znieksztalcenia_poznawcze">Zniekształcenia i ograniczenia poznawcze</label>
-                <textarea id="znieksztalcenia_poznawcze" rows="2"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="strategie_rola">Podstawowe strategie behawioralne stosowane przez pacjenta i ich rola w powstaniu lub podtrzymywaniu problemu</label>
-                <textarea id="strategie_rola"></textarea>
-            </div>
-
-            <h4>Zidentyfikowane procesy transdiagnostyczne podtrzymujące problem</h4>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="proces_unikanie">Unikanie poznawcze</label>
-                    <input type="text" id="proces_unikanie">
-                </div>
-                <div class="form-group">
-                    <label for="proces_zamartwianie">Zamartwianie, ruminacje</label>
-                    <input type="text" id="proces_zamartwianie">
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="proces_historia">Historia uczenia/wzmocnienia</label>
-                    <input type="text" id="proces_historia">
-                </div>
-                <div class="form-group">
-                    <label for="proces_perfekcjonizm">Perfekcjonizm</label>
-                    <input type="text" id="proces_perfekcjonizm">
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="proces_monitorowanie">Monitorowanie zagrożenia (ukierunkowanie uwagi)</label>
-                    <input type="text" id="proces_monitorowanie">
-                </div>
-                <div class="form-group">
-                    <label for="proces_inne">Inne</label>
-                    <input type="text" id="proces_inne">
-                </div>
-            </div>
-
-            <h4>Profil rozwojowy</h4>
-            <div class="form-group">
-                <label for="przeszlosc_zwiazki">Przeszłość i związki z innymi (rodzice, rodzeństwo, rówieśnicy, autorytety)</label>
-                <textarea id="przeszlosc_zwiazki"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="wydarzenia_traumatyczne">Istotne wydarzenia i przeżycia traumatyczne</label>
-                <textarea id="wydarzenia_traumatyczne"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="czynniki_wyzwalajace">Czynniki wyzwalające obecne zaburzenie</label>
-                <textarea id="czynniki_wyzwalajace"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="czynniki_negatywne">Czynniki, które mogą negatywnie wpływać na przebieg terapii</label>
-                <textarea id="czynniki_negatywne"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="zasoby">Zasoby, rezyliencja - czynniki, które mogą pozytywnie wpływać na przebieg terapii</label>
-                <textarea id="zasoby"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="dodatkowe_info">Dodatkowe informacje, narzędzia, wyniki badań</label>
-                <textarea id="dodatkowe_info"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="podsumowanie_konceptualizacji">Podsumowanie konceptualizacji</label>
-                <span class="help-text">Synteza wiedzy na temat czynników i mechanizmów.</span>
-                <textarea id="podsumowanie_konceptualizacji"></textarea>
-            </div>
-            
-            <div class="form-group">
-                <label for="cele_terapii">1.2 Cele terapii</label>
-                <textarea id="cele_terapii"></textarea>
-            </div>
-        </div>
-
-        <div class="section-card">
-            <h2>2. Drugi Etap Terapii</h2>
-            
-            <div class="form-group">
-                <label for="plan_terapii">II.1 Plan terapii</label>
-                <span class="help-text">Modele zaburzenia, protokół terapeutyczny, uzasadnienie wyboru metody.</span>
-                <textarea id="plan_terapii"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="narzedzia_oceny">Narzędzia oceny stanu psychicznego / monitorowanie zmian</label>
-                <textarea id="narzedzia_oceny" rows="2"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="realizacja_planu">II.2 Realizacja planu - opis kolejnych sesji, interwencji</label>
-                <span class="help-text">Plan sesji, co zrobiono, metody, wnioski, praca osobista, refleksje terapeuty.</span>
-                <textarea id="realizacja_planu" style="min-height: 200px;"></textarea>
-            </div>
-        </div>
-
-        <div class="section-card">
-            <h2>3. Trzeci Etap Terapii - Osiągnięte Cele i Zmiany</h2>
             
             <div class="form-row">
                 <div class="form-group">
-                    <label for="cele_wg_pacjenta">Według pacjenta</label>
-                    <textarea id="cele_wg_pacjenta" rows="2"></textarea>
+                    <label for="najlepsza_interwencja">Na co pacjent zareagował najlepiej? (Dlaczego?)</label>
+                    <textarea id="najlepsza_interwencja" rows="2"></textarea>
                 </div>
                 <div class="form-group">
-                    <label for="cele_wg_terapeuty">Według terapeuty</label>
-                    <textarea id="cele_wg_terapeuty" rows="2"></textarea>
+                    <label for="najgorsza_interwencja">Na co pacjent zareagował najgorzej? (Dlaczego?)</label>
+                    <textarea id="najgorsza_interwencja" rows="2"></textarea>
                 </div>
             </div>
-            <div class="form-group">
-                <label for="cele_wg_narzedzi">Według narzędzi oceny</label>
-                <textarea id="cele_wg_narzedzi" rows="2"></textarea>
-            </div>
-
-            <h4>Zmiany, które zaszły w zakresie:</h4>
-            <div class="form-group">
-                <label for="zmiany_poznawcze">Funkcjonowania poznawczego pacjenta</label>
-                <textarea id="zmiany_poznawcze" rows="2"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="zmiany_emocje">Emocji</label>
-                <textarea id="zmiany_emocje" rows="2"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="zmiany_zachowania">Zachowań</label>
-                <textarea id="zmiany_zachowania" rows="2"></textarea>
-            </div>
-
-            <h4>Mechanizmy zmian (lub brak zmian):</h4>
-            <div class="form-group">
-                <label for="mech_zmian_pacjent">Według pacjenta</label>
-                <textarea id="mech_zmian_pacjent" rows="2"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="mech_zmian_terapeuta">Według terapeuty</label>
-                <textarea id="mech_zmian_terapeuta" rows="2"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="zapobieganie_nawrotom">Zastosowane strategie zapobiegania nawrotom i zalecenia</label>
-                <textarea id="zapobieganie_nawrotom"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="trudnosci_terapia">Trudności, które wystąpiły podczas terapii</label>
-                <textarea id="trudnosci_terapia"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="relacja_ocena">Relacja Terapeutyczna (ocena czynników)</label>
-                <textarea id="relacja_ocena"></textarea>
-            </div>
-        </div>
-
-        <div class="section-card">
-            <h2>4. Podsumowanie Terapii</h2>
             
             <div class="form-group">
-                <label for="podsumowanie_wnioski">Wnioski z całości procesu</label>
-                <textarea id="podsumowanie_wnioski"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="literatura">Literatura (z jakich materiałów korzystałem/am)</label>
-                <textarea id="literatura"></textarea>
+                <label for="wlasne_abc">Jak wygląda MOJE własne ABC na myśl o terapii / superwizji tego pacjenta?</label>
+                <textarea id="wlasne_abc" rows="2"></textarea>
             </div>
         </div>
 
@@ -641,7 +831,7 @@
 
             const pacjentName = document.getElementById('pacjent').value || 'nieznany';
             const dateStr = new Date().toISOString().split('T')[0];
-            const fileName = `cbt_formularz_${pacjentName}_${dateStr}.json`;
+            const fileName = `cbt_diagnoza_terapia_${pacjentName}_${dateStr}.json`;
 
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -673,15 +863,14 @@
                             }
                         }
                     }
-                    alert('Dane zostały pomyślnie wczytane!');
+                    alert('Dane diagnozy i terapii zostały pomyślnie wczytane!');
                 } catch (error) {
-                    alert('Błąd podczas wczytywania pliku. Upewnij się, że to poprawny plik JSON wygenerowany przez ten formularz.');
+                    alert('Błąd podczas wczytywania pliku. Upewnij się, że wgrywasz poprawny plik JSON z tej aplikacji.');
                     console.error(error);
                 }
             };
             reader.readAsText(file);
-            // Reset input so the same file can be loaded again if needed
-            event.target.value = '';
+            event.target.value = ''; // reset pliku
         }
     </script>
 </body>
