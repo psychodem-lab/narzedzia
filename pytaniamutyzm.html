@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gra w Odpowiedzi - Tak / Nie</title>
+  <style>
+    :root {
+      --bg-color: #f0f4f8;
+      --card-bg: #ffffff;
+      --primary: #4a90e2;
+      --accent-mama: #e91e63;
+      --accent-dziecko: #ff9800;
+      --accent-terapeuta: #9c27b0;
+      --text: #333333;
+      --yes-color: #4caf50;
+      --no-color: #f44336;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+
+    .container {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 700px;
+      width: 100%;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    /* Wskaźnik kolejki */
+    .turn-indicator {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 25px;
+    }
+
+    .player-badge {
+      padding: 10px 20px;
+      border-radius: 50px;
+      font-weight: bold;
+      opacity: 0.4;
+      transform: scale(0.9);
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .player-badge.active {
+      opacity: 1;
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .player-mama { background-color: #fce4ec; color: var(--accent-mama); border-color: var(--accent-mama); }
+    .player-dziecko { background-color: #fff3e0; color: var(--accent-dziecko); border-color: var(--accent-dziecko); }
+    .player-terapeuta { background-color: #f3e5f5; color: var(--accent-terapeuta); border-color: var(--accent-terapeuta); }
+
+    /* Karta pytania */
+    .question-card {
+      background: #f8f9fa;
+      border: 2px dashed #ccc;
+      border-radius: 15px;
+      padding: 30px 20px;
+      margin-bottom: 25px;
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .category-tag {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #666;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+
+    .question-text {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    /* Przyciski odpowiedzi */
+    .answers-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 25px;
+    }
+
+    .btn-answer {
+      border: none;
+      border-radius: 15px;
+      padding: 20px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: white;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .btn-answer:active {
+      transform: scale(0.98);
+    }
+
+    .btn-yes { background-color: var(--yes-color); box-shadow: 0 5px 0 #388e3c; }
+    .btn-no { background-color: var(--no-color); box-shadow: 0 5px 0 #d32f2f; }
+
+    /* Nawigacja i Ustawienia */
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #eee;
+      padding-top: 20px;
+    }
+
+    .btn-secondary {
+      background: #e0e0e0;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      color: #555;
+    }
+
+    .speech-status {
+      font-size: 0.9rem;
+      color: #666;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .mic-active {
+      color: var(--yes-color);
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="turn-indicator">
+    <div id="badge-mama" class="player-badge player-mama active">MAMA</div>
+    <div id="badge-dziecko" class="player-badge player-dziecko">DZIEWCZYNKA</div>
+    <div id="badge-terapeuta" class="player-badge player-terapeuta">TERAPEUTA</div>
+  </div>
+
+  <div class="question-card">
+    <div id="category" class="category-tag">Kategoria</div>
+    <div id="question" class="question-text">Kliknij "Start", aby rozpocząć grę!</div>
+  </div>
+
+  <div class="answers-grid">
+    <button class="btn-answer btn-yes" onclick="answer('TAK')">👍 TAK</button>
+    <button class="btn-answer btn-no" onclick="answer('NIE')">👎 NIE</button>
+  </div>
+
+  <div class="controls">
+    <button class="btn-secondary" onclick="nextQuestion()">Następne pytanie ➔</button>
+    <div id="micStatus" class="speech-status">🎤 Rozpoznawanie mowy: Wyłączone</div>
+    <button class="btn-secondary" onclick="toggleSpeech()">Włącz Mikrofon</button>
+  </div>
+</div>
+
+<script>
+  const questions = [
+    // Preferencje
+    { cat: "Preferencje", text: "Czy lubisz lody truskawkowe?" },
+    { cat: "Preferencje", text: "Czy lubisz, gdy pada deszcz?" },
+    { cat: "Preferencje", text: "Czy oglądasz bajki na tablecie lub telewizorze?" },
+    { cat: "Preferencje", text: "Czy lubisz układać klocki LEGO?" },
+    { cat: "Preferencje", text: "Czy masz w domu jakieś zwierzątko?" },
+    { cat: "Preferencje", text: "Czy lubisz chodzić na plac zabaw?" },
+    { cat: "Preferencje", text: "Czy lubisz pić sok pomarańczowy?" },
+    { cat: "Preferencje", text: "Czy lubisz kolor różowy?" },
+    { cat: "Preferencje", text: "Czy wolisz jeździć na rowerze niż biegać?" },
+    { cat: "Preferencje", text: "Czy lubisz jeść pizzę?" },
+
+    // Absurdy i Żarty
+    { cat: "Absurdy i Żarty", text: "Czy terapeuta ma dzisiaj na sobie różowe uszy królika?" },
+    { cat: "Absurdy i Żarty", text: "Czy psy potrafią latać?" },
+    { cat: "Absurdy i Żarty", text: "Czy mama ma dzisiaj założone buty na rękach?" },
+    { cat: "Absurdy i Żarty", text: "Czy koty robią 'muuu'?" },
+    { cat: "Absurdy i Żarty", text: "Czy w lodówce mieszkają niedźwiedzie polarne?" },
+    { cat: "Absurdy i Żarty", text: "Czy ryby potrafią jeździć na hulajnodze?" },
+    { cat: "Absurdy i Żarty", text: "Czy trawa jest niebieska?" },
+    { cat: "Absurdy i Żarty", text: "Czy banany noszą czapki zimowe?" },
+    { cat: "Absurdy i Żarty", text: "Czy słonie potrafią skakać na skakance?" },
+    { cat: "Absurdy i Żarty", text: "Czy potrafisz zjeść cały samochód?" },
+
+    // Obserwacja
+    { cat: "Obserwacja", text: "Czy mama ma dzisiaj spięte włosy?" },
+    { cat: "Obserwacja", text: "Czy na stole leży coś czerwonego?" },
+    { cat: "Obserwacja", text: "Czy terapeuta ma założone okulary?" },
+    { cat: "Obserwacja", text: "Czy za oknem świeci teraz słońce?" },
+    { cat: "Obserwacja", text: "Czy masz na sobie coś zielonego?" },
+    { cat: "Obserwacja", text: "Czy w tym pokoju stoi zegar?" },
+    { cat: "Obserwacja", text: "Czy drzwi do pokoju są otwarte?" },
+    { cat: "Obserwacja", text: "Czy ktoś z nas ma na sobie białe buty?" },
+    { cat: "Obserwacja", text: "Czy na podłodze leży dywan?" },
+    { cat: "Obserwacja", text: "Czy w pokoju jest włączone światło?" },
+
+    // Zadania Ruchowe
+    { cat: "Zadania Ruchowe", text: "Czy potrafisz mrugnąć jednym okiem?" },
+    { cat: "Zadania Ruchowe", text: "Czy potrafisz dotknąć palcem nosa z zamkniętymi oczami?" },
+    { cat: "Zadania Ruchowe", text: "Czy potrafisz klasnąć trzy razy?" },
+    { cat: "Zadania Ruchowe", text: "Czy umiesz skakać na jednej nodze?" },
+    { cat: "Zadania Ruchowe", text: "Czy potrafisz zrobić śmieszną minę?" },
+    { cat: "Zadania Ruchowe", text: "Czy umiesz pokazać język?" },
+    { cat: "Zadania Ruchowe", text: "Czy potrafisz podnieść obie ręce do góry?" },
+    { cat: "Zadania Ruchowe", text: "Czy umiesz zbić piątkę z mamą?" },
+    { cat: "Zadania Ruchowe", text: "Czy potrafisz tupnąć prawą nogą?" },
+    { cat: "Zadania Ruchowe", text: "Czy potrafisz pokazać jak macha się na pożegnanie?" }
+  ];
+
+  const players = ['mama', 'dziecko', 'terapeuta'];
+  let currentPlayerIndex = 0;
+  let currentQuestionIndex = 0;
+  let recognition;
+  let isListening = false;
+
+  // Losowanie kolejności pytań
+  questions.sort(() => Math.random() - 0.5);
+
+  function updateDisplay() {
+    // Aktualizacja wskaźnika gracza
+    players.forEach((player, index) => {
+      const badge = document.getElementById(`badge-${player}`);
+      if (index === currentPlayerIndex) {
+        badge.classList.add('active');
+      } else {
+        badge.classList.remove('active');
+      }
+    });
+
+    // Aktualizacja pytania
+    const q = questions[currentQuestionIndex];
+    document.getElementById('category').innerText = q.cat;
+    document.getElementById('question').innerText = q.text;
+  }
+
+  function answer(val) {
+    // Synteza mowy - odtworzenie odpowiedzi głosowo przez przeglądarkę
+    const synth = window.speechSynthesis;
+    const utterance = new SpeechSynthesisUtterance(val);
+    utterance.lang = 'pl-PL';
+    synth.speak(utterance);
+
+    // Przejście do następnego gracza
+    currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+    
+    // Jeśli zrobiliśmy pełną rundę (wszyscy 3 odpowiedzieli), zmień pytanie
+    if (currentPlayerIndex === 0) {
+      currentQuestionIndex = (currentQuestionIndex + 1) % questions.length;
+    }
+
+    updateDisplay();
+  }
+
+  function nextQuestion() {
+    currentQuestionIndex = (currentQuestionIndex + 1) % questions.length;
+    currentPlayerIndex = 0; // Reset do Mamy
+    updateDisplay();
+  }
+
+  // Web Speech API – Wykrywanie głosu
+  function toggleSpeech() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert("Twoja przeglądarka nie wspiera rozpoznawania mowy. Użyj Google Chrome.");
+      return;
+    }
+
+    if (isListening) {
+      recognition.stop();
+      isListening = false;
+      document.getElementById('micStatus').innerHTML = "🎤 Rozpoznawanie mowy: Wyłączone";
+      document.getElementById('micStatus').classList.remove('mic-active');
+    } else {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.lang = 'pl-PL';
+      recognition.continuous = true;
+      recognition.interimResults = false;
+
+      recognition.onresult = function(event) {
+        const last = event.results.length - 1;
+        const text = event.results[last][0].transcript.trim().toLowerCase();
+
+        if (text.includes("tak")) {
+          answer("TAK");
+        } else if (text.includes("nie")) {
+          answer("NIE");
+        }
+      };
+
+      recognition.start();
+      isListening = true;
+      document.getElementById('micStatus').innerHTML = "🎤 Rozpoznawanie mowy: Aktywne (Mów 'TAK' lub 'NIE')";
+      document.getElementById('micStatus').classList.add('mic-active');
+    }
+  }
+
+  // Inicjalizacja pierwszej planszy
+  updateDisplay();
+</script>
+
+</body>
+</html>
