@@ -187,7 +187,6 @@
 
 <script>
   const questions = [
-    // Preferencje
     { cat: "Preferencje", text: "Czy lubisz lody truskawkowe?" },
     { cat: "Preferencje", text: "Czy lubisz, gdy pada deszcz?" },
     { cat: "Preferencje", text: "Czy oglądasz bajki na tablecie lub telewizorze?" },
@@ -199,7 +198,6 @@
     { cat: "Preferencje", text: "Czy wolisz jeździć na rowerze niż biegać?" },
     { cat: "Preferencje", text: "Czy lubisz jeść pizzę?" },
 
-    // Absurdy i Żarty
     { cat: "Absurdy i Żarty", text: "Czy terapeuta ma dzisiaj na sobie różowe uszy królika?" },
     { cat: "Absurdy i Żarty", text: "Czy psy potrafią latać?" },
     { cat: "Absurdy i Żarty", text: "Czy mama ma dzisiaj założone buty na rękach?" },
@@ -211,7 +209,6 @@
     { cat: "Absurdy i Żarty", text: "Czy słonie potrafią skakać na skakance?" },
     { cat: "Absurdy i Żarty", text: "Czy potrafisz zjeść cały samochód?" },
 
-    // Obserwacja
     { cat: "Obserwacja", text: "Czy mama ma dzisiaj spięte włosy?" },
     { cat: "Obserwacja", text: "Czy na stole leży coś czerwonego?" },
     { cat: "Obserwacja", text: "Czy terapeuta ma założone okulary?" },
@@ -223,7 +220,6 @@
     { cat: "Obserwacja", text: "Czy na podłodze leży dywan?" },
     { cat: "Obserwacja", text: "Czy w pokoju jest włączone światło?" },
 
-    // Zadania Ruchowe
     { cat: "Zadania Ruchowe", text: "Czy potrafisz mrugnąć jednym okiem?" },
     { cat: "Zadania Ruchowe", text: "Czy potrafisz dotknąć palcem nosa z zamkniętymi oczami?" },
     { cat: "Zadania Ruchowe", text: "Czy potrafisz klasnąć trzy razy?" },
@@ -240,13 +236,12 @@
   let currentPlayerIndex = 0;
   let currentQuestionIndex = 0;
   let recognition;
-  let isListening = false;
+  let shouldListen = false; // Zmienna pilnująca ciągłości mikrofonu
 
-  // Losowanie kolejności pytań
+  // Losowanie kolejności pytań na starcie
   questions.sort(() => Math.random() - 0.5);
 
   function updateDisplay() {
-    // Aktualizacja wskaźnika gracza
     players.forEach((player, index) => {
       const badge = document.getElementById(`badge-${player}`);
       if (index === currentPlayerIndex) {
@@ -256,23 +251,19 @@
       }
     });
 
-    // Aktualizacja pytania
     const q = questions[currentQuestionIndex];
     document.getElementById('category').innerText = q.cat;
     document.getElementById('question').innerText = q.text;
   }
 
   function answer(val) {
-    // Synteza mowy - odtworzenie odpowiedzi głosowo przez przeglądarkę
     const synth = window.speechSynthesis;
     const utterance = new SpeechSynthesisUtterance(val);
     utterance.lang = 'pl-PL';
     synth.speak(utterance);
 
-    // Przejście do następnego gracza
     currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
-    
-    // Jeśli zrobiliśmy pełną rundę (wszyscy 3 odpowiedzieli), zmień pytanie
+
     if (currentPlayerIndex === 0) {
       currentQuestionIndex = (currentQuestionIndex + 1) % questions.length;
     }
@@ -282,15 +273,11 @@
 
   function nextQuestion() {
     currentQuestionIndex = (currentQuestionIndex + 1) % questions.length;
-    currentPlayerIndex = 0; // Reset do Mamy
+    currentPlayerIndex = 0; 
     updateDisplay();
   }
 
-  // Web Speech API – Wykrywanie głosu
-  
-  let recognition;
-  let isListening = false;
-  let shouldListen = false; // Zmienna pilnująca, czy mikrofon ma działać w pętli
+  // --- Web Speech API z ciągłym nasłuchem ---
 
   function initSpeechRecognition() {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
@@ -301,14 +288,13 @@
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const rec = new SpeechRecognition();
     rec.lang = 'pl-PL';
-    rec.continuous = true;       // Nie rozłączaj po 1 słowie
-    rec.interimResults = false;  // Zwracaj tylko pewne wyniki
+    rec.continuous = true;       
+    rec.interimResults = false;  
 
     rec.onresult = function(event) {
       const last = event.results.length - 1;
       const text = event.results[last][0].transcript.trim().toLowerCase();
 
-      // Wykrywanie słów kluczowych
       if (text.includes("tak")) {
         answer("TAK");
       } else if (text.includes("nie")) {
@@ -316,19 +302,17 @@
       }
     };
 
-    // AUTOMATYCZNY RESTART: Gdy przeglądarka wyłączy mikrofon, włącz go z powrotem
     rec.onend = function() {
       if (shouldListen) {
         try {
           rec.start();
         } catch (e) {
-          // Zabezpieczenie przed zbyt szybkim restartem
+          // Ignoruj błąd przy próbie szybkiego restartu
         }
       }
     };
 
     rec.onerror = function(event) {
-      // Ignoruj powszechne błędy braku mowy i kontynuuj nasłuch
       if (event.error === 'no-speech') return;
       console.warn("Błąd rozpoznawania mowy:", event.error);
     };
@@ -352,15 +336,14 @@
       try {
         recognition.start();
       } catch (e) {
-        // Mikrofon mógł być już aktywny
+        // Ignoruj błąd jeśli już wystartował
       }
       document.getElementById('micStatus').innerHTML = "🎤 Mikrofon AKTYWNY (Zawsze nasłuchuje 'TAK' / 'NIE')";
       document.getElementById('micStatus').classList.add('mic-active');
     }
   }
 
-
-  // Inicjalizacja pierwszej planszy
+  // Uruchomienie planszy po załadowaniu
   updateDisplay();
 </script>
 
