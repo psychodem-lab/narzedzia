@@ -287,41 +287,78 @@
   }
 
   // Web Speech API – Wykrywanie głosu
-  function toggleSpeech() {
+  
+  let recognition;
+  let isListening = false;
+  let shouldListen = false; // Zmienna pilnująca, czy mikrofon ma działać w pętli
+
+  function initSpeechRecognition() {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       alert("Twoja przeglądarka nie wspiera rozpoznawania mowy. Użyj Google Chrome.");
-      return;
+      return null;
     }
 
-    if (isListening) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const rec = new SpeechRecognition();
+    rec.lang = 'pl-PL';
+    rec.continuous = true;       // Nie rozłączaj po 1 słowie
+    rec.interimResults = false;  // Zwracaj tylko pewne wyniki
+
+    rec.onresult = function(event) {
+      const last = event.results.length - 1;
+      const text = event.results[last][0].transcript.trim().toLowerCase();
+
+      // Wykrywanie słów kluczowych
+      if (text.includes("tak")) {
+        answer("TAK");
+      } else if (text.includes("nie")) {
+        answer("NIE");
+      }
+    };
+
+    // AUTOMATYCZNY RESTART: Gdy przeglądarka wyłączy mikrofon, włącz go z powrotem
+    rec.onend = function() {
+      if (shouldListen) {
+        try {
+          rec.start();
+        } catch (e) {
+          // Zabezpieczenie przed zbyt szybkim restartem
+        }
+      }
+    };
+
+    rec.onerror = function(event) {
+      // Ignoruj powszechne błędy braku mowy i kontynuuj nasłuch
+      if (event.error === 'no-speech') return;
+      console.warn("Błąd rozpoznawania mowy:", event.error);
+    };
+
+    return rec;
+  }
+
+  function toggleSpeech() {
+    if (!recognition) {
+      recognition = initSpeechRecognition();
+    }
+    if (!recognition) return;
+
+    if (shouldListen) {
+      shouldListen = false;
       recognition.stop();
-      isListening = false;
       document.getElementById('micStatus').innerHTML = "🎤 Rozpoznawanie mowy: Wyłączone";
       document.getElementById('micStatus').classList.remove('mic-active');
     } else {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognition = new SpeechRecognition();
-      recognition.lang = 'pl-PL';
-      recognition.continuous = true;
-      recognition.interimResults = false;
-
-      recognition.onresult = function(event) {
-        const last = event.results.length - 1;
-        const text = event.results[last][0].transcript.trim().toLowerCase();
-
-        if (text.includes("tak")) {
-          answer("TAK");
-        } else if (text.includes("nie")) {
-          answer("NIE");
-        }
-      };
-
-      recognition.start();
-      isListening = true;
-      document.getElementById('micStatus').innerHTML = "🎤 Rozpoznawanie mowy: Aktywne (Mów 'TAK' lub 'NIE')";
+      shouldListen = true;
+      try {
+        recognition.start();
+      } catch (e) {
+        // Mikrofon mógł być już aktywny
+      }
+      document.getElementById('micStatus').innerHTML = "🎤 Mikrofon AKTYWNY (Zawsze nasłuchuje 'TAK' / 'NIE')";
       document.getElementById('micStatus').classList.add('mic-active');
     }
   }
+
 
   // Inicjalizacja pierwszej planszy
   updateDisplay();
